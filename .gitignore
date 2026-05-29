@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PWA — workbox generated files (if using a PWA wrapper)
+/public/workbox-*.js
