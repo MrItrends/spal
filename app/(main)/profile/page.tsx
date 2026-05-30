@@ -370,7 +370,7 @@ export default function ProfilePage() {
         open={activeSheet === "add-email" || activeSheet === "add-phone"}
         type={activeSheet === "add-email" ? "email" : "phone"}
         onClose={() => setActiveSheet(null)}
-        onSaved={(updatedUser) => { setUser(updatedUser); setActiveSheet(null); }}
+        onSaved={(updatedUser) => { setUser(updatedUser as User); setActiveSheet(null); }}
       />
     </div>
   );

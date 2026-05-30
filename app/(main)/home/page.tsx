@@ -92,7 +92,7 @@ export default function HomePage() {
                 Today&apos;s Pulse
               </span>
               <a href="/insights" className="text-[11px] text-white/30 font-medium flex items-center gap-0.5 hover:text-white/50 transition-colors">
-                Details <ArrowIcon />
+                Details <ChevronRight size={10} strokeWidth={2} />
               </a>
             </div>
 
