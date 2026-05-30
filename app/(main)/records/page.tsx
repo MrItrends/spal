@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { formatTime } from "@/lib/utils/dates";
 import { useSPALStore } from "@/store";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
+import { SwipeableRow } from "@/components/records/SwipeableRow";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense";
@@ -25,10 +26,11 @@ function dateLabel(recordDate: string): string {
 
 export default function RecordsPage() {
   const { addSheetOpen, setAddSheet } = useSPALStore();
-  const [filter,   setFilter]   = useState<Filter>("all");
-  const [records,  setRecords]  = useState<BusinessRecord[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [editRecord, setEditRecord] = useState<BusinessRecord | null>(null);
+  const [filter,      setFilter]      = useState<Filter>("all");
+  const [records,     setRecords]     = useState<BusinessRecord[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [editRecord,  setEditRecord]  = useState<BusinessRecord | null>(null);
+  const [deletingId,  setDeletingId]  = useState<string | null>(null);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -57,6 +59,19 @@ export default function RecordsPage() {
 
   function handleEditClose() {
     setEditRecord(null);
+  }
+
+  async function handleDelete(record: BusinessRecord) {
+    setDeletingId(record.id);
+    try {
+      const res = await fetch(`/api/records?id=${record.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setRecords((prev) => prev.filter((r) => r.id !== record.id));
+      }
+    } catch { /* silent */ } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -92,6 +107,13 @@ export default function RecordsPage() {
         </div>
 
         {/* Content */}
+        {/* Swipe hint — shown once until dismissed */}
+        {!loading && Object.keys(grouped).length > 0 && (
+          <p className="text-[11px] text-neutral-400 text-right mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Swipe a record to edit or delete
+          </p>
+        )}
+
         {loading ? (
           <RecordsSkeleton />
         ) : Object.keys(grouped).length === 0 ? (
@@ -107,51 +129,55 @@ export default function RecordsPage() {
                       `+${formatCurrency(dayRecords.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0))}`}
                   </p>
                 </div>
-                <div className="bg-white rounded-[18px] border border-neutral-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] overflow-hidden">
+                {/* Each row is individually rounded so swipe reveals work per-row */}
+                <div className="space-y-1.5">
                   {dayRecords.map((record, i) => (
-                    <motion.button
+                    <motion.div
                       key={record.id}
                       initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      onClick={() => handleRecordTap(record)}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 active:bg-neutral-50 transition-colors text-left ${
-                        i < dayRecords.length - 1 ? "border-b border-neutral-50" : ""
-                      }`}
+                      animate={{ opacity: deletingId === record.id ? 0 : 1, x: 0, height: deletingId === record.id ? 0 : "auto" }}
+                      transition={{ delay: i * 0.035 }}
+                      className="rounded-[16px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]"
+                      style={{ border: "1px solid rgba(228,228,231,0.6)" }}
                     >
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED" }}
+                      <SwipeableRow
+                        onEdit={() => handleRecordTap(record)}
+                        onDelete={() => handleDelete(record)}
                       >
-                        {record.type === "sale" ? <RecordSaleIcon /> : <RecordExpenseIcon />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-spal-navy truncate">
-                          {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {record.category && (
-                            <>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                record.type === "sale" ? "bg-spal-green-50 text-spal-green-700" : "bg-spal-orange-50 text-spal-orange-600"
-                              }`}>
-                                {record.category}
-                              </span>
-                              <span className="text-xs text-neutral-300">·</span>
-                            </>
-                          )}
-                          <span className="text-xs text-neutral-400">{formatTime(record.created_at)}</span>
+                        <div className="flex items-center gap-3 px-4 py-3.5">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED" }}
+                          >
+                            {record.type === "sale" ? <RecordSaleIcon /> : <RecordExpenseIcon />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                              {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {record.category && (
+                                <>
+                                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                                    record.type === "sale" ? "bg-spal-green-50 text-spal-green-700" : "bg-spal-orange-50 text-spal-orange-600"
+                                  }`}>
+                                    {record.category}
+                                  </span>
+                                  <span className="text-xs text-neutral-300">·</span>
+                                </>
+                              )}
+                              <span className="text-[11px] text-neutral-400">{formatTime(record.created_at)}</span>
+                            </div>
+                          </div>
+                          <p
+                            className="text-[13px] font-bold flex-shrink-0"
+                            style={{ color: record.type === "sale" ? "#22C55E" : "#F97316", fontFamily: "var(--font-satoshi)" }}
+                          >
+                            {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
+                          </p>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <p className={`text-sm font-bold ${
-                          record.type === "sale" ? "text-spal-green" : "text-spal-orange"
-                        }`}>
-                          {record.type === "sale" ? "+" : "-"}{formatCurrency(record.amount)}
-                        </p>
-                        <EditIcon />
-                      </div>
-                    </motion.button>
+                      </SwipeableRow>
+                    </motion.div>
                   ))}
                 </div>
               </div>
