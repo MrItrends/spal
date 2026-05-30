@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendOTPviaSMS  } from "@/lib/termii";
-import { sendOTPviaEmail } from "@/lib/mailer";
+import { sendOTPviaEmail } from "@/lib/resend";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
