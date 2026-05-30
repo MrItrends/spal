@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -78,14 +77,17 @@ export default function WelcomePage() {
           transition={{ delay: 0.55, duration: 0.4 }}
           className="w-full flex flex-col gap-3"
         >
-          <Button
-            size="lg"
-            fullWidth
-            className="!bg-white !text-spal-green !shadow-[0_8px_24px_rgba(0,0,0,0.2)] font-bold"
+          <button
             onClick={() => router.push("/business-type")}
+            className="w-full h-14 rounded-full font-bold text-base font-[family-name:var(--font-poppins)] tracking-tight"
+            style={{
+              background: "#ffffff",
+              color: "#1DB954",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            }}
           >
             Let&apos;s get started →
-          </Button>
+          </button>
           <button
             className="text-white/60 text-xs text-center py-1"
             onClick={() => router.push("/login")}
