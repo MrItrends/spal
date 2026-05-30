@@ -110,7 +110,7 @@ export function AchievementsSection() {
             >
               Close
             </button>
-            </div>{/* end scroll zone */}
+            </div>
           </motion.div>
         </div>
       )}

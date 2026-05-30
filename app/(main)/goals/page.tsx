@@ -212,7 +212,7 @@ function SetGoalSheet({
           {saving ? "Saving…" : existing ? "Update Goal" : "Set Goal 🎯"}
         </button>
 
-        </div>{/* end scroll zone */}
+        </div>
       </motion.div>
     </motion.div>
   );

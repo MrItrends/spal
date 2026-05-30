@@ -222,7 +222,7 @@ export default function LearnPage() {
                 Delete
               </button>
             </div>
-            </div>{/* end scroll zone */}
+            </div>
           </motion.div>
         </div>
       )}

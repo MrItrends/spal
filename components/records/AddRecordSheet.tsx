@@ -357,7 +357,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   )}
                 </div>
 
-              </div>{/* end single scroll zone */}
+              </div>
             )}
           </motion.div>
         </>
