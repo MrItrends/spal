@@ -195,9 +195,10 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
             {success ? (
               <SuccessState isEdit={isEdit} type={type} amount={amount} />
             ) : (
+              <div className="flex flex-col flex-1 min-h-0">
+              {/* ↑ flex column so scroll area + sticky footer work together */}
               <div
-                className="overflow-y-auto overscroll-contain px-5 pt-3 relative"
-                style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
+                className="overflow-y-auto overscroll-contain flex-1 px-5 pt-3 relative pb-4"
               >
                 {/* Scanning overlay */}
                 <AnimatePresence>
@@ -296,7 +297,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className="flex-1 text-3xl font-bold text-spal-navy bg-transparent outline-none placeholder:text-neutral-200"
-                      autoFocus={!isEdit}
                     />
                   </div>
                 </div>
@@ -334,7 +334,13 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   </div>
                 </div>
 
-                {/* Save button */}
+              </div>{/* end scroll area */}
+
+              {/* ── Sticky footer — always visible, never scrolls away ── */}
+              <div
+                className="flex-shrink-0 px-5 pt-3 pb-6 border-t border-neutral-100 bg-white"
+                style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }}
+              >
                 <Button
                   fullWidth size="lg" loading={loading} disabled={!isValid}
                   className={type === "expense" ? "!bg-spal-orange !shadow-[0_4px_14px_rgba(249,115,22,0.35)]" : ""}
@@ -343,7 +349,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   {isEdit ? `Update ${label}` : `Save ${label}`} ✓
                 </Button>
 
-                {/* Delete button — only in edit mode */}
                 {isEdit && (
                   <motion.button
                     initial={{ opacity: 0 }}
@@ -351,15 +356,15 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                     onClick={handleDelete}
                     disabled={deleting}
                     className={`mt-3 w-full h-12 rounded-full text-sm font-semibold transition-all duration-200 ${
-                      deleteConfirm
-                        ? "bg-red-500 text-white"
-                        : "bg-red-50 text-red-500"
+                      deleteConfirm ? "bg-red-500 text-white" : "bg-red-50 text-red-500"
                     }`}
                   >
-                    {deleting ? "Deleting…" : deleteConfirm ? "Tap again to confirm delete" : "🗑️ Delete record"}
+                    {deleting ? "Deleting…" : deleteConfirm ? "Tap again to confirm delete" : "Delete record"}
                   </motion.button>
                 )}
               </div>
+
+              </div>{/* end flex column wrapper */}
             )}
           </motion.div>
         </>
