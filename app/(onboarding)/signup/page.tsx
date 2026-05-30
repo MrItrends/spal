@@ -105,7 +105,7 @@ export default function SignupPage() {
                   : "text-neutral-500"
               }`}
             >
-              {m === "phone" ? "📱 Phone" : "📧 Email"}
+              {m === "phone" ? "Phone" : "Email"}
             </button>
           ))}
         </div>
@@ -123,11 +123,13 @@ export default function SignupPage() {
               <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
                 Phone number
               </label>
-              <div className="flex gap-2">
+              <div className="flex rounded-2xl border-2 border-neutral-100 bg-white overflow-hidden focus-within:border-spal-blue transition-colors">
+                {/* Country code picker — fixed narrow width */}
                 <select
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
-                  className="spal-input w-auto px-3 text-sm"
+                  className="h-14 pl-3 pr-1 text-sm font-semibold text-spal-navy bg-transparent outline-none border-r border-neutral-100 flex-shrink-0"
+                  style={{ width: "90px" }}
                 >
                   {COUNTRY_CODES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -135,13 +137,15 @@ export default function SignupPage() {
                     </option>
                   ))}
                 </select>
+
+                {/* Phone number field — takes all remaining space */}
                 <input
                   type="tel"
                   inputMode="numeric"
                   placeholder="0812 345 6789"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/[^\d\s-]/g, ""))}
-                  className="spal-input flex-1 text-lg font-bold placeholder:font-normal placeholder:text-sm"
+                  className="flex-1 h-14 px-3 text-base font-semibold text-spal-navy bg-transparent outline-none placeholder:text-neutral-300 placeholder:font-normal min-w-0"
                 />
               </div>
               <p className="text-xs text-neutral-400 mt-2">
@@ -195,7 +199,7 @@ export default function SignupPage() {
           Send code
         </Button>
         <p className="text-center text-neutral-400 text-xs mt-3">
-          Your {method === "phone" ? "number" : "email"} is only used to log you in. We don&apos;t share it.
+          Your {method === "phone" ? "phone number" : "email"} is only used to sign you in. We never share it.
         </p>
       </motion.div>
     </div>
