@@ -58,6 +58,7 @@ interface SPALStore {
     goals?: BusinessGoal[];
     phoneNumber?: string;
     email?: string;
+    mode?: "signup" | "reset"; // "reset" = forgot-password flow
   };
   setOnboardingData: (data: Partial<SPALStore["onboardingData"]>) => void;
 

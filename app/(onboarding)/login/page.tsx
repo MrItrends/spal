@@ -98,10 +98,10 @@ export default function LoginPage() {
 
         {/* Forgot password */}
         <button
-          onClick={() => router.push("/signup")}
+          onClick={() => router.push("/signup?mode=reset")}
           className="text-sm text-spal-blue font-semibold text-right -mt-1 font-[family-name:var(--font-satoshi)]"
         >
-          Forgot password? Send me a code →
+          Forgot password? →
         </button>
       </motion.div>
 

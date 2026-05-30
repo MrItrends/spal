@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
@@ -17,6 +17,8 @@ const COUNTRY_CODES = [
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isReset = searchParams.get("mode") === "reset";
   const { setOnboardingData } = useSPALStore();
 
   const [method, setMethod]           = useState<Method>("phone");
@@ -57,9 +59,9 @@ export default function SignupPage() {
       }
 
       if (method === "phone") {
-        setOnboardingData({ phoneNumber: fullPhone, email: undefined });
+        setOnboardingData({ phoneNumber: fullPhone, email: undefined, mode: isReset ? "reset" : "signup" });
       } else {
-        setOnboardingData({ email: email.trim().toLowerCase(), phoneNumber: undefined });
+        setOnboardingData({ email: email.trim().toLowerCase(), phoneNumber: undefined, mode: isReset ? "reset" : "signup" });
       }
 
       router.push("/verify");
@@ -75,9 +77,13 @@ export default function SignupPage() {
       <StepIndicator current={5} total={5} />
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
-        <h1 className="text-2xl font-bold text-spal-navy">Save your progress</h1>
+        <h1 className="text-2xl font-bold text-spal-navy">
+          {isReset ? "Reset your password" : "Save your progress"}
+        </h1>
         <p className="mt-2 text-neutral-500 text-sm">
-          Enter your {method === "phone" ? "phone number" : "email address"}. No password needed.
+          {isReset
+            ? `Enter the ${method === "phone" ? "phone number" : "email"} linked to your account. We'll send a code to verify it's you.`
+            : `Enter your ${method === "phone" ? "phone number" : "email address"}. No password needed.`}
         </p>
       </motion.div>
 

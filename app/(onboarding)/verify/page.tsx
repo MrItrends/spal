@@ -17,6 +17,7 @@ export default function VerifyPage() {
 
   // Determine which method was used on the signup page
   const isEmail  = !!onboardingData.email;
+  const isReset  = onboardingData.mode === "reset";
   const contact  = onboardingData.email ?? onboardingData.phoneNumber ?? "your contact";
 
   useEffect(() => {
@@ -74,8 +75,9 @@ export default function VerifyPage() {
       }
 
       setUser(data.data.user);
-      // New users create a password; returning users go straight to home
-      router.push(data.data.isNewUser ? "/create-password" : "/home");
+      // New users and reset-password flow both go to create-password
+      // Returning users signing in normally go straight to home
+      router.push(data.data.isNewUser || isReset ? "/create-password" : "/home");
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {

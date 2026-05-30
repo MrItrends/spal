@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { useSPALStore } from "@/store";
 
 export default function CreatePasswordPage() {
   const router = useRouter();
+  const { onboardingData } = useSPALStore();
+  const isReset = onboardingData.mode === "reset";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm]   = useState("");
   const [loading, setLoading]   = useState(false);
@@ -45,10 +48,19 @@ export default function CreatePasswordPage() {
   return (
     <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
-        <span className="text-4xl">🔐</span>
-        <h1 className="mt-4 text-2xl font-bold text-spal-navy">Create a password</h1>
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+          style={{ background: isReset ? "#FFF7ED" : "#F0FDF4" }}
+        >
+          <LockIcon color={isReset ? "#F97316" : "#22C55E"} />
+        </div>
+        <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+          {isReset ? "Set a new password" : "Create a password"}
+        </h1>
         <p className="mt-2 text-neutral-500 text-sm leading-relaxed">
-          You&apos;ll use this to sign in next time — no code needed.
+          {isReset
+            ? "Choose a new password for your SPAL account."
+            : "You'll use this to sign in next time — no code needed."}
         </p>
       </motion.div>
 
@@ -113,16 +125,27 @@ export default function CreatePasswordPage() {
         className="mt-8"
       >
         <Button fullWidth size="lg" loading={loading} disabled={!isValid} onClick={handleCreate}>
-          Create password &amp; continue
+          {isReset ? "Save new password" : "Create password & continue"}
         </Button>
-        <button
-          className="mt-4 w-full text-center text-sm text-neutral-400 py-2"
-          onClick={() => router.push("/home")}
-        >
-          Skip for now
-        </button>
+        {!isReset && (
+          <button
+            className="mt-4 w-full text-center text-sm text-neutral-400 py-2"
+            onClick={() => router.push("/home")}
+          >
+            Skip for now
+          </button>
+        )}
       </motion.div>
     </div>
+  );
+}
+
+function LockIcon({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
   );
 }
 
