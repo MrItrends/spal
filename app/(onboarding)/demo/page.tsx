@@ -51,7 +51,7 @@ export default function DemoPage() {
       </div>
 
       {/* Content — animates per step */}
-      <div className="flex-1 flex flex-col px-5 pt-8 pb-0 overflow-hidden">
+      <div className="flex-1 flex flex-col px-5 pt-8 pb-0 min-h-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
