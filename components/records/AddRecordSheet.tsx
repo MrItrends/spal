@@ -7,6 +7,7 @@ import { PillChip } from "@/components/ui/PillChip";
 import { useSPALStore } from "@/store";
 import type { BusinessRecord } from "@/lib/types";
 import type { Badge } from "@/lib/gamification/badges";
+import { Camera, X, CheckCircle2 } from "lucide-react";
 
 const SALE_CATEGORIES    = ["Drinks", "Food", "Clothing", "Services", "Products", "Other"];
 const EXPENSE_CATEGORIES = ["Stock", "Fuel", "Transport", "Rent", "Salary", "Utilities", "Other"];
@@ -217,10 +218,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                           className="absolute inset-0 rounded-full bg-spal-blue"
                         />
                         <div className="relative w-14 h-14 rounded-full bg-spal-blue/10 border-2 border-spal-blue flex items-center justify-center">
-                          <svg className="w-6 h-6 text-spal-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
+                          <Camera size={24} className="text-spal-blue" strokeWidth={1.8} />
                         </div>
                       </div>
                       <div className="text-center">
@@ -254,10 +252,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                         disabled={scanning}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-spal-blue-50 text-spal-blue text-xs font-semibold rounded-full border border-spal-blue-100 active:bg-spal-blue-100 transition-colors disabled:opacity-40"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <Camera size={14} strokeWidth={2} />
                         Scan
                       </motion.button>
                     )}
@@ -266,7 +261,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                       className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500"
                       aria-label="Close"
                     >
-                      ✕
+                      <X size={16} strokeWidth={2} />
                     </button>
                   </div>
                 </div>

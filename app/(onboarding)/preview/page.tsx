@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Mic, TrendingUp, MessageCircle, Lightbulb } from "lucide-react";
 
 const FEATURES = [
   { icon: <VoiceIcon />,    label: "Record by voice",       sub: "Say it, SPAL writes it down" },
@@ -25,7 +26,7 @@ export default function PreviewPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2} />
           </button>
           <div className="flex-1"><OnboardProgress step={4} total={4} /></div>
         </div>
@@ -146,14 +147,6 @@ export default function PreviewPage() {
   );
 }
 
-function BackIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 5l-7 7 7 7" />
-    </svg>
-  );
-}
-
 function OnboardProgress({ step, total }: { step: number; total: number }) {
   return (
     <div className="flex gap-1.5">
@@ -168,37 +161,7 @@ function OnboardProgress({ step, total }: { step: number; total: number }) {
   );
 }
 
-function VoiceIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
-    </svg>
-  );
-}
-
-function ProfitIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
-    </svg>
-  );
-}
-
-function AskIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function InsightIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M7.05 7.05 5.64 5.64M18.36 18.36l-1.41-1.41M7.05 16.95l-1.41 1.41M18.36 5.64l-1.41 1.41" />
-    </svg>
-  );
-}
+function VoiceIcon()  { return <Mic          size={18} strokeWidth={1.8} />; }
+function ProfitIcon() { return <TrendingUp   size={18} strokeWidth={1.8} />; }
+function AskIcon()    { return <MessageCircle size={18} strokeWidth={1.8} />; }
+function InsightIcon(){ return <Lightbulb    size={18} strokeWidth={1.8} />; }

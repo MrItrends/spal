@@ -7,6 +7,7 @@ import { formatTime } from "@/lib/utils/dates";
 import { useSPALStore } from "@/store";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
+import { ArrowUp, ArrowDown, Pencil, Plus } from "lucide-react";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense";
@@ -196,11 +197,11 @@ export default function RecordsPage() {
             exit={{ scale: 0, opacity: 0 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => setAddSheet("sale")}
-            className="fixed bottom-24 right-4 w-14 h-14 bg-spal-green rounded-full flex items-center justify-center text-white text-2xl z-30"
+            className="fixed bottom-24 right-4 w-14 h-14 bg-spal-green rounded-full flex items-center justify-center text-white z-30"
             style={{ boxShadow: "0 4px 16px rgba(29,185,84,0.45)" }}
             aria-label="Add record"
           >
-            +
+            <Plus size={24} strokeWidth={2.5} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -245,30 +246,11 @@ function EmptyState({ filter, onAdd }: { filter: Filter; onAdd: () => void }) {
 }
 
 function RecordSaleIcon({ large = false }: { large?: boolean }) {
-  const s = large ? 22 : 16;
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 19V5M5 12l7-7 7 7" />
-    </svg>
-  );
+  return <ArrowUp size={large ? 22 : 16} color="#22C55E" strokeWidth={2} />;
 }
 
 function RecordExpenseIcon({ large = false }: { large?: boolean }) {
-  const s = large ? 22 : 16;
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 5v14M19 12l-7 7-7-7" />
-    </svg>
-  );
-}
-
-function EditIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4D4D8" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  );
+  return <ArrowDown size={large ? 22 : 16} color="#F97316" strokeWidth={2} />;
 }
 
 function RecordsSkeleton() {

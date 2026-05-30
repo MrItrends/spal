@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { useSPALStore, type BusinessType } from "@/store";
 
 const BUSINESS_TYPES: {
@@ -91,7 +92,7 @@ export default function BusinessTypePage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2} />
           </button>
           <div className="flex-1">
             <OnboardProgress step={1} total={4} />
@@ -202,14 +203,6 @@ export default function BusinessTypePage() {
 }
 
 /* ── Navigation ── */
-function BackIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 5l-7 7 7 7" />
-    </svg>
-  );
-}
-
 /* ── Progress bar ── */
 function OnboardProgress({ step, total }: { step: number; total: number }) {
   return (

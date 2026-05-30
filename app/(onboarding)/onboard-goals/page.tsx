@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type BusinessGoal } from "@/store";
+import { ArrowLeft, Check, BarChart3, Clock, Scissors, TrendingUp, Search } from "lucide-react";
 
 const GOALS: {
   goal: BusinessGoal;
@@ -16,35 +17,35 @@ const GOALS: {
     goal: "track_sales",
     label: "Track my sales daily",
     sub: "Know exactly how much I make each day",
-    icon: <TrackIcon />,
+    icon: <BarChart3 size={20} strokeWidth={1.7} />,
     accent: "#22C55E",
   },
   {
     goal: "know_profit",
     label: "Know my real profit",
     sub: "See what I actually keep after expenses",
-    icon: <ProfitIcon />,
+    icon: <Clock size={20} strokeWidth={1.7} />,
     accent: "#2563EB",
   },
   {
     goal: "reduce_expenses",
     label: "Reduce my expenses",
     sub: "Find where money is leaking out",
-    icon: <CutIcon />,
+    icon: <Scissors size={20} strokeWidth={1.7} />,
     accent: "#F97316",
   },
   {
     goal: "grow_business",
     label: "Grow my business",
     sub: "Make better decisions to scale up",
-    icon: <GrowIcon />,
+    icon: <TrendingUp size={20} strokeWidth={1.7} />,
     accent: "#8B5CF6",
   },
   {
     goal: "understand_spending",
     label: "Understand my spending",
     sub: "See patterns in how I spend money",
-    icon: <SpendIcon />,
+    icon: <Search size={20} strokeWidth={1.7} />,
     accent: "#2563EB",
   },
 ];
@@ -80,7 +81,7 @@ export default function GoalsPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2} />
           </button>
           <div className="flex-1"><OnboardProgress step={2} total={4} /></div>
         </div>
@@ -153,7 +154,7 @@ export default function GoalsPage() {
                       className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ background: item.accent }}
                     >
-                      <CheckIcon />
+                      <Check size={13} strokeWidth={2.5} color="white" />
                     </motion.div>
                   ) : (
                     <div className="w-6 h-6 rounded-lg border-2 border-neutral-200 flex-shrink-0" />
@@ -211,67 +212,4 @@ function OnboardProgress({ step, total }: { step: number; total: number }) {
   );
 }
 
-function BackIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 5l-7 7 7 7" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2.5 6.5l3 3 5-5" />
-    </svg>
-  );
-}
-
-function TrackIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="14" width="4" height="7" rx="1" />
-      <rect x="10" y="9" width="4" height="12" rx="1" />
-      <rect x="17" y="4" width="4" height="17" rx="1" />
-    </svg>
-  );
-}
-
-function ProfitIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" />
-    </svg>
-  );
-}
-
-function CutIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="6" cy="6" r="3" />
-      <circle cx="6" cy="18" r="3" />
-      <line x1="20" y1="4" x2="8.12" y2="15.88" />
-      <line x1="14.47" y1="14.48" x2="20" y2="20" />
-      <line x1="8.12" y1="8.12" x2="12" y2="12" />
-    </svg>
-  );
-}
-
-function GrowIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
-    </svg>
-  );
-}
-
-function SpendIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
+// Icons via Lucide — imported above

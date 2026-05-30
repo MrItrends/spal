@@ -8,6 +8,7 @@ import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { WeeklyChallengeCard } from "@/components/gamification/WeeklyChallengeCard";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
+import { TrendingUp, TrendingDown, Target, MessageCircle, Lightbulb, ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react";
 
 export default function HomePage() {
   const { user, addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
@@ -387,74 +388,29 @@ function RecordsSkeleton() {
   );
 }
 
-// ── Geometric symbols (no emoji) ────────────────────────────────────────────
+// ── Icons via Lucide ─────────────────────────────────────────────────────────
 
 function StreakDotIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-      <circle cx="5" cy="5" r="3" fill="#22C55E" />
-      <circle cx="5" cy="5" r="5" fill="#22C55E" fillOpacity="0.2" />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-      <path d="M2.5 5h5M5.5 2.5 8 5l-2.5 2.5" />
-    </svg>
-  );
+  return <div className="w-2 h-2 rounded-full bg-spal-green" />;
 }
 
 function InsightSymbol() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="flex-shrink-0 mt-0.5">
-      <rect width="28" height="28" rx="8" fill="#EFF6FF" />
-      <circle cx="14" cy="14" r="4" stroke="#2563EB" strokeWidth="1.6" />
-      <path d="M14 7v2M14 19v2M7 14h2M19 14h2" stroke="#2563EB" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
+    <div className="w-8 h-8 rounded-xl bg-spal-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+      <Lightbulb size={16} className="text-spal-blue" strokeWidth={1.8} />
+    </div>
   );
 }
 
 function RecordsEmptySymbol() {
   return (
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="mx-auto">
-      <rect width="40" height="40" rx="12" fill="#F4F4F5" />
-      <path d="M13 14h14M13 20h10M13 26h7" stroke="#D4D4D8" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mx-auto">
+      <TrendingUp size={20} className="text-neutral-300" strokeWidth={1.8} />
+    </div>
   );
 }
 
-function SaleActionIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 19V5M5 12l7-7 7 7" />
-    </svg>
-  );
-}
-
-function ExpenseActionIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 5v14M19 12l-7 7-7-7" />
-    </svg>
-  );
-}
-
-function GoalsActionIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="8" />
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2" />
-    </svg>
-  );
-}
-
-function AskActionIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
+function SaleActionIcon()    { return <TrendingUp    size={18} strokeWidth={1.8} />; }
+function ExpenseActionIcon() { return <TrendingDown  size={18} strokeWidth={1.8} />; }
+function GoalsActionIcon()   { return <Target        size={18} strokeWidth={1.8} />; }
+function AskActionIcon()     { return <MessageCircle size={18} strokeWidth={1.8} />; }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 
 const STEPS = [
   {
@@ -54,7 +55,7 @@ export default function DemoPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2} />
           </button>
           <div className="flex-1"><OnboardProgress step={3} total={4} /></div>
         </div>
@@ -140,14 +141,6 @@ export default function DemoPage() {
         </button>
       </div>
     </div>
-  );
-}
-
-function BackIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 5l-7 7 7 7" />
-    </svg>
   );
 }
 

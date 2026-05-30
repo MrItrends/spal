@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
+import { Pencil, Lock, X } from "lucide-react";
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
   food_seller:    "Food Seller",
@@ -352,12 +353,7 @@ export default function ProfilePage() {
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function PencilMiniIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  );
+  return <Pencil size={13} strokeWidth={2.2} color="#A1A1AA" />;
 }
 
 function StatItem({ value, label }: { value: string; label: string }) {
@@ -408,7 +404,7 @@ function Sheet({ open, onClose, title, children }: {
                   onClick={onClose}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500 flex-shrink-0"
                 >
-                  ✕
+                  <X size={15} strokeWidth={2} />
                 </button>
               </div>
               {children}

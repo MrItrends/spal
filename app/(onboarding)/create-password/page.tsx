@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
+import { Lock } from "lucide-react";
 
 export default function CreatePasswordPage() {
   const router = useRouter();
@@ -141,11 +142,6 @@ export default function CreatePasswordPage() {
 }
 
 function LockIcon({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
+  return <Lock size={22} strokeWidth={2} color={color} />;
 }
 
