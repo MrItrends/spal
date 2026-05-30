@@ -45,7 +45,7 @@ export async function proxy(req: NextRequest) {
   // If visiting root, redirect based on auth state
   if (pathname === "/") {
     return NextResponse.redirect(
-      new URL(user ? "/home" : "/login", req.url)
+      new URL(user ? "/home" : "/welcome", req.url)
     );
   }
 
