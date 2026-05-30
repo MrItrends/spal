@@ -38,7 +38,7 @@ export async function sendOTPviaEmail(
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from:    "SPAL <onboarding@resend.dev>",
+        from:    "SPAL <hello@spal.ng>",
         to:      email,
         subject: `${otp} is your SPAL code`,
         html: `
