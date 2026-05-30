@@ -28,7 +28,7 @@ const CURRENCIES = [
   { code: "GBP", label: "British Pound",  symbol: "£" },
 ];
 
-type SheetType = "business" | "whatsapp" | "currency" | "notifications" | null;
+type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | null;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -146,10 +146,18 @@ export default function ProfilePage() {
             </label>
 
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-spal-navy text-base truncate">
-                {user?.full_name ?? user?.business_name ?? "Your Account"}
-              </p>
-              <p className="text-sm text-neutral-400 truncate">
+              <button
+                onClick={() => setActiveSheet("name")}
+                className="flex items-center gap-1.5 group text-left w-full"
+              >
+                <p className="font-bold text-spal-navy text-base truncate">
+                  {user?.full_name ?? user?.business_name ?? "Tap to set your name"}
+                </p>
+                <span className="flex-shrink-0 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
+                  <PencilMiniIcon />
+                </span>
+              </button>
+              <p className="text-sm text-neutral-400 truncate mt-0.5">
                 {user?.email ?? user?.phone_number ?? ""}
               </p>
               <div className="mt-1.5">
@@ -178,6 +186,12 @@ export default function ProfilePage() {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Card padding="none">
           {[
+            {
+              icon:    "👤",
+              label:   "Your name",
+              hint:    user?.full_name ? user.full_name : "Tap to set your name",
+              sheet:   "name" as SheetType,
+            },
             {
               icon:    "📱",
               label:   "WhatsApp reports",
@@ -283,6 +297,17 @@ export default function ProfilePage() {
 
       {/* ── Bottom Sheets ─────────────────────────────────────────── */}
 
+      <NameSheet
+        open={activeSheet === "name"}
+        user={user}
+        onClose={() => setActiveSheet(null)}
+        onSave={async (updates) => {
+          const err = await saveProfile(updates);
+          if (!err) setActiveSheet(null);
+          return err;
+        }}
+      />
+
       <BusinessDetailsSheet
         open={activeSheet === "business"}
         user={user}
@@ -325,6 +350,15 @@ export default function ProfilePage() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
+
+function PencilMiniIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
 
 function StatItem({ value, label }: { value: string; label: string }) {
   return (
@@ -376,6 +410,59 @@ function Sheet({ open, onClose, title, children }: {
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+// ── Name sheet ────────────────────────────────────────────────────────────
+
+function NameSheet({ open, user, onClose, onSave }: {
+  open: boolean;
+  user: User | null;
+  onClose: () => void;
+  onSave: (updates: Record<string, string | null>) => Promise<string | null>;
+}) {
+  const [fullName, setFullName] = useState(user?.full_name ?? "");
+  const [saving, setSaving]     = useState(false);
+  const [error,  setError]      = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) { setFullName(user?.full_name ?? ""); setError(null); }
+  }, [open, user?.full_name]);
+
+  async function handleSave() {
+    if (!fullName.trim()) { setError("Please enter your name."); return; }
+    setSaving(true);
+    setError(null);
+    const err = await onSave({ full_name: fullName.trim() });
+    if (err) setError(err);
+    setSaving(false);
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Your name">
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wide block mb-2">
+            Full name
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. Amaka Okonkwo"
+            value={fullName}
+            onChange={e => { setFullName(e.target.value); setError(null); }}
+            onKeyDown={e => e.key === "Enter" && handleSave()}
+            autoFocus
+            className={`w-full h-12 px-4 bg-neutral-50 rounded-2xl border-2 text-sm text-spal-navy placeholder:text-neutral-300 outline-none transition-colors ${
+              error ? "border-red-300 focus:border-red-400" : "border-neutral-100 focus:border-spal-blue"
+            }`}
+          />
+          {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+        </div>
+        <Button fullWidth loading={saving} onClick={handleSave} disabled={!fullName.trim()}>
+          Save name
+        </Button>
+      </div>
+    </Sheet>
   );
 }
 
