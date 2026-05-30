@@ -2,24 +2,65 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { PillChip } from "@/components/ui/PillChip";
-import { Button } from "@/components/ui/Button";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type BusinessType } from "@/store";
 
 const BUSINESS_TYPES: {
   type: BusinessType;
   label: string;
-  emoji: string;
-  color: "green" | "orange" | "purple" | "blue" | "gray";
+  sub: string;
+  icon: React.ReactNode;
+  accent: string;
 }[] = [
-  { type: "food_seller",    label: "Food Seller",    emoji: "🍲", color: "green"  },
-  { type: "bar_owner",      label: "Bar Owner",      emoji: "🍺", color: "orange" },
-  { type: "fashion_vendor", label: "Fashion Vendor", emoji: "👗", color: "purple" },
-  { type: "salon",          label: "Salon Owner",    emoji: "✂️", color: "blue"   },
-  { type: "kiosk",          label: "Kiosk Owner",    emoji: "🛒", color: "green"  },
-  { type: "market_trader",  label: "Market Trader",  emoji: "🛍", color: "orange" },
-  { type: "other",          label: "Something else", emoji: "✨", color: "gray"   },
+  {
+    type: "food_seller",
+    label: "Food Seller",
+    sub: "Restaurant, buuka, food stall",
+    icon: <FoodIcon />,
+    accent: "#22C55E",
+  },
+  {
+    type: "bar_owner",
+    label: "Bar / Drinks",
+    sub: "Bar, beer parlour, cold store",
+    icon: <BarIcon />,
+    accent: "#F97316",
+  },
+  {
+    type: "fashion_vendor",
+    label: "Fashion & Clothing",
+    sub: "Boutique, tailoring, shoes",
+    icon: <FashionIcon />,
+    accent: "#8B5CF6",
+  },
+  {
+    type: "salon",
+    label: "Salon / Barber",
+    sub: "Hair salon, barbing, beauty",
+    icon: <SalonIcon />,
+    accent: "#2563EB",
+  },
+  {
+    type: "kiosk",
+    label: "Kiosk / Shop",
+    sub: "General store, provision, pharmacy",
+    icon: <KioskIcon />,
+    accent: "#22C55E",
+  },
+  {
+    type: "market_trader",
+    label: "Market Trader",
+    sub: "Open market, stall, agro",
+    icon: <MarketIcon />,
+    accent: "#F97316",
+  },
+  {
+    type: "other",
+    label: "Something else",
+    sub: "Any other type of business",
+    icon: <OtherIcon />,
+    accent: "#A1A1AA",
+  },
 ];
 
 export default function BusinessTypePage() {
@@ -29,91 +70,199 @@ export default function BusinessTypePage() {
 
   function handleSelect(type: BusinessType) {
     setSelected(type);
-    // Auto-advance after short delay
     setTimeout(() => {
       setOnboardingData({ businessType: type });
       router.push("/onboard-goals");
-    }, 350);
+    }, 320);
   }
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-12 pb-8 overflow-y-auto scroll-container">
-      {/* Step indicator */}
-      <StepIndicator current={1} total={5} />
+    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-8"
-      >
-        <h1 className="text-2xl font-bold text-spal-navy leading-tight">
-          What kind of business do you run?
-        </h1>
-        <p className="mt-2 text-neutral-500 text-sm">
-          Pick the one that fits best. You can change this later.
-        </p>
-      </motion.div>
+      {/* Header */}
+      <div className="px-5 pt-12 pb-0">
+        <OnboardProgress step={1} total={4} />
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.15 }}
-        className="mt-8 flex flex-wrap gap-3"
-      >
-        {BUSINESS_TYPES.map((item, i) => (
-          <motion.div
-            key={item.type}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.05 + 0.1 }}
-          >
-            <PillChip
-              label={item.label}
-              icon={item.emoji}
-              color={item.color}
-              selected={selected === item.type}
-              onClick={() => handleSelect(item.type)}
-              size="md"
-            />
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <div className="flex-1" />
-
-      {selected && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6"
+          transition={{ delay: 0.05, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          className="mt-7"
         >
-          <Button
-            fullWidth
-            size="lg"
-            onClick={() => {
-              setOnboardingData({ businessType: selected });
-              router.push("/onboard-goals");
-            }}
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 mb-2"
+            style={{ fontFamily: "var(--font-satoshi)" }}>
+            Step 1 of 4
+          </p>
+          <h1
+            className="text-spal-navy font-bold leading-[1.1]"
+            style={{ fontSize: "clamp(30px, 8.5vw, 36px)", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.025em" }}
           >
-            Continue →
-          </Button>
+            What kind of<br />business do you run?
+          </h1>
+          <p className="mt-2 text-neutral-400 text-[13px]" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Pick the one that fits best.
+          </p>
         </motion.div>
-      )}
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto scroll-container px-5 pt-6 pb-32">
+        <div className="space-y-2.5">
+          {BUSINESS_TYPES.map((item, i) => (
+            <motion.button
+              key={item.type}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.045 + 0.12, duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+              onClick={() => handleSelect(item.type)}
+              className="w-full flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5 text-left active:scale-[0.98] transition-all duration-150"
+              style={{
+                border: selected === item.type ? `1.5px solid ${item.accent}` : "1.5px solid transparent",
+                boxShadow: selected === item.type
+                  ? `0 0 0 3px ${item.accent}18, 0 2px 8px rgba(0,0,0,0.06)`
+                  : "0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            >
+              {/* Icon */}
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${item.accent}12`, color: item.accent }}
+              >
+                {item.icon}
+              </div>
+
+              {/* Labels */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {item.label}
+                </p>
+                <p className="text-[12px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {item.sub}
+                </p>
+              </div>
+
+              {/* Check */}
+              <AnimatePresence>
+                {selected === item.type ? (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    transition={{ duration: 0.18, ease: [0.34, 1.4, 0.64, 1] }}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: item.accent }}
+                  >
+                    <CheckIcon />
+                  </motion.div>
+                ) : (
+                  <div className="w-6 h-6 rounded-lg border-2 border-neutral-200 flex-shrink-0" />
+                )}
+              </AnimatePresence>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom gradient fade */}
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-28 pointer-events-none"
+        style={{ background: "linear-gradient(to top, #F8F7F4 40%, transparent)" }}
+      />
     </div>
   );
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+/* ── Progress bar ── */
+function OnboardProgress({ step, total }: { step: number; total: number }) {
   return (
     <div className="flex gap-1.5">
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
-          className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-            i <= current ? "bg-spal-green" : "bg-neutral-200"
-          }`}
+          className="h-1 flex-1 rounded-full transition-all duration-400"
+          style={{ background: i < step ? "#22C55E" : "#E4E4E7" }}
         />
       ))}
     </div>
+  );
+}
+
+/* ── Bespoke business icons ── */
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.5 6.5l3 3 5-5" />
+    </svg>
+  );
+}
+
+function FoodIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+      <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+      <line x1="6" y1="1" x2="6" y2="4" />
+      <line x1="10" y1="1" x2="10" y2="4" />
+      <line x1="14" y1="1" x2="14" y2="4" />
+    </svg>
+  );
+}
+
+function BarIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 22V12M16 22V12" />
+      <path d="M5 12h14" />
+      <path d="M7 4h10l1 8H6L7 4z" />
+    </svg>
+  );
+}
+
+function FashionIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z" />
+    </svg>
+  );
+}
+
+function SalonIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <line x1="20" y1="4" x2="8.12" y2="15.88" />
+      <line x1="14.47" y1="14.48" x2="20" y2="20" />
+      <line x1="8.12" y1="8.12" x2="12" y2="12" />
+    </svg>
+  );
+}
+
+function KioskIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+function MarketIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  );
+}
+
+function OtherIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
   );
 }

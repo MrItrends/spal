@@ -2,115 +2,185 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+
+const FEATURES = [
+  { icon: <VoiceIcon />,    label: "Record by voice",       sub: "Say it, SPAL writes it down" },
+  { icon: <ProfitIcon />,   label: "See your real profit",   sub: "Every day, automatically" },
+  { icon: <AskIcon />,      label: "Ask any question",       sub: "Plain answers about your money" },
+  { icon: <InsightIcon />,  label: "Get smart insights",     sub: "Patterns and advice, weekly" },
+];
 
 export default function PreviewPage() {
   const router = useRouter();
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-12 pb-8 overflow-y-auto scroll-container">
-      <StepIndicator current={4} total={5} />
+    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-8 text-center"
-      >
-        <span className="text-5xl">🚀</span>
-        <h1 className="mt-4 text-2xl font-bold text-spal-navy leading-tight">
-          Here&apos;s what SPAL does for you
-        </h1>
-        <p className="mt-2 text-neutral-500 text-sm">
-          Every day. Automatically. In simple words.
-        </p>
-      </motion.div>
+      {/* Progress */}
+      <div className="px-5 pt-12">
+        <OnboardProgress step={4} total={4} />
+      </div>
 
-      {/* Sample insight card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="mt-8 bg-spal-green rounded-2xl p-5 text-white"
-      >
-        <p className="text-green-100 text-xs uppercase tracking-wide font-medium">
-          SAMPLE — Thursday, May 22
-        </p>
-        <div className="mt-3 space-y-2">
-          <div className="flex justify-between">
-            <span className="text-green-100 text-sm">Sales</span>
-            <span className="font-bold">₦24,500</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-green-100 text-sm">Expenses</span>
-            <span className="font-bold">₦8,000</span>
-          </div>
-          <div className="border-t border-white/20 pt-2 flex justify-between">
-            <span className="text-green-100 text-sm">Profit</span>
-            <span className="font-bold text-lg">₦16,500 🎉</span>
-          </div>
-        </div>
-        <div className="mt-4 bg-white/15 rounded-xl p-3">
-          <p className="text-white/90 text-sm leading-relaxed">
-            💡 Your Jollof Rice sales increased this week. Your best-selling day was Friday.
-            Try stocking more on Thursdays.
-          </p>
-        </div>
-      </motion.div>
+      <div className="flex-1 flex flex-col px-5 pt-7 pb-0 overflow-y-auto scroll-container">
 
-      {/* Features list */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.35 }}
-        className="mt-6 space-y-3"
-      >
-        {[
-          { icon: "🎤", label: "Record by voice — no typing needed" },
-          { icon: "📱", label: "Works on any Android phone" },
-          { icon: "💬", label: "Get weekly reports on WhatsApp" },
-          { icon: "🤖", label: "AI explains everything in simple words" },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-3">
-            <span className="text-xl">{item.icon}</span>
-            <span className="text-sm text-neutral-600">{item.label}</span>
-          </div>
-        ))}
-      </motion.div>
-
-      <div className="flex-1" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="mt-8"
-      >
-        <Button
-          fullWidth
-          size="lg"
-          onClick={() => router.push("/signup")}
+        {/* Headline */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         >
-          I want this for my business →
-        </Button>
-        <p className="text-center text-neutral-400 text-xs mt-3">
-          Free to start. No credit card needed.
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 mb-2"
+            style={{ fontFamily: "var(--font-satoshi)" }}>
+            You&apos;re almost in
+          </p>
+          <h1
+            className="text-spal-navy font-bold leading-[1.1]"
+            style={{ fontSize: "clamp(30px, 8.5vw, 36px)", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.025em" }}
+          >
+            Here&apos;s what<br />you&apos;re getting.
+          </h1>
+        </motion.div>
+
+        {/* Dark preview card */}
+        <motion.div
+          initial={{ opacity: 0, y: 16, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.16, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="mt-6 rounded-2xl p-5"
+          style={{ background: "#0F172A" }}
+        >
+          <p className="text-white/30 text-[10px] font-semibold tracking-widest uppercase mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Sample — your view
+          </p>
+
+          <div className="mb-4">
+            <p className="text-white/30 text-xs mb-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>Today&apos;s profit</p>
+            <p className="font-bold" style={{ fontSize: "32px", color: "#22C55E", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.02em" }}>
+              ₦16,500
+            </p>
+          </div>
+
+          <div className="flex gap-5 mb-4">
+            <div>
+              <p className="text-white/25 text-[10px] uppercase tracking-wider" style={{ fontFamily: "var(--font-satoshi)" }}>Sales</p>
+              <p className="text-white/70 font-semibold text-sm mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>₦24,500</p>
+            </div>
+            <div className="w-px bg-white/8" />
+            <div>
+              <p className="text-white/25 text-[10px] uppercase tracking-wider" style={{ fontFamily: "var(--font-satoshi)" }}>Expenses</p>
+              <p className="font-semibold text-sm mt-0.5" style={{ fontFamily: "var(--font-satoshi)", color: "#F97316" }}>₦8,000</p>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            <p className="text-white/40 text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+              Your Jollof Rice sold best this week. Try stocking more on Thursdays.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Feature list */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          className="mt-5 space-y-2.5"
+        >
+          {FEATURES.map((f, i) => (
+            <motion.div
+              key={f.label}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 + i * 0.06, duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="flex items-center gap-3.5 bg-white rounded-2xl px-4 py-3.5"
+              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+            >
+              <div className="w-9 h-9 rounded-xl bg-spal-green-50 flex items-center justify-center flex-shrink-0 text-spal-green">
+                {f.icon}
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>{f.label}</p>
+                <p className="text-[11px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>{f.sub}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        <div className="h-36" />
+      </div>
+
+      {/* Fixed CTA */}
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-10 pt-16"
+        style={{ background: "linear-gradient(to top, #F8F7F4 60%, transparent)" }}
+      >
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          onClick={() => router.push("/signup")}
+          className="w-full h-14 rounded-full font-bold text-[15px] text-white"
+          style={{
+            fontFamily: "var(--font-satoshi)",
+            background: "#0F172A",
+            boxShadow: "0 4px 20px rgba(15,23,42,0.25)",
+          }}
+        >
+          Create my free account
+        </motion.button>
+        <p className="text-center text-neutral-400 text-[12px] mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+          Free to start · No credit card needed
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+function OnboardProgress({ step, total }: { step: number; total: number }) {
   return (
     <div className="flex gap-1.5">
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
-          className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-            i <= current ? "bg-spal-green" : "bg-neutral-200"
-          }`}
+          className="h-1 flex-1 rounded-full transition-all duration-400"
+          style={{ background: i < step ? "#22C55E" : "#E4E4E7" }}
         />
       ))}
     </div>
+  );
+}
+
+function VoiceIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+    </svg>
+  );
+}
+
+function ProfitIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
+function AskIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function InsightIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M7.05 7.05 5.64 5.64M18.36 18.36l-1.41-1.41M7.05 16.95l-1.41 1.41M18.36 5.64l-1.41 1.41" />
+    </svg>
   );
 }
