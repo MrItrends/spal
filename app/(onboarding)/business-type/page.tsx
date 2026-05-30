@@ -79,7 +79,7 @@ export default function BusinessTypePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F8F7F4" }}>
 
       {/* Header */}
       <div className="px-5 pt-12 pb-0">
@@ -120,8 +120,9 @@ export default function BusinessTypePage() {
         </motion.div>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto scroll-container px-5 pt-6 pb-32">
+      {/* List — min-h-0 is essential on iOS: without it flex children can't shrink,
+           the whole page scrolls instead of this div, and iOS bounces it back */}
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-container px-5 pt-6 pb-44">
         <div className="space-y-2.5">
           {BUSINESS_TYPES.map((item, i) => (
             <motion.button

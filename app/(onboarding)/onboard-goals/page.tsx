@@ -69,7 +69,7 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F8F7F4" }}>
 
       {/* Header */}
       <div className="px-5 pt-12 pb-0">
@@ -108,7 +108,7 @@ export default function GoalsPage() {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto scroll-container px-5 pt-6 pb-40">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-container px-5 pt-6 pb-44">
         <div className="space-y-2.5">
           {GOALS.map((item, i) => {
             const isSelected = selected.has(item.goal);
