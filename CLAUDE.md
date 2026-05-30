@@ -105,31 +105,19 @@ Good: "You spent more money than you made today."
 
 # Design System
 
-## Brand Colors
-- SPAL Green:  #22C55E  → sales, positive, success
-- SPAL Blue:   #2563EB  → profit, insights, AI
-- SPAL Orange: #FF7A00  → expenses, money out
-- SPAL Purple: #8B5CF6  → learn, analytics
-- Navy:        #0F172A  → primary text
-- Soft BG:     #F8F7F4  → page background
+→ **See `DESIGN.md` for the complete visual source of truth.**
 
-## Typography
-- Headings: Poppins (Bold / SemiBold)
-- Body: Inter (Regular / Medium)
-- H1: 32px | H2: 24px | H3: 20px | H4: 18px
-- Body: 14px | Small: 12px
+DESIGN.md covers: brand identity, color philosophy, typography, icon system, symbol system, motion system, illustration direction, layout philosophy, component rules, and screen-level direction.
 
-## Components
-- Rounded corners: rounded-2xl for cards, rounded-full for pills
-- Shadows: shadow-sm for cards
-- Bottom sheets, not modals
-- Bottom navigation: 5 tabs (Home, Records, Insights, Learn, Profile)
-
-## Color Semantics
-- Green = sales / money in
-- Orange = expenses / money out
-- Blue = profit / AI / insights
-- Purple = learn / growth
+**Quick reference (full detail in DESIGN.md):**
+- Primary font: **Satoshi** (headings) / Inter Tight (body) — NOT Poppins
+- Dominant tone: Midnight Navy `#0F172A`
+- Accent: SPAL Green `#22C55E` (sales, CTAs, success)
+- Secondary: SPAL Blue `#2563EB` (profit, AI, insights)
+- Support: SPAL Purple `#8B5CF6` (coach/learn)
+- Orange `#FF7A00`: expenses only — sparingly
+- Motion: fluid `easeOut` — never bounce or spring
+- Visual language: geometric symbols, not emoji or mascots
 
 ---
 
