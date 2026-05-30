@@ -70,10 +70,12 @@ export default function BusinessTypePage() {
 
   function handleSelect(type: BusinessType) {
     setSelected(type);
-    setTimeout(() => {
-      setOnboardingData({ businessType: type });
-      router.push("/onboard-goals");
-    }, 320);
+  }
+
+  function handleContinue() {
+    if (!selected) return;
+    setOnboardingData({ businessType: selected });
+    router.push("/onboard-goals");
   }
 
   return (
@@ -81,7 +83,20 @@ export default function BusinessTypePage() {
 
       {/* Header */}
       <div className="px-5 pt-12 pb-0">
-        <OnboardProgress step={1} total={4} />
+        {/* Back + Progress row */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => router.push("/welcome")}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+            style={{ background: "rgba(15,23,42,0.06)" }}
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+          <div className="flex-1">
+            <OnboardProgress step={1} total={4} />
+          </div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 14 }}
@@ -163,12 +178,34 @@ export default function BusinessTypePage() {
         </div>
       </div>
 
-      {/* Bottom gradient fade */}
+      {/* Bottom gradient + Continue button */}
       <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-28 pointer-events-none"
-        style={{ background: "linear-gradient(to top, #F8F7F4 40%, transparent)" }}
-      />
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-10 pt-16"
+        style={{ background: "linear-gradient(to top, #F8F7F4 60%, transparent)" }}
+      >
+        <button
+          onClick={handleContinue}
+          disabled={!selected}
+          className="w-full h-14 rounded-full font-bold text-[15px] transition-all duration-200"
+          style={{
+            fontFamily: "var(--font-satoshi)",
+            background: selected ? "#0F172A" : "#E4E4E7",
+            color: selected ? "#fff" : "#A1A1AA",
+          }}
+        >
+          Continue
+        </button>
+      </div>
     </div>
+  );
+}
+
+/* ── Navigation ── */
+function BackIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7" />
+    </svg>
   );
 }
 

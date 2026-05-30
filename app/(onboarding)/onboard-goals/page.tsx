@@ -73,7 +73,17 @@ export default function GoalsPage() {
 
       {/* Header */}
       <div className="px-5 pt-12 pb-0">
-        <OnboardProgress step={2} total={4} />
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => router.push("/business-type")}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+            style={{ background: "rgba(15,23,42,0.06)" }}
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+          <div className="flex-1"><OnboardProgress step={2} total={4} /></div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 14 }}
@@ -198,6 +208,14 @@ function OnboardProgress({ step, total }: { step: number; total: number }) {
         />
       ))}
     </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7" />
+    </svg>
   );
 }
 
