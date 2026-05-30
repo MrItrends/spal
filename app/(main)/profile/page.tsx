@@ -411,21 +411,24 @@ function Sheet({ open, onClose, title, children }: {
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl flex flex-col"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden"
             style={{ maxHeight: "92dvh" }}
           >
-            {/* Drag handle — never scrolls away */}
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
 
-            {/* Scrollable content */}
+            {/* Single scrollable zone — everything including buttons lives here */}
             <div
               className="overflow-y-auto overscroll-contain px-5 pt-3"
-              style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
+              style={{
+                maxHeight: "calc(92dvh - 24px)",
+                paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
+              }}
             >
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">{title}</h2>
+                <h2 className="text-lg font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>{title}</h2>
                 <button
                   onClick={onClose}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500 flex-shrink-0"

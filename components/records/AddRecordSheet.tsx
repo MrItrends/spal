@@ -185,21 +185,24 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl flex flex-col"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden"
             style={{ maxHeight: "92dvh" }}
           >
-            {/* Handle — never scrolls away */}
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
 
             {success ? (
               <SuccessState isEdit={isEdit} type={type} amount={amount} />
             ) : (
-              <div className="flex flex-col flex-1 min-h-0">
-              {/* ↑ flex column so scroll area + sticky footer work together */}
+              /* Single scrollable zone — form + buttons all in natural flow */
               <div
-                className="overflow-y-auto overscroll-contain flex-1 px-5 pt-3 relative pb-4"
+                className="overflow-y-auto overscroll-contain px-5 pt-3 relative"
+                style={{
+                  maxHeight: "calc(92dvh - 24px)",
+                  paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
+                }}
               >
                 {/* Scanning overlay */}
                 <AnimatePresence>
@@ -329,37 +332,32 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   </div>
                 </div>
 
-              </div>{/* end scroll area */}
-
-              {/* ── Sticky footer — always visible, never scrolls away ── */}
-              <div
-                className="flex-shrink-0 px-5 pt-3 pb-6 border-t border-neutral-100 bg-white"
-                style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }}
-              >
-                <Button
-                  fullWidth size="lg" loading={loading} disabled={!isValid}
-                  className={type === "expense" ? "!bg-spal-orange !shadow-[0_4px_14px_rgba(249,115,22,0.35)]" : ""}
-                  onClick={handleSave}
-                >
-                  {isEdit ? `Update ${label}` : `Save ${label}`} ✓
-                </Button>
-
-                {isEdit && (
-                  <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className={`mt-3 w-full h-12 rounded-full text-sm font-semibold transition-all duration-200 ${
-                      deleteConfirm ? "bg-red-500 text-white" : "bg-red-50 text-red-500"
-                    }`}
+                {/* Save button — in natural scroll flow, always reachable */}
+                <div className="mt-5">
+                  <Button
+                    fullWidth size="lg" loading={loading} disabled={!isValid}
+                    className={type === "expense" ? "!bg-spal-orange !shadow-[0_4px_14px_rgba(249,115,22,0.35)]" : ""}
+                    onClick={handleSave}
                   >
-                    {deleting ? "Deleting…" : deleteConfirm ? "Tap again to confirm delete" : "Delete record"}
-                  </motion.button>
-                )}
-              </div>
+                    {isEdit ? `Update ${label}` : `Save ${label}`} ✓
+                  </Button>
 
-              </div>{/* end flex column wrapper */}
+                  {isEdit && (
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className={`mt-3 w-full h-12 rounded-full text-sm font-semibold transition-all duration-200 ${
+                        deleteConfirm ? "bg-red-500 text-white" : "bg-red-50 text-red-500"
+                      }`}
+                    >
+                      {deleting ? "Deleting…" : deleteConfirm ? "Tap again to confirm delete" : "Delete record"}
+                    </motion.button>
+                  )}
+                </div>
+
+              </div>{/* end single scroll zone */}
             )}
           </motion.div>
         </>

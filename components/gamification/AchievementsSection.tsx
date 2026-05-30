@@ -84,9 +84,14 @@ export function AchievementsSection() {
             initial={{ y: 60, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 60, opacity: 0 }}
-            className="relative z-10 bg-white rounded-t-3xl w-full max-w-md px-6 py-8 text-center"
+            className="relative z-10 bg-white rounded-t-3xl w-full max-w-md overflow-hidden"
+            style={{ maxHeight: "92dvh" }}
             onClick={(e) => e.stopPropagation()}
           >
+            <div
+              className="overflow-y-auto overscroll-contain px-6 py-8 text-center"
+              style={{ maxHeight: "calc(92dvh)", paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }}
+            >
             <div className="text-5xl mb-3">{selected.earned_at ? selected.emoji : "🔒"}</div>
             <h3 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
               {selected.name}
@@ -105,6 +110,7 @@ export function AchievementsSection() {
             >
               Close
             </button>
+            </div>{/* end scroll zone */}
           </motion.div>
         </div>
       )}

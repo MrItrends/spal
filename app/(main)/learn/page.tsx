@@ -196,9 +196,14 @@ export default function LearnPage() {
           <motion.div
             initial={{ y: 40 }}
             animate={{ y: 0 }}
-            className="relative z-10 bg-white rounded-t-3xl w-full max-w-md px-6 py-7"
+            className="relative z-10 bg-white rounded-t-3xl w-full max-w-md overflow-hidden"
+            style={{ maxHeight: "92dvh" }}
             onClick={(e) => e.stopPropagation()}
           >
+            <div
+              className="overflow-y-auto overscroll-contain px-6 py-7"
+              style={{ maxHeight: "calc(92dvh)", paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }}
+            >
             <h3 className="text-base font-bold text-spal-navy text-center mb-1">
               Delete conversation?
             </h3>
@@ -217,6 +222,7 @@ export default function LearnPage() {
                 Delete
               </button>
             </div>
+            </div>{/* end scroll zone */}
           </motion.div>
         </div>
       )}

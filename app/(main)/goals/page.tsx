@@ -144,11 +144,23 @@ function SetGoalSheet({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 26, stiffness: 300 }}
-        className="relative w-full max-w-[480px] bg-white rounded-t-3xl px-6 pt-5 pb-safe pb-8"
+        className="relative w-full max-w-[480px] bg-white rounded-t-3xl shadow-2xl overflow-hidden"
+        style={{ maxHeight: "92dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="w-10 h-1 bg-neutral-200 rounded-full mx-auto mb-5" />
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-neutral-200 rounded-full" />
+        </div>
+
+        {/* Single scrollable zone */}
+        <div
+          className="overflow-y-auto overscroll-contain px-6 pt-3"
+          style={{
+            maxHeight: "calc(92dvh - 24px)",
+            paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
+          }}
+        >
 
         <div className="flex items-center gap-3 mb-6">
           <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${meta.bg} border ${meta.border}`}>
@@ -171,7 +183,6 @@ function SetGoalSheet({
             placeholder="0"
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
-            autoFocus
             className="w-full pl-9 pr-4 py-4 text-2xl font-bold text-spal-navy rounded-2xl border-2 border-neutral-100 focus:border-spal-green outline-none bg-neutral-50 transition-colors"
           />
         </div>
@@ -200,6 +211,8 @@ function SetGoalSheet({
         >
           {saving ? "Saving…" : existing ? "Update Goal" : "Set Goal 🎯"}
         </button>
+
+        </div>{/* end scroll zone */}
       </motion.div>
     </motion.div>
   );
