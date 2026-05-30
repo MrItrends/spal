@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type User } from "@/store";
@@ -29,7 +29,7 @@ const CURRENCIES = [
   { code: "GBP", label: "British Pound",  symbol: "£" },
 ];
 
-type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | null;
+type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | null;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -193,6 +193,25 @@ export default function ProfilePage() {
               hint:    user?.full_name ? user.full_name : "Tap to set your name",
               sheet:   "name" as SheetType,
             },
+            ...(!user?.email ? [{
+              icon:    "✉️",
+              label:   "Add email address",
+              hint:    "Sign in with email too",
+              sheet:   "add-email" as SheetType,
+            }] : []),
+            ...(!user?.phone_number ? [{
+              icon:    "📞",
+              label:   "Add phone number",
+              hint:    "Sign in with phone too",
+              sheet:   "add-phone" as SheetType,
+            }] : [
+              user?.phone_number ? {
+                icon:    "📞",
+                label:   "Phone number",
+                hint:    user.phone_number,
+                sheet:   "add-phone" as SheetType,
+              } : null,
+            ].filter(Boolean) as { icon: string; label: string; hint: string; sheet: SheetType }[]),
             {
               icon:    "📱",
               label:   "WhatsApp reports",
@@ -345,6 +364,13 @@ export default function ProfilePage() {
       <NotificationsSheet
         open={activeSheet === "notifications"}
         onClose={() => setActiveSheet(null)}
+      />
+
+      <AddContactSheet
+        open={activeSheet === "add-email" || activeSheet === "add-phone"}
+        type={activeSheet === "add-email" ? "email" : "phone"}
+        onClose={() => setActiveSheet(null)}
+        onSaved={(updatedUser) => { setUser(updatedUser); setActiveSheet(null); }}
       />
     </div>
   );
@@ -655,6 +681,129 @@ function CurrencySheet({ open, current, onClose, onSave }: {
           Save currency ✓
         </Button>
       </div>
+    </Sheet>
+  );
+}
+
+// ── Add Contact sheet (link email or phone to existing account) ────────────
+
+function AddContactSheet({ open, type, onClose, onSaved }: {
+  open:     boolean;
+  type:     "email" | "phone";
+  onClose:  () => void;
+  onSaved:  (user: unknown) => void;
+}) {
+  const [step,    setStep]    = useState<"enter" | "verify">("enter");
+  const [contact, setContact] = useState("");
+  const [otp,     setOtp]     = useState(["", "", "", "", "", ""]);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => { if (open) { setStep("enter"); setContact(""); setOtp(["","","","","",""]); setError(null); } }, [open]);
+
+  const isEmail = type === "email";
+  const title   = isEmail ? "Add email address" : "Add phone number";
+  const valid   = isEmail
+    ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.trim())
+    : /^\+?\d{7,15}$/.test(contact.trim().replace(/[\s\-().]/g, ""));
+
+  async function handleSendCode() {
+    setLoading(true); setError(null);
+    const body = isEmail ? { email: contact.trim().toLowerCase() } : { phone: contact.trim() };
+    const res  = await fetch("/api/auth/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json();
+    setLoading(false);
+    if (!data.success) { setError(data.error ?? "Failed to send code."); return; }
+    setStep("verify");
+    setTimeout(() => inputRefs.current[0]?.focus(), 100);
+  }
+
+  async function handleVerify() {
+    const code = otp.join("");
+    if (code.length < 6) return;
+    setLoading(true); setError(null);
+    const contactVal = isEmail ? contact.trim().toLowerCase() : contact.trim();
+    const res  = await fetch("/api/profile/add-contact", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, contact: contactVal, token: code }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!data.success) { setError(data.error ?? "Wrong code."); setOtp(["","","","","",""]); inputRefs.current[0]?.focus(); return; }
+    onSaved(data.data.user);
+  }
+
+  function handleOtpChange(i: number, v: string) {
+    if (!/^\d*$/.test(v)) return;
+    const n = [...otp]; n[i] = v.slice(-1); setOtp(n);
+    if (v && i < 5) inputRefs.current[i + 1]?.focus();
+    if (n.every(d => d) && v) { const joined = n.join(""); if (joined.length === 6) { const newOtp = n; setTimeout(() => { const code = newOtp.join(""); if (code.length === 6) handleVerifyDirect(code); }, 0); } }
+  }
+
+  async function handleVerifyDirect(code: string) {
+    setLoading(true); setError(null);
+    const contactVal = isEmail ? contact.trim().toLowerCase() : contact.trim();
+    const res  = await fetch("/api/profile/add-contact", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, contact: contactVal, token: code }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!data.success) { setError(data.error ?? "Wrong code."); setOtp(["","","","","",""]); inputRefs.current[0]?.focus(); return; }
+    onSaved(data.data.user);
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title={title}>
+      {step === "enter" ? (
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-500 leading-relaxed">
+            {isEmail
+              ? "Add your email so you can also sign in with it. We'll send a code to confirm."
+              : "Add your phone number so you can also sign in with it. We'll send a code to confirm."}
+          </p>
+          <input
+            type={isEmail ? "email" : "tel"}
+            inputMode={isEmail ? "email" : "numeric"}
+            placeholder={isEmail ? "you@example.com" : "+234 801 234 5678"}
+            value={contact}
+            onChange={e => { setContact(e.target.value); setError(null); }}
+            className="w-full h-12 px-4 bg-neutral-50 rounded-2xl border-2 border-neutral-100 focus:border-spal-blue text-sm text-spal-navy placeholder:text-neutral-300 outline-none transition-colors"
+            autoCapitalize="none"
+          />
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <Button fullWidth loading={loading} disabled={!valid} onClick={handleSendCode}>
+            Send verification code
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <p className="text-sm text-neutral-500">
+            Enter the 6-digit code sent to <strong className="text-spal-navy">{contact}</strong>
+          </p>
+          <div className="flex justify-center gap-2">
+            {otp.map((d, i) => (
+              <input
+                key={i}
+                ref={el => { inputRefs.current[i] = el; }}
+                type="text" inputMode="numeric" maxLength={1} value={d}
+                onChange={e => handleOtpChange(i, e.target.value)}
+                onKeyDown={e => { if (e.key === "Backspace" && !otp[i] && i > 0) inputRefs.current[i - 1]?.focus(); }}
+                className={`w-11 h-13 text-center text-xl font-bold rounded-2xl border-2 text-spal-navy outline-none transition-all ${d ? "border-spal-green bg-spal-green-50" : "border-neutral-200"} focus:border-spal-blue`}
+                style={{ height: "52px" }}
+              />
+            ))}
+          </div>
+          {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+          <Button fullWidth loading={loading} disabled={otp.some(d => !d)} onClick={handleVerify}>
+            Confirm &amp; link {isEmail ? "email" : "phone"}
+          </Button>
+          <button className="w-full text-center text-sm text-neutral-400 py-1" onClick={() => setStep("enter")}>
+            ← Change {isEmail ? "email" : "number"}
+          </button>
+        </div>
+      )}
     </Sheet>
   );
 }

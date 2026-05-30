@@ -15,9 +15,9 @@ export default function VerifyPage() {
   const [resendTimer, setResendTimer] = useState(30);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Determine which method was used on the signup page
   const isEmail  = !!onboardingData.email;
   const isReset  = onboardingData.mode === "reset";
+  const isSignup = onboardingData.mode === "signup" || (!isReset && !onboardingData.mode);
   const contact  = onboardingData.email ?? onboardingData.phoneNumber ?? "your contact";
 
   useEffect(() => {
@@ -59,6 +59,7 @@ export default function VerifyPage() {
             ? { email: onboardingData.email }
             : { phone: onboardingData.phoneNumber }),
           token: code,
+          mode: onboardingData.mode ?? "signup",
           onboardingData: {
             businessType: onboardingData.businessType,
             goals: onboardingData.goals,
@@ -68,6 +69,12 @@ export default function VerifyPage() {
       const data = await res.json();
 
       if (!data.success) {
+        if (data.error === "account_exists") {
+          // Account already registered — send them to login
+          setError(data.message + " Redirecting to sign in…");
+          setTimeout(() => router.push("/login"), 1800);
+          return;
+        }
         setError(data.error ?? "Wrong code. Please try again.");
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();

@@ -10,7 +10,8 @@ function hashOTP(otp: string): string {
 // POST /api/auth/verify-otp
 export async function POST(req: NextRequest) {
   try {
-    const { phone, email, token, onboardingData } = await req.json();
+    const { phone, email, token, onboardingData, mode } = await req.json();
+    const isSignup = mode === "signup";
 
     if ((!phone && !email) || !token) {
       return NextResponse.json(
@@ -69,9 +70,17 @@ export async function POST(req: NextRequest) {
       // 3. Find or create user profile (look up by email column)
       const { data: existingProfile } = await admin
         .from("users")
-        .select("id")
+        .select("id, onboarding_completed")
         .eq("email", trimmedEmail)
         .maybeSingle();
+
+      // Block re-signup: existing user trying to create a new account
+      if (isSignup && existingProfile?.onboarding_completed) {
+        return NextResponse.json(
+          { success: false, error: "account_exists", message: "An account with this email already exists. Please sign in." },
+          { status: 409 }
+        );
+      }
 
       const tempPassword = `${crypto.randomUUID()}-${crypto.randomInt(1e6, 9e6)}`;
       let userId:   string;
@@ -195,9 +204,17 @@ export async function POST(req: NextRequest) {
     // ── 3. Find or create the Supabase user ──────────────────────────────────
     const { data: existingProfile } = await admin
       .from("users")
-      .select("id")
+      .select("id, onboarding_completed")
       .eq("phone_number", phone)
       .maybeSingle();
+
+    // Block re-signup: existing user trying to create a new account
+    if (isSignup && existingProfile?.onboarding_completed) {
+      return NextResponse.json(
+        { success: false, error: "account_exists", message: "An account with this phone number already exists. Please sign in." },
+        { status: 409 }
+      );
+    }
 
     // One-time password — rotates on every login.
     // Used only to get a Supabase session token; never revealed to users.

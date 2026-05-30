@@ -10,13 +10,15 @@ export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useSPALStore();
 
-  const [email, setEmail]       = useState("");
+  const [contact, setContact]   = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
 
-  const isValid =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && password.length >= 6;
+  const trimmed = contact.trim();
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  const isPhone = /^\+?\d[\d\s\-().]{6,}$/.test(trimmed);
+  const isValid = (isEmail || isPhone) && password.length >= 6;
 
   async function handleLogin() {
     if (!isValid) return;
@@ -27,7 +29,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        body:    JSON.stringify({ contact: contact.trim(), password }),
       });
       const data = await res.json();
 
@@ -49,7 +51,7 @@ export default function LoginPage() {
     <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
         <h1 className="text-2xl font-bold text-spal-navy">Welcome back</h1>
-        <p className="mt-2 text-neutral-500 text-sm">Sign in to your SPAL account</p>
+        <p className="mt-2 text-neutral-500 text-sm">Sign in with your email or phone number</p>
       </motion.div>
 
       <motion.div
@@ -61,15 +63,15 @@ export default function LoginPage() {
         {/* Email */}
         <div>
           <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
-            Email address
+            Email or phone number
           </label>
           <input
-            type="email"
+            type="text"
             inputMode="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => { setEmail(e.target.value); setError(""); }}
-            className="spal-input spal-input-email"
+            placeholder="you@example.com or +234 801 234 5678"
+            value={contact}
+            onChange={(e) => { setContact(e.target.value); setError(""); }}
+            className="spal-input"
             autoCapitalize="none"
             autoCorrect="off"
           />
