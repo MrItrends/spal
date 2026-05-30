@@ -75,8 +75,8 @@ export default function BusinessTypePage() {
 
   function handleContinue() {
     if (!selected) return;
-    setOnboardingData({ businessType: selected });
-    router.push("/onboard-goals");
+    setOnboardingData({ businessType: selected, mode: "signup" });
+    router.push("/signup");
   }
 
   return (
@@ -95,7 +95,7 @@ export default function BusinessTypePage() {
             <ArrowLeft size={18} strokeWidth={2} />
           </button>
           <div className="flex-1">
-            <OnboardProgress step={1} total={4} />
+            <OnboardProgress step={1} total={2} />
           </div>
         </div>
 

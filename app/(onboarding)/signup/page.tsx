@@ -74,7 +74,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
-      <StepIndicator current={5} total={5} />
+      <StepIndicator current={2} total={2} />
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
         <h1 className="text-2xl font-bold text-spal-navy">
