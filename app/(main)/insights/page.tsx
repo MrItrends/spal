@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -163,7 +163,7 @@ export default function InsightsPage() {
     <div className="px-4 pt-6 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
           Insights
         </h1>
       </div>
@@ -174,7 +174,7 @@ export default function InsightsPage() {
           <button
             key={p}
             onClick={() => setPeriod(p)}
-            className={`flex-1 h-8 rounded-full text-xs font-semibold transition-all duration-200 font-[family-name:var(--font-poppins)] ${
+            className={`flex-1 h-8 rounded-full text-xs font-semibold transition-all duration-200 font-[family-name:var(--font-satoshi)] ${
               period === p ? "bg-white text-spal-navy shadow-sm" : "text-neutral-500"
             }`}
           >
@@ -305,7 +305,7 @@ function MetricBlock({ label, amount, color, compact }: {
   return (
     <div className="flex flex-col">
       <p className="text-xs text-neutral-400 mb-1">{label}</p>
-      <p className={`font-bold font-[family-name:var(--font-poppins)] ${compact ? "text-base" : "text-xl"} ${color}`}>
+      <p className={`font-bold font-[family-name:var(--font-satoshi)] ${compact ? "text-base" : "text-xl"} ${color}`}>
         {formatCurrency(amount, "NGN", true)}
       </p>
     </div>
@@ -324,3 +324,4 @@ function SummarySkeleton() {
     </div>
   );
 }
+

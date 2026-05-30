@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 
@@ -61,7 +61,7 @@ export function InsightCard({
           <span className="text-2xl flex-shrink-0 mt-0.5 leading-none">{emoji}</span>
         )}
         <div className="flex-1 min-w-0">
-          <p className={`font-semibold text-sm font-[family-name:var(--font-poppins)] ${titleColor[variant]}`}>
+          <p className={`font-semibold text-sm font-[family-name:var(--font-satoshi)] ${titleColor[variant]}`}>
             {title}
           </p>
           <p className={`text-xs mt-1 leading-relaxed ${bodyColor[variant]}`}>
@@ -70,7 +70,7 @@ export function InsightCard({
         </div>
         {metric && (
           <div className="flex-shrink-0 text-right">
-            <p className={`text-xl font-bold font-[family-name:var(--font-poppins)] ${
+            <p className={`text-xl font-bold font-[family-name:var(--font-satoshi)] ${
               variant === "celebration"
                 ? "text-white"
                 : positive === true
@@ -90,3 +90,4 @@ export function InsightCard({
     </motion.div>
   );
 }
+

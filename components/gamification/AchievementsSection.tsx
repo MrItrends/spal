@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -88,7 +88,7 @@ export function AchievementsSection() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-5xl mb-3">{selected.earned_at ? selected.emoji : "🔒"}</div>
-            <h3 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+            <h3 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
               {selected.name}
             </h3>
             <p className="text-sm text-neutral-500 mt-1">{selected.description}</p>
@@ -111,3 +111,4 @@ export function AchievementsSection() {
     </div>
   );
 }
+

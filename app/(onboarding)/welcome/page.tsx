@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ export default function WelcomePage() {
 
       {/* Rich multi-layer gradient — deep green to electric blue */}
       <div className="absolute inset-0" style={{
-        background: "linear-gradient(155deg, #0f7a3a 0%, #1DB954 35%, #1a5fcf 75%, #1e3a8a 100%)"
+        background: "linear-gradient(155deg, #0f7a3a 0%, #22C55E 35%, #1a5fcf 75%, #1e3a8a 100%)"
       }} />
 
       {/* Luminous overlay — brightens the center */}
@@ -79,10 +79,10 @@ export default function WelcomePage() {
         >
           <button
             onClick={() => router.push("/business-type")}
-            className="w-full h-14 rounded-full font-bold text-base font-[family-name:var(--font-poppins)] tracking-tight"
+            className="w-full h-14 rounded-full font-bold text-base font-[family-name:var(--font-satoshi)] tracking-tight"
             style={{
               background: "#ffffff",
-              color: "#1DB954",
+              color: "#22C55E",
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}
           >
@@ -111,7 +111,7 @@ function PreviewCard() {
       </div>
       <div className="space-y-2.5">
         {[
-          { label: "Sales",    amount: "₦18,500", color: "#1DB954" },
+          { label: "Sales",    amount: "₦18,500", color: "#22C55E" },
           { label: "Expenses", amount: "₦6,000",  color: "#F97316" },
         ].map((item) => (
           <div key={item.label} className="flex items-center justify-between">
@@ -129,7 +129,7 @@ function PreviewCard() {
       </div>
       <div className="mt-3 px-3 py-2 rounded-xl" style={{ background: "rgba(29,185,84,0.18)" }}>
         <p className="text-white/80 text-xs leading-relaxed">
-          🔥 <span className="font-semibold">Nice work!</span> Sales are up from yesterday.
+          <span className="font-semibold">Nice work!</span> Sales are up from yesterday.
         </p>
       </div>
     </div>
@@ -140,7 +140,7 @@ function SPALLogo() {
   return (
     <svg viewBox="0 0 60 40" className="w-14 h-9" fill="none">
       <text x="0" y="32" fontSize="36" fontWeight="800" fontFamily="system-ui, sans-serif">
-        <tspan fill="#1DB954">S</tspan>
+        <tspan fill="#22C55E">S</tspan>
         <tspan fill="#2563EB">P</tspan>
         <tspan fill="#F97316">A</tspan>
         <tspan fill="#8B5CF6">L</tspan>
@@ -148,3 +148,4 @@ function SPALLogo() {
     </svg>
   );
 }
+

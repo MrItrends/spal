@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -155,7 +155,7 @@ function SetGoalSheet({
             {meta.emoji}
           </div>
           <div>
-            <h2 className="text-base font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+            <h2 className="text-base font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
               Set {meta.label} Target
             </h2>
             <p className="text-xs text-neutral-400">How much do you want to {goalType === "weekly_profit" ? "earn as profit" : "make in sales"} {meta.period}?</p>
@@ -245,7 +245,7 @@ function GoalCard({
       <div className="flex items-start justify-between mb-3">
         <div>
           <span className="text-lg leading-none">{meta.emoji}</span>
-          <p className="text-xs font-bold text-neutral-600 mt-0.5 font-[family-name:var(--font-poppins)]">{meta.label}</p>
+          <p className="text-xs font-bold text-neutral-600 mt-0.5 font-[family-name:var(--font-satoshi)]">{meta.label}</p>
         </div>
         <button onClick={onEdit} className="text-[10px] text-neutral-400 font-semibold underline underline-offset-2">
           Edit
@@ -261,7 +261,7 @@ function GoalCard({
               key={pct}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`text-sm font-extrabold ${meta.color} font-[family-name:var(--font-poppins)]`}
+              className={`text-sm font-extrabold ${meta.color} font-[family-name:var(--font-satoshi)]`}
             >
               {pct}%
             </motion.span>
@@ -269,7 +269,7 @@ function GoalCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-lg font-extrabold ${meta.color} font-[family-name:var(--font-poppins)] leading-tight`}>
+          <p className={`text-lg font-extrabold ${meta.color} font-[family-name:var(--font-satoshi)] leading-tight`}>
             {formatCurrency(goal.current)}
           </p>
           <p className="text-xs text-neutral-400 mt-0.5">of {formatCurrency(goal.target)}</p>
@@ -318,7 +318,7 @@ function EmptyGoalCard({ goalType, onSet }: { goalType: GoalType; onSet: () => v
       className={`w-full rounded-3xl p-4 border-2 border-dashed ${meta.border} bg-white/60 flex flex-col items-center gap-2 py-7`}
     >
       <span className="text-2xl opacity-50">{meta.emoji}</span>
-      <p className="text-xs font-bold text-neutral-400 font-[family-name:var(--font-poppins)]">{meta.label}</p>
+      <p className="text-xs font-bold text-neutral-400 font-[family-name:var(--font-satoshi)]">{meta.label}</p>
       <span className={`text-xs font-semibold ${meta.color} bg-white rounded-full px-3 py-1 border ${meta.border}`}>
         + Set target
       </span>
@@ -378,7 +378,7 @@ export default function GoalsPage() {
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">Your Goals 🎯</h1>
+        <h1 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">Your Goals 🎯</h1>
         <p className="text-sm text-neutral-400 mt-0.5">Track what matters most to your business</p>
       </motion.div>
 
@@ -404,7 +404,7 @@ export default function GoalsPage() {
           </motion.div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-semibold leading-snug font-[family-name:var(--font-poppins)]">
+            <p className="text-white text-sm font-semibold leading-snug font-[family-name:var(--font-satoshi)]">
               {motivationalMsg(avgPct, "Boss")}
             </p>
             {anyGoal && (
@@ -544,3 +544,4 @@ function GoalsSkeleton() {
     </div>
   );
 }
+

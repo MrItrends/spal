@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,7 +61,7 @@ export function BadgeCelebration() {
               <p className="text-xs font-bold text-spal-green uppercase tracking-widest mb-1">
                 Badge Unlocked!
               </p>
-              <h2 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-poppins)] mb-2">
+              <h2 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)] mb-2">
                 {newBadge.name}
               </h2>
               <p className="text-sm text-neutral-500 leading-relaxed">
@@ -83,3 +83,4 @@ export function BadgeCelebration() {
     </AnimatePresence>
   );
 }
+

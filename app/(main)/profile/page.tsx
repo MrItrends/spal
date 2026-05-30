@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -104,7 +104,7 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 pt-6 space-y-4">
-      <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+      <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
         Profile
       </h1>
 
@@ -329,7 +329,7 @@ export default function ProfilePage() {
 function StatItem({ value, label }: { value: string; label: string }) {
   return (
     <div>
-      <p className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">{value}</p>
+      <p className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">{value}</p>
       <p className="text-xs text-neutral-400 mt-0.5">{label}</p>
     </div>
   );
@@ -362,7 +362,7 @@ function Sheet({ open, onClose, title, children }: {
             </div>
             <div className="px-5 pb-8 pt-3">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-poppins)]">{title}</h2>
+                <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">{title}</h2>
                 <button
                   onClick={onClose}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500"
@@ -677,3 +677,4 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
     </Sheet>
   );
 }
+

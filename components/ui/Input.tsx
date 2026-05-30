@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { forwardRef, useState } from "react";
 
@@ -21,7 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)]">
+          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)]">
             {label}
           </label>
         )}
@@ -74,3 +74,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = "Input";
+

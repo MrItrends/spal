@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
@@ -98,7 +98,7 @@ function UpgradeContent() {
         <div className="w-16 h-16 bg-gradient-to-br from-spal-purple to-spal-blue rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
           <span className="text-2xl">⚡</span>
         </div>
-        <h1 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+        <h1 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
           Unlock SPAL Pro
         </h1>
         <p className="text-sm text-neutral-500 mt-1 leading-relaxed">
@@ -196,7 +196,7 @@ function UpgradeContent() {
           <button
             onClick={handleUpgrade}
             disabled={loading}
-            className="w-full h-14 bg-spal-purple rounded-2xl text-white font-bold text-base font-[family-name:var(--font-poppins)] active:scale-95 transition-all disabled:opacity-60 shadow-md"
+            className="w-full h-14 bg-spal-purple rounded-2xl text-white font-bold text-base font-[family-name:var(--font-satoshi)] active:scale-95 transition-all disabled:opacity-60 shadow-md"
           >
             {loading ? "Redirecting to Paystack..." : `Upgrade Now — ${selected === "monthly" ? "₦2,000/mo" : "₦18,000/yr"}`}
           </button>
@@ -225,3 +225,4 @@ export default function UpgradePage() {
     </Suspense>
   );
 }
+

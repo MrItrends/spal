@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -93,7 +93,7 @@ export default function SignupPage() {
             <button
               key={m}
               onClick={() => { setMethod(m); setError(""); }}
-              className={`flex-1 h-9 rounded-full text-sm font-semibold transition-all duration-200 font-[family-name:var(--font-poppins)] ${
+              className={`flex-1 h-9 rounded-full text-sm font-semibold transition-all duration-200 font-[family-name:var(--font-satoshi)] ${
                 method === m
                   ? "bg-white text-spal-navy shadow-sm"
                   : "text-neutral-500"
@@ -114,7 +114,7 @@ export default function SignupPage() {
               exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.15 }}
             >
-              <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)] block mb-1.5">
+              <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
                 Phone number
               </label>
               <div className="flex gap-2">
@@ -150,7 +150,7 @@ export default function SignupPage() {
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.15 }}
             >
-              <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)] block mb-1.5">
+              <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
                 Email address
               </label>
               <input
@@ -210,3 +210,4 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
     </div>
   );
 }
+

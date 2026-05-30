@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Offline fallback page — shown by the service worker when the user
  * navigates to a page that isn't in cache and has no internet connection.
  */
@@ -12,7 +12,7 @@ export default function OfflinePage() {
 
       {/* Heading */}
       <div>
-        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
           No internet right now
         </h1>
         <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
@@ -30,3 +30,4 @@ export default function OfflinePage() {
     </div>
   );
 }
+

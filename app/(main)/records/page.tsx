@@ -64,7 +64,7 @@ export default function RecordsPage() {
       <div className="px-4 pt-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">Records</h1>
+          <h1 className="text-xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Records</h1>
           {records.length > 0 && (
             <span className="text-xs text-neutral-400">
               {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : "expenses"}
@@ -78,7 +78,7 @@ export default function RecordsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-1 h-10 rounded-full text-sm font-semibold transition-all duration-200 font-[family-name:var(--font-poppins)] ${
+              className={`flex-1 h-10 rounded-full text-sm font-semibold transition-all duration-200 ${
                 filter === f
                   ? f === "sale" ? "bg-spal-green text-white"
                   : f === "expense" ? "bg-spal-orange text-white"
@@ -119,10 +119,11 @@ export default function RecordsPage() {
                         i < dayRecords.length - 1 ? "border-b border-neutral-50" : ""
                       }`}
                     >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        record.type === "sale" ? "bg-spal-green-50" : "bg-spal-orange-50"
-                      }`}>
-                        <span className="text-base">{record.type === "sale" ? "💰" : "🧾"}</span>
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED" }}
+                      >
+                        {record.type === "sale" ? <RecordSaleIcon /> : <RecordExpenseIcon />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-spal-navy truncate">
@@ -148,7 +149,7 @@ export default function RecordsPage() {
                         }`}>
                           {record.type === "sale" ? "+" : "-"}{formatCurrency(record.amount)}
                         </p>
-                        <span className="text-neutral-200 text-xs">✎</span>
+                        <EditIcon />
                       </div>
                     </motion.button>
                   ))}
@@ -197,17 +198,50 @@ export default function RecordsPage() {
 function EmptyState({ filter, onAdd }: { filter: Filter; onAdd: () => void }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center py-16 text-center">
-      <span className="text-5xl mb-4">{filter === "expense" ? "🧾" : "💰"}</span>
-      <p className="text-spal-navy font-semibold text-base">
+      <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
+        {filter === "expense" ? <RecordExpenseIcon large /> : <RecordSaleIcon large />}
+      </div>
+      <p className="text-spal-navy font-semibold text-base" style={{ fontFamily: "var(--font-satoshi)" }}>
         No {filter === "all" ? "records" : filter === "sale" ? "sales" : "expenses"} yet
       </p>
-      <p className="text-neutral-400 text-sm mt-1 max-w-xs leading-relaxed">
-        Start tracking your business today. It only takes a few seconds.
+      <p className="text-neutral-400 text-sm mt-1 max-w-xs leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+        Start tracking your business today.
       </p>
-      <button onClick={onAdd} className="mt-5 bg-spal-green text-white font-semibold text-sm rounded-full px-6 h-11">
+      <button
+        onClick={onAdd}
+        className="mt-5 bg-spal-navy text-white font-semibold text-sm rounded-full px-6 h-11"
+        style={{ fontFamily: "var(--font-satoshi)" }}
+      >
         Add your first {filter === "expense" ? "expense" : "sale"}
       </button>
     </motion.div>
+  );
+}
+
+function RecordSaleIcon({ large = false }: { large?: boolean }) {
+  const s = large ? 22 : 16;
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+
+function RecordExpenseIcon({ large = false }: { large?: boolean }) {
+  const s = large ? 22 : 16;
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5v14M19 12l-7 7-7-7" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4D4D8" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
   );
 }
 

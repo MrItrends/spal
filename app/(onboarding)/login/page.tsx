@@ -60,7 +60,7 @@ export default function LoginPage() {
       >
         {/* Email */}
         <div>
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)] block mb-1.5">
+          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
             Email address
           </label>
           <input
@@ -77,7 +77,7 @@ export default function LoginPage() {
 
         {/* Password */}
         <div>
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)] block mb-1.5">
+          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
             Password
           </label>
           <input
@@ -99,7 +99,7 @@ export default function LoginPage() {
         {/* Forgot password */}
         <button
           onClick={() => router.push("/signup")}
-          className="text-sm text-spal-blue font-semibold text-right -mt-1 font-[family-name:var(--font-poppins)]"
+          className="text-sm text-spal-blue font-semibold text-right -mt-1 font-[family-name:var(--font-satoshi)]"
         >
           Forgot password? Send me a code →
         </button>

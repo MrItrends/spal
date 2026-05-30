@@ -53,7 +53,6 @@
 
   /* Typography */
   --font-satoshi: 'Satoshi', system-ui, sans-serif;
-  --font-poppins: 'Satoshi', system-ui, sans-serif;  /* remapped -> use --font-satoshi in new code */
   --font-inter:   var(--font-inter-tight), 'Inter Tight', system-ui, sans-serif;
 
   /* Radius */
@@ -300,4 +299,5 @@ h1, h2, h3, h4, h5, h6 {
   width: 0;
   height: 0;
 }
+
 

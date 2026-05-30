@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -237,7 +237,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+                  <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
                     {emoji} {isEdit ? `Edit ${label}` : `Add ${label}`}
                   </h2>
                   <div className="flex items-center gap-2">
@@ -391,3 +391,4 @@ function SuccessState({ isEdit, type, amount }: { isEdit: boolean; type: string;
     </motion.div>
   );
 }
+

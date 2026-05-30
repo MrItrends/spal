@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * PWAInstallPrompt
@@ -99,7 +99,7 @@ export function PWAInstallPrompt() {
                 className="w-14 h-14 rounded-2xl shadow-sm flex-shrink-0"
               />
               <div>
-                <p className="font-bold text-spal-navy font-[family-name:var(--font-poppins)] leading-tight">
+                <p className="font-bold text-spal-navy font-[family-name:var(--font-satoshi)] leading-tight">
                   Add SPAL to your phone
                 </p>
                 <p className="text-sm text-neutral-400 mt-1 leading-snug">
@@ -147,3 +147,4 @@ export function PWAInstallPrompt() {
     </AnimatePresence>
   );
 }
+

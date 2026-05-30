@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -149,7 +149,7 @@ export default function AskSPALPage() {
             S
           </div>
           <div>
-            <h1 className="text-base font-bold text-spal-navy font-[family-name:var(--font-poppins)] leading-tight">
+            <h1 className="text-base font-bold text-spal-navy font-[family-name:var(--font-satoshi)] leading-tight">
               Ask SPAL
             </h1>
             <p className="text-xs text-spal-green font-medium">● Online</p>
@@ -318,7 +318,7 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
           S
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <h2 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+          <h2 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
             Hey {name}! 👋
           </h2>
           <p className="text-sm text-neutral-400 mt-1 leading-relaxed">
@@ -357,3 +357,4 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
     </div>
   );
 }
+

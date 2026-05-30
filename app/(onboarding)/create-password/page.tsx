@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -60,7 +60,7 @@ export default function CreatePasswordPage() {
       >
         {/* Password */}
         <div>
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)] block mb-1.5">
+          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
             Password
           </label>
           <input
@@ -77,7 +77,7 @@ export default function CreatePasswordPage() {
 
         {/* Confirm */}
         <div>
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-poppins)] block mb-1.5">
+          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
             Confirm password
           </label>
           <input
@@ -125,3 +125,4 @@ export default function CreatePasswordPage() {
     </div>
   );
 }
+

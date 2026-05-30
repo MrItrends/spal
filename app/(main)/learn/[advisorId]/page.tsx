@@ -345,7 +345,7 @@ function VoiceChatOverlay({
           </svg>
         </button>
         <div className="text-center">
-          <p className="text-white font-bold text-sm font-[family-name:var(--font-poppins)]">{advisor.name}</p>
+          <p className="text-white font-bold text-sm font-[family-name:var(--font-satoshi)]">{advisor.name}</p>
           <p className="text-white/50 text-xs">{advisor.title}</p>
         </div>
         <div className="w-9" />
@@ -694,7 +694,7 @@ function AdvisorChatContent() {
               {advisor.avatarLetter}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-bold text-spal-navy font-[family-name:var(--font-poppins)] leading-tight">{advisor.name}</h1>
+              <h1 className="text-base font-bold text-spal-navy font-[family-name:var(--font-satoshi)] leading-tight">{advisor.name}</h1>
               <p className="text-xs text-neutral-400">{advisor.title}</p>
             </div>
             {/* Voice mode button */}
@@ -870,7 +870,7 @@ function EmptyAdvisorChat({
           {advisor.avatarLetter}
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <h2 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">Hi! I&apos;m {advisor.name}</h2>
+          <h2 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">Hi! I&apos;m {advisor.name}</h2>
           <p className="text-sm text-neutral-400 mt-1 leading-relaxed max-w-xs mx-auto">{advisor.tagline}</p>
         </motion.div>
       </div>

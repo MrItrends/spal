@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -52,7 +52,7 @@ export default function LearnPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
         <p className="text-neutral-400 text-sm">Your</p>
-        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">
+        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
           Financial Advisors
         </h1>
         <p className="text-xs text-neutral-400 mt-0.5">
@@ -223,3 +223,4 @@ export default function LearnPage() {
     </div>
   );
 }
+

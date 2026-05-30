@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 
@@ -57,7 +57,7 @@ export function PillChip({
       onClick={onClick}
       className={`
         inline-flex items-center justify-center rounded-full font-medium
-        font-[family-name:var(--font-poppins)] cursor-pointer
+        font-[family-name:var(--font-satoshi)] cursor-pointer
         transition-all duration-200 select-none
         ${sizeStyles[size]}
         ${selected ? styles.selected : styles.base}
@@ -69,3 +69,4 @@ export function PillChip({
     </motion.button>
   );
 }
+
