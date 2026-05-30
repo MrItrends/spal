@@ -15,8 +15,8 @@ export default function WelcomePage() {
       <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full pointer-events-none"
         style={{ background: "radial-gradient(circle at 80% 80%, rgba(37,99,235,0.10) 0%, transparent 65%)" }} />
 
-      {/* Scrollable content — no overflow-hidden so nothing clips */}
-      <div className="relative flex-1 overflow-y-auto scroll-container px-6 pt-14 pb-48">
+      {/* Scrollable content — extra bottom padding leaves room for fixed CTA */}
+      <div className="relative flex-1 overflow-y-auto scroll-container px-6 pt-14 pb-56">
 
         {/* Logo mark */}
         <motion.div
@@ -85,17 +85,17 @@ export default function WelcomePage() {
 
       </div>
 
-      {/* CTA — always pinned to bottom, dark fade keeps it readable over any content */}
-      <div
-        className="absolute bottom-0 left-0 right-0 px-6 pb-10 pt-20 pointer-events-none"
-        style={{ background: "linear-gradient(to top, #0F172A 55%, transparent)" }}
-      />
+      {/* CTA — fixed to viewport bottom, always visible on any screen/browser */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="relative z-10 px-6 pb-10 flex flex-col gap-3"
-        style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 2.5rem))" }}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-20 px-6 flex flex-col gap-3"
+        style={{
+          paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 2.5rem))",
+          paddingTop: "4rem",
+          background: "linear-gradient(to top, #0F172A 55%, transparent)",
+        }}
       >
         <button
           onClick={() => router.push("/business-type")}
