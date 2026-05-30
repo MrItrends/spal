@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 /* =============================================
    SPAL Design System — Tailwind v4 CSS Config
@@ -6,18 +6,18 @@
 
 @theme {
   /* ── Brand colors ──────────────────────────── */
-  --color-spal-green:  #1DB954;
+  --color-spal-green:  #22C55E;
   --color-spal-blue:   #2563EB;
   --color-spal-orange: #F97316;
   --color-spal-purple: #8B5CF6;
   --color-spal-navy:   #0F172A;
-  --color-spal-bg:     #F5F5F3;
+  --color-spal-bg:     #F8F7F4;
 
   /* Green shades */
   --color-spal-green-50:  #F0FDF4;
   --color-spal-green-100: #DCFCE7;
   --color-spal-green-200: #BBF7D0;
-  --color-spal-green-500: #1DB954;
+  --color-spal-green-500: #22C55E;
   --color-spal-green-600: #16A34A;
   --color-spal-green-700: #15803D;
 
@@ -52,8 +52,9 @@
   --color-neutral-900: #18181B;
 
   /* Typography */
-  --font-poppins: 'Poppins', sans-serif;
-  --font-inter:   'Inter', sans-serif;
+  --font-satoshi: 'Satoshi', system-ui, sans-serif;
+  --font-poppins: 'Satoshi', system-ui, sans-serif;  /* remapped -> use --font-satoshi in new code */
+  --font-inter:   var(--font-inter-tight), 'Inter Tight', system-ui, sans-serif;
 
   /* Radius */
   --radius-sm:   0.5rem;
@@ -68,7 +69,7 @@
    ============================================= */
 
 :root {
-  --background: #F5F5F3;
+  --background: #F8F7F4;
   --foreground: #0F172A;
   --sab: env(safe-area-inset-bottom, 0px);
   --sat: env(safe-area-inset-top, 0px);
@@ -99,9 +100,9 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-poppins);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-family: var(--font-satoshi);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
 }
 
 /* =============================================
@@ -182,7 +183,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .spal-input:focus {
-  border-color: #1DB954;
+  border-color: #22C55E;
   box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.12);
 }
 
@@ -208,11 +209,11 @@ h1, h2, h3, h4, h5, h6 {
    ============================================= */
 
 .gradient-spal {
-  background: linear-gradient(145deg, #1DB954 0%, #1a9e48 40%, #1a6ebf 100%);
+  background: linear-gradient(145deg, #22C55E 0%, #1a9e48 40%, #1a6ebf 100%);
 }
 
 .gradient-spal-warm {
-  background: linear-gradient(145deg, #1DB954 0%, #F97316 100%);
+  background: linear-gradient(145deg, #22C55E 0%, #F97316 100%);
 }
 
 .gradient-spal-soft {
@@ -220,7 +221,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gradient-spal-card {
-  background: linear-gradient(135deg, #1DB954 0%, #16A34A 100%);
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
 }
 
 /* =============================================
@@ -228,10 +229,10 @@ h1, h2, h3, h4, h5, h6 {
    ============================================= */
 
 .spal-section-label {
-  font-family: var(--font-poppins);
+  font-family: var(--font-satoshi);
   font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #A1A1AA;
 }
@@ -299,3 +300,4 @@ h1, h2, h3, h4, h5, h6 {
   width: 0;
   height: 0;
 }
+

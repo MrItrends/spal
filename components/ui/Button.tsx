@@ -17,20 +17,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    // Subtle top-to-bottom gradient + soft glow shadow
-    "bg-gradient-to-b from-[#21C957] to-spal-green text-white " +
-    "shadow-[0_4px_14px_rgba(29,185,84,0.36)] " +
-    "disabled:opacity-50 disabled:shadow-none",
+    "bg-spal-green text-white " +
+    "shadow-[0_2px_12px_rgba(34,197,94,0.28)] " +
+    "active:bg-spal-green-600 disabled:opacity-50 disabled:shadow-none",
   secondary:
-    "bg-white text-spal-navy border border-neutral-200 " +
+    "bg-white text-spal-navy border border-neutral-200/80 " +
     "shadow-[0_1px_4px_rgba(0,0,0,0.06)] " +
     "active:bg-neutral-50 disabled:opacity-50",
   ghost:
     "bg-transparent text-spal-navy active:bg-neutral-100 disabled:opacity-50",
   danger:
-    "bg-gradient-to-b from-red-400 to-red-500 text-white " +
-    "shadow-[0_4px_14px_rgba(239,68,68,0.3)] " +
-    "active:from-red-500 active:to-red-600 disabled:opacity-50",
+    "bg-red-500 text-white " +
+    "shadow-[0_2px_12px_rgba(239,68,68,0.25)] " +
+    "active:bg-red-600 disabled:opacity-50",
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -62,7 +61,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         transition={{ duration: 0.08 }}
         className={`
           inline-flex items-center justify-center gap-2
-          font-semibold font-[family-name:var(--font-poppins)]
+          font-semibold font-[family-name:var(--font-satoshi)]
           tracking-tight
           transition-all duration-150 cursor-pointer select-none
           ${variantStyles[variant]}

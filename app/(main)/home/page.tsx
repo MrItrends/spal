@@ -4,9 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
-import { getGreeting, formatTime } from "@/lib/utils/dates";
-import { InsightCard } from "@/components/ui/InsightCard";
-import { Card } from "@/components/ui/Card";
+import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { WeeklyChallengeCard } from "@/components/gamification/WeeklyChallengeCard";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
@@ -16,171 +14,279 @@ export default function HomePage() {
   const greeting = getGreeting();
   const name = user?.full_name ?? user?.business_name ?? "there";
 
-  const [summary, setSummary] = useState<DailySummary | null>(null);
-  const [records, setRecords] = useState<BusinessRecord[]>([]);
+  const [summary, setSummary]           = useState<DailySummary | null>(null);
+  const [records, setRecords]           = useState<BusinessRecord[]>([]);
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(true);
-  const [editRecord, setEditRecord] = useState<BusinessRecord | null>(null);
+  const [editRecord, setEditRecord]     = useState<BusinessRecord | null>(null);
 
   const fetchData = useCallback(async () => {
-    // Fetch today's AI summary
     try {
-      const res = await fetch("/api/ai/daily-insight");
+      const res  = await fetch("/api/ai/daily-insight");
       const data = await res.json();
       if (data.success) setSummary(data.data);
-    } catch { /* silent */ } finally {
-      setLoadingSummary(false);
-    }
+    } catch { /* silent */ } finally { setLoadingSummary(false); }
 
-    // Fetch today's records (last 4)
     try {
-      const res = await fetch("/api/records?limit=4");
+      const res  = await fetch("/api/records?limit=5");
       const data = await res.json();
       if (data.success) setRecords(data.data);
-    } catch { /* silent */ } finally {
-      setLoadingRecords(false);
-    }
+    } catch { /* silent */ } finally { setLoadingRecords(false); }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  // Re-fetch whenever a voice/quick record is saved
-  useEffect(() => { if (recordSavedAt) { setLoadingSummary(true); setLoadingRecords(true); fetchData(); } }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (recordSavedAt) { setLoadingSummary(true); setLoadingRecords(true); fetchData(); }
+  }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Refetch after adding/editing a record
-  function handleRecordAdded() {
-    setLoadingSummary(true);
-    setLoadingRecords(true);
-    fetchData();
-  }
-
-  function handleEditClose() {
-    setEditRecord(null);
-  }
+  function handleRecordAdded() { setLoadingSummary(true); setLoadingRecords(true); fetchData(); }
+  function handleEditClose()   { setEditRecord(null); }
 
   return (
     <>
-      <div className="px-4 pt-6 space-y-4 animate-fade-in">
+      <div className="px-5 pt-7 space-y-5 animate-fade-in">
 
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
+        {/* ── Header ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="flex items-start justify-between"
+        >
           <div>
-            <p className="text-neutral-400 text-sm">{greeting} 👋</p>
-            <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-poppins)]">{name}</h1>
+            <p className="text-neutral-400 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {greeting}
+            </p>
+            <h1 className="text-[22px] font-bold text-spal-navy mt-0.5">
+              {name}
+            </h1>
           </div>
-          <div className="flex items-center gap-1 bg-spal-orange-50 rounded-full px-3 py-1.5">
-            <span className="text-sm">🔥</span>
-            <span className="text-xs font-bold text-spal-orange-600 font-[family-name:var(--font-poppins)]">
-              {user?.streak_days ?? 0} days
-            </span>
-          </div>
+
+          {/* Streak — minimal, navy pill */}
+          {(user?.streak_days ?? 0) > 0 && (
+            <div
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5"
+              style={{ background: "#0F172A" }}
+            >
+              <StreakDotIcon />
+              <span className="text-[11px] font-semibold text-white" style={{ fontFamily: "var(--font-satoshi)" }}>
+                {user?.streak_days} day streak
+              </span>
+            </div>
+          )}
         </motion.div>
 
-        {/* Today's Summary Card */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card accent="green" padding="md">
-            <div className="flex items-center justify-between mb-3">
-              <p className="spal-section-label">Today&apos;s Summary</p>
-              <a href="/insights" className="text-xs text-spal-blue font-medium">See details →</a>
+        {/* ── Today's Pulse — dark hero card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <div
+            className="rounded-[22px] p-5"
+            style={{ background: "#0F172A" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-semibold tracking-widest uppercase text-white/40" style={{ fontFamily: "var(--font-satoshi)" }}>
+                Today&apos;s Pulse
+              </span>
+              <a href="/insights" className="text-[11px] text-white/30 font-medium flex items-center gap-0.5 hover:text-white/50 transition-colors">
+                Details <ArrowIcon />
+              </a>
             </div>
 
             {loadingSummary ? (
-              <SummarySkeleton />
+              <PulseSkeleton />
             ) : summary ? (
               <>
-                <div className="space-y-2.5">
-                  <SummaryRow label="Sales"      amount={summary.total_sales}    color="text-spal-green"  dot="bg-spal-green"  prefix="+" />
-                  <SummaryRow label="Expenses"   amount={summary.total_expenses} color="text-spal-orange" dot="bg-spal-orange" prefix="-" />
-                  <div className="border-t border-neutral-100 pt-2.5">
-                    <SummaryRow label="Your Profit" amount={summary.profit}     color="text-spal-blue"   dot="bg-spal-blue"   large />
+                {/* Big profit number */}
+                <div className="mb-5">
+                  <p className="text-white/40 text-xs mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>
+                    {(summary.profit ?? 0) >= 0 ? "Profit" : "Net loss"}
+                  </p>
+                  <p
+                    className="font-bold leading-none"
+                    style={{
+                      fontFamily: "var(--font-satoshi)",
+                      fontSize: "clamp(28px, 8vw, 36px)",
+                      color: (summary.profit ?? 0) >= 0 ? "#22C55E" : "#F97316",
+                    }}
+                  >
+                    {formatCurrency(Math.abs(summary.profit ?? 0))}
+                  </p>
+                </div>
+
+                {/* Sales / Expenses row */}
+                <div className="flex gap-6">
+                  <div>
+                    <p className="text-white/30 text-[10px] uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>Sales</p>
+                    <p className="text-white font-semibold text-base" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      {formatCurrency(summary.total_sales ?? 0)}
+                    </p>
+                  </div>
+                  <div className="w-px bg-white/8" />
+                  <div>
+                    <p className="text-white/30 text-[10px] uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>Expenses</p>
+                    <p className="text-spal-orange font-semibold text-base" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      {formatCurrency(summary.total_expenses ?? 0)}
+                    </p>
                   </div>
                 </div>
+
+                {/* AI message */}
                 {summary.ai_message && (
-                  <div className="mt-3 bg-spal-green-50 rounded-xl p-3">
-                    <p className="text-xs text-spal-green-700 leading-relaxed">{summary.ai_message}</p>
+                  <div className="mt-4 pt-4 border-t border-white/8">
+                    <p className="text-white/50 text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      {summary.ai_message}
+                    </p>
                   </div>
                 )}
               </>
             ) : (
-              <EmptySummary onAdd={() => setAddSheet("sale")} />
+              <PulseEmpty onAdd={() => setAddSheet("sale")} />
             )}
-          </Card>
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <p className="spal-section-label mb-2">Quick actions</p>
-          <div className="grid grid-cols-4 gap-2">
-            <QuickAction emoji="💰" label="Add Sale"  color="bg-spal-green-50  text-spal-green-700"   border="border-spal-green-100"   onClick={() => setAddSheet("sale")} />
-            <QuickAction emoji="🧾" label="Expense"   color="bg-spal-orange-50 text-spal-orange-600"  border="border-spal-orange-100"  onClick={() => setAddSheet("expense")} />
-            <QuickAction emoji="🎯" label="Goals"     color="bg-spal-blue-50   text-spal-blue-600"    border="border-spal-blue-100"    href="/goals" />
-            <QuickAction emoji="💬" label="Ask SPAL"  color="bg-spal-purple-50 text-spal-purple-600"  border="border-spal-purple-100"  href="/ask" />
           </div>
         </motion.div>
 
-        {/* Weekly Challenge */}
+        {/* ── Quick Actions ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <div className="grid grid-cols-2 gap-2.5">
+            <ActionButton
+              icon={<SaleActionIcon />}
+              label="Record Sale"
+              sub="Add money in"
+              accent="#22C55E"
+              onClick={() => setAddSheet("sale")}
+            />
+            <ActionButton
+              icon={<ExpenseActionIcon />}
+              label="Record Expense"
+              sub="Add money out"
+              accent="#F97316"
+              onClick={() => setAddSheet("expense")}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 mt-2.5">
+            <ActionButton
+              icon={<GoalsActionIcon />}
+              label="Goals"
+              sub="Track targets"
+              accent="#2563EB"
+              href="/goals"
+              small
+            />
+            <ActionButton
+              icon={<AskActionIcon />}
+              label="Ask SPAL"
+              sub="Get answers"
+              accent="#8B5CF6"
+              href="/ask"
+              small
+            />
+          </div>
+        </motion.div>
+
+        {/* ── Weekly Challenge ── */}
         <WeeklyChallengeCard />
 
-        {/* AI Insight */}
+        {/* ── AI Insight ── */}
         {summary?.ai_insight && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <InsightCard title="Today's insight" message={summary.ai_insight} emoji="💡" variant="tip" />
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="bg-white rounded-[18px] p-4 border border-neutral-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+          >
+            <div className="flex items-start gap-3">
+              <InsightSymbol />
+              <div>
+                <p className="text-[11px] font-semibold text-spal-navy uppercase tracking-wider mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Insight
+                </p>
+                <p className="text-[13px] text-neutral-500 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {summary.ai_insight}
+                </p>
+              </div>
+            </div>
           </motion.div>
         )}
 
-        {/* Recent Records */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="spal-section-label">Recent records</p>
-            <a href="/records" className="text-xs text-spal-blue font-medium">See all →</a>
+        {/* ── Recent Records ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="spal-section-label">Recent activity</p>
+            <a href="/records" className="text-[11px] text-spal-blue font-medium">View all</a>
           </div>
 
-          <Card padding="none">
+          <div className="bg-white rounded-[18px] border border-neutral-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
             {loadingRecords ? (
               <RecordsSkeleton />
             ) : records.length > 0 ? (
               records.map((record, i) => (
                 <motion.button
                   key={record.id}
-                  initial={{ opacity: 0, x: -6 }}
+                  initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
+                  transition={{ delay: i * 0.035, ease: [0.4, 0, 0.2, 1] }}
                   onClick={() => { setEditRecord(record); setAddSheet(null); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 active:bg-neutral-50 transition-colors text-left ${
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 active:bg-neutral-50 transition-colors text-left ${
                     i < records.length - 1 ? "border-b border-neutral-50" : ""
                   }`}
                 >
-                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${record.type === "sale" ? "bg-spal-green" : "bg-spal-orange"}`} />
+                  {/* Color dot */}
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: record.type === "sale" ? "#22C55E" : "#F97316" }}
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-spal-navy font-medium truncate">{record.description ?? record.category ?? record.type}</p>
-                    <p className="text-xs text-neutral-400">{formatTime(record.created_at)}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <p className={`text-sm font-bold ${record.type === "sale" ? "text-spal-green" : "text-spal-orange"}`}>
-                      {record.type === "sale" ? "+" : "-"}{formatCurrency(record.amount)}
+                    <p className="text-[13px] text-spal-navy font-medium truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      {record.description ?? record.category ?? record.type}
                     </p>
-                    <span className="text-neutral-200 text-xs">✎</span>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">{formatRecordTime(record.created_at)}</p>
                   </div>
+                  <p
+                    className="text-[13px] font-semibold flex-shrink-0"
+                    style={{
+                      fontFamily: "var(--font-satoshi)",
+                      color: record.type === "sale" ? "#22C55E" : "#F97316",
+                    }}
+                  >
+                    {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
+                  </p>
                 </motion.button>
               ))
             ) : (
-              <div className="px-4 py-8 text-center">
-                <p className="text-sm text-neutral-400">No records yet today.</p>
-                <button onClick={() => setAddSheet("sale")} className="mt-2 text-spal-green text-sm font-semibold">
-                  Record your first sale →
+              <div className="px-4 py-10 text-center">
+                <RecordsEmptySymbol />
+                <p className="text-[13px] text-neutral-400 mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  No activity yet today.
+                </p>
+                <button
+                  onClick={() => setAddSheet("sale")}
+                  className="mt-2 text-spal-green text-[13px] font-semibold"
+                  style={{ fontFamily: "var(--font-satoshi)" }}
+                >
+                  Record your first sale
                 </button>
               </div>
             )}
-          </Card>
+          </div>
         </motion.div>
 
-        <div className="h-4" />
+        <div className="h-5" />
       </div>
 
-      {/* Add sheets */}
+      {/* Sheets */}
       <AddRecordSheet type="sale"    open={addSheetOpen === "sale"}    onClose={() => setAddSheet(null)} onSuccess={handleRecordAdded} />
       <AddRecordSheet type="expense" open={addSheetOpen === "expense"} onClose={() => setAddSheet(null)} onSuccess={handleRecordAdded} />
-
-      {/* Edit sheet — opens when a recent record is tapped */}
       <AddRecordSheet
         type={editRecord?.type ?? "sale"}
         open={!!editRecord}
@@ -192,56 +298,74 @@ export default function HomePage() {
   );
 }
 
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatRecordTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function SummaryRow({ label, amount, color, dot, prefix = "", large = false }:
-  { label: string; amount: number; color: string; dot: string; prefix?: string; large?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className={`w-2.5 h-2.5 rounded-full ${dot}`} />
-        <span className={`${large ? "text-sm font-semibold" : "text-sm"} text-neutral-600`}>{label}</span>
-      </div>
-      <span className={`font-bold ${large ? "text-lg" : "text-sm"} ${color}`}>{prefix}{formatCurrency(amount)}</span>
-    </div>
-  );
-}
-
-function QuickAction({ emoji, label, color, border, onClick, href }:
-  { emoji: string; label: string; color: string; border: string; onClick?: () => void; href?: string }) {
-  const content = (
+function ActionButton({
+  icon, label, sub, accent, onClick, href, small = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sub: string;
+  accent: string;
+  onClick?: () => void;
+  href?: string;
+  small?: boolean;
+}) {
+  const inner = (
     <div
-      className={`flex flex-col items-center gap-1.5 p-3 rounded-[16px] ${color} border ${border} cursor-pointer active:scale-95 transition-all duration-150`}
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.05)" }}
+      className={`flex items-center gap-3 bg-white border border-neutral-100 rounded-[16px] cursor-pointer active:scale-[0.98] transition-all duration-150 ${small ? "px-3.5 py-3" : "px-4 py-4"}`}
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04)" }}
       onClick={onClick}
     >
-      <span className="text-xl leading-none">{emoji}</span>
-      <span className="text-[10px] font-semibold text-center leading-tight font-[family-name:var(--font-poppins)]">{label}</span>
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: `${accent}14`, color: accent }}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[13px] font-semibold text-spal-navy leading-tight" style={{ fontFamily: "var(--font-satoshi)" }}>
+          {label}
+        </p>
+        <p className="text-[11px] text-neutral-400 mt-0.5">{sub}</p>
+      </div>
     </div>
   );
-  return href ? <a href={href}>{content}</a> : content;
+  return href ? <a href={href}>{inner}</a> : inner;
 }
 
-function EmptySummary({ onAdd }: { onAdd: () => void }) {
+function PulseEmpty({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="py-4 text-center">
-      <p className="text-sm text-neutral-400 leading-relaxed">No records yet today.</p>
-      <button onClick={onAdd} className="mt-3 text-spal-green font-semibold text-sm">
-        + Add your first sale
+    <div className="py-2">
+      <p className="text-white/30 text-[13px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+        Nothing recorded yet today.
+      </p>
+      <button
+        onClick={onAdd}
+        className="mt-3 text-spal-green font-semibold text-[13px]"
+        style={{ fontFamily: "var(--font-satoshi)" }}
+      >
+        Record your first sale
       </button>
     </div>
   );
 }
 
-function SummarySkeleton() {
+function PulseSkeleton() {
   return (
-    <div className="space-y-3 animate-pulse">
-      {[1, 2, 3].map(i => (
-        <div key={i} className="flex justify-between">
-          <div className="h-4 bg-neutral-100 rounded w-24" />
-          <div className="h-4 bg-neutral-100 rounded w-20" />
-        </div>
-      ))}
+    <div className="space-y-4 animate-pulse">
+      <div className="h-9 bg-white/8 rounded-xl w-40" />
+      <div className="flex gap-6">
+        <div className="h-5 bg-white/8 rounded w-24" />
+        <div className="h-5 bg-white/8 rounded w-24" />
+      </div>
     </div>
   );
 }
@@ -250,9 +374,9 @@ function RecordsSkeleton() {
   return (
     <>
       {[1, 2, 3].map(i => (
-        <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-neutral-50 animate-pulse">
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-100" />
-          <div className="flex-1 space-y-1">
+        <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-neutral-50 animate-pulse">
+          <div className="w-2 h-2 rounded-full bg-neutral-100" />
+          <div className="flex-1 space-y-1.5">
             <div className="h-3 bg-neutral-100 rounded w-32" />
             <div className="h-2.5 bg-neutral-100 rounded w-16" />
           </div>
@@ -260,5 +384,77 @@ function RecordsSkeleton() {
         </div>
       ))}
     </>
+  );
+}
+
+// ── Geometric symbols (no emoji) ────────────────────────────────────────────
+
+function StreakDotIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <circle cx="5" cy="5" r="3" fill="#22C55E" />
+      <circle cx="5" cy="5" r="5" fill="#22C55E" fillOpacity="0.2" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+      <path d="M2.5 5h5M5.5 2.5 8 5l-2.5 2.5" />
+    </svg>
+  );
+}
+
+function InsightSymbol() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="flex-shrink-0 mt-0.5">
+      <rect width="28" height="28" rx="8" fill="#EFF6FF" />
+      <circle cx="14" cy="14" r="4" stroke="#2563EB" strokeWidth="1.6" />
+      <path d="M14 7v2M14 19v2M7 14h2M19 14h2" stroke="#2563EB" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RecordsEmptySymbol() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="mx-auto">
+      <rect width="40" height="40" rx="12" fill="#F4F4F5" />
+      <path d="M13 14h14M13 20h10M13 26h7" stroke="#D4D4D8" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SaleActionIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+
+function ExpenseActionIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5v14M19 12l-7 7-7-7" />
+    </svg>
+  );
+}
+
+function GoalsActionIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2" />
+    </svg>
+  );
+}
+
+function AskActionIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }
