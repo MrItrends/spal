@@ -389,17 +389,24 @@ function Sheet({ open, onClose, title, children }: {
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl flex flex-col"
+            style={{ maxHeight: "92dvh" }}
           >
-            <div className="flex justify-center pt-3 pb-1">
+            {/* Drag handle — never scrolls away */}
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
-            <div className="px-5 pb-8 pt-3">
+
+            {/* Scrollable content */}
+            <div
+              className="overflow-y-auto overscroll-contain px-5 pt-3"
+              style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
+            >
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500 flex-shrink-0"
                 >
                   ✕
                 </button>
@@ -451,7 +458,6 @@ function NameSheet({ open, user, onClose, onSave }: {
             value={fullName}
             onChange={e => { setFullName(e.target.value); setError(null); }}
             onKeyDown={e => e.key === "Enter" && handleSave()}
-            autoFocus
             className={`w-full h-12 px-4 bg-neutral-50 rounded-2xl border-2 text-sm text-spal-navy placeholder:text-neutral-300 outline-none transition-colors ${
               error ? "border-red-300 focus:border-red-400" : "border-neutral-100 focus:border-spal-blue"
             }`}

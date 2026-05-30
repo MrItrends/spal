@@ -184,17 +184,21 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl flex flex-col"
+            style={{ maxHeight: "92dvh" }}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
+            {/* Handle — never scrolls away */}
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
 
             {success ? (
               <SuccessState isEdit={isEdit} type={type} amount={amount} />
             ) : (
-              <div className="px-5 pb-8 pt-3 relative">
+              <div
+                className="overflow-y-auto overscroll-contain px-5 pt-3 relative"
+                style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
+              >
                 {/* Scanning overlay */}
                 <AnimatePresence>
                   {scanning && (
