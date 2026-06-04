@@ -1,118 +1,181 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { TrendingUp, Mic, Lightbulb, Target } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, LogIn } from "lucide-react";
+
+const TEAL   = "#123232";
+const GREEN  = "#37CB6D";
 
 export default function WelcomePage() {
   const router = useRouter();
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Splash auto-dismisses after a short beat
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 1900);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div
-      className="flex-1 flex flex-col relative overflow-hidden"
-      style={{ background: "#22C55E" }}
-    >
-      {/* Background texture — subtle radial shadows for depth */}
-      <div
-        className="absolute top-0 right-0 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle at 80% 0%, rgba(255,255,255,0.15) 0%, transparent 60%)" }}
-      />
-      <div
-        className="absolute bottom-0 left-0 w-80 h-80 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle at 10% 100%, rgba(0,0,0,0.12) 0%, transparent 55%)" }}
-      />
+    <div className="flex-1 relative overflow-hidden" style={{ background: TEAL }}>
 
-      {/* Scrollable content */}
-      <div className="relative flex-1 overflow-y-auto px-6 pt-14 pb-52">
-
-        {/* SPAL wordmark */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <SPALWordmark />
-        </motion.div>
-
-        {/* Main headline */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <h1
-            className="text-white font-black leading-[1.0]"
-            style={{
-              fontSize: "clamp(40px, 11vw, 52px)",
-              fontFamily: "var(--font-satoshi)",
-              letterSpacing: "-0.03em",
-            }}
+      {/* ── Splash overlay ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="absolute inset-0 z-50 flex items-center justify-center"
+            style={{ background: TEAL }}
           >
-            Your business.
-            <br />
-            Understood.
-          </h1>
-          <p
-            className="mt-4 text-white/65 text-[15px] leading-relaxed"
-            style={{ fontFamily: "var(--font-satoshi)", maxWidth: "260px" }}
+            {/* Glow */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: "-180px", left: "-160px", width: "440px", height: "440px",
+                borderRadius: "50%", background: GREEN, filter: "blur(110px)", opacity: 0.55,
+              }}
+            />
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, ease: [0.34, 1.2, 0.64, 1] }}
+              className="relative"
+            >
+              <Image
+                src="/spal-wordmark.png"
+                alt="SPAL"
+                width={210}
+                height={75}
+                priority
+                style={{ width: "200px", height: "auto" }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Get Started content ──────────────────────────────────────── */}
+      <GetStartedContent
+        router={router}
+        // Slightly delayed entrance so it reveals as splash fades
+        ready={!showSplash}
+      />
+    </div>
+  );
+}
+
+function GetStartedContent({
+  router,
+  ready,
+}: {
+  router: ReturnType<typeof useRouter>;
+  ready: boolean;
+}) {
+  return (
+    <div className="absolute inset-0 flex flex-col">
+
+      {/* Background glow — top left */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "-180px", left: "-160px", width: "440px", height: "440px",
+          borderRadius: "50%", background: GREEN, filter: "blur(110px)", opacity: 0.45,
+        }}
+      />
+
+      {/* Logo top center */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={ready ? { opacity: 1, y: 0 } : {}}
+        transition={{ delay: 0.1, duration: 0.4 }}
+        className="relative pt-16 flex justify-center"
+      >
+        <Image
+          src="/spal-wordmark.png"
+          alt="SPAL"
+          width={90}
+          height={32}
+          style={{ width: "84px", height: "auto" }}
+        />
+      </motion.div>
+
+      {/* Fanned preview cards */}
+      <div className="relative flex-1 flex items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={ready ? { opacity: 1, scale: 1, y: 0 } : {}}
+          transition={{ delay: 0.2, duration: 0.6, ease: [0.34, 1.1, 0.64, 1] }}
+          className="relative"
+          style={{ width: "260px", height: "300px" }}
+        >
+          {/* Back card — tilted left */}
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{ transform: "translate(-50%,-50%) rotate(-5deg)", zIndex: 1 }}
           >
-            Track sales, know your profit, and grow — no accounting needed.
-          </p>
+            <PreviewCard variant="sales" />
+          </div>
+          {/* Front card — tilted right */}
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{ transform: "translate(-50%,-50%) rotate(4deg) translateX(14px)", zIndex: 2 }}
+          >
+            <PreviewCard variant="expenses" />
+          </div>
         </motion.div>
-
-        {/* Floating feature chips */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.28, duration: 0.4 }}
-          className="mt-7 flex flex-wrap gap-2.5"
-        >
-          <FeatureChip icon={<TrendingUp size={13} strokeWidth={2} />} label="Track Sales" />
-          <FeatureChip icon={<Lightbulb    size={13} strokeWidth={2} />} label="Know Your Profit" />
-          <FeatureChip icon={<Mic          size={13} strokeWidth={2} />} label="Voice Entry" />
-          <FeatureChip icon={<Target       size={13} strokeWidth={2} />} label="Set Goals" />
-        </motion.div>
-
-        {/* Dashboard preview card */}
-        <motion.div
-          initial={{ opacity: 0, y: 28, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: 0.40, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="mt-8"
-        >
-          <PreviewCard />
-        </motion.div>
-
       </div>
 
-      {/* CTA — always at bottom */}
+      {/* Headline + CTAs */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.56, duration: 0.4 }}
-        className="relative z-10 px-6 pb-10 flex flex-col gap-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={ready ? { opacity: 1, y: 0 } : {}}
+        transition={{ delay: 0.35, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        className="relative px-6 pb-10"
         style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 2.5rem))" }}
       >
+        <h1
+          className="text-white font-black leading-[1.08] mb-3"
+          style={{ fontSize: "clamp(30px, 8vw, 38px)", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.03em" }}
+        >
+          Your business.
+          <br />
+          <span style={{ color: GREEN }}>Understood.</span>
+        </h1>
+        <p
+          className="text-white/55 text-[15px] leading-relaxed mb-7"
+          style={{ fontFamily: "var(--font-satoshi)", maxWidth: "300px" }}
+        >
+          Track sales, know your real profit, and grow — no accounting needed.
+        </p>
+
+        {/* Primary — Get started */}
         <button
           onClick={() => router.push("/business-type")}
-          className="w-full h-14 rounded-full font-bold text-[15px]"
-          style={{
-            fontFamily: "var(--font-satoshi)",
-            background: "#ffffff",
-            color: "#0F172A",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-          }}
+          className="w-full h-14 rounded-full font-bold text-[15px] flex items-center justify-center gap-2 mb-3"
+          style={{ fontFamily: "var(--font-satoshi)", background: "#ffffff", color: TEAL }}
         >
           Get started
+          <ArrowRight size={18} strokeWidth={2.5} />
         </button>
+
+        {/* Secondary — Sign in */}
         <button
           onClick={() => router.push("/login")}
-          className="w-full h-11 text-[13px] text-center text-white/60"
-          style={{ fontFamily: "var(--font-satoshi)" }}
+          className="w-full h-14 rounded-full font-semibold text-[15px] flex items-center justify-center gap-2"
+          style={{
+            fontFamily: "var(--font-satoshi)",
+            background: "rgba(255,255,255,0.08)",
+            color: "#ffffff",
+            border: "1px solid rgba(255,255,255,0.15)",
+          }}
         >
-          Already have an account?{" "}
-          <span className="text-white font-semibold">Sign in</span>
+          <LogIn size={17} strokeWidth={2} />
+          I already have an account
         </button>
       </motion.div>
 
@@ -120,129 +183,64 @@ export default function WelcomePage() {
   );
 }
 
-/* ── Feature chip ─────────────────────────────────────────────────────────── */
-function FeatureChip({ icon, label }: { icon: React.ReactNode; label: string }) {
+/* ── Mini preview card (records mockup) ──────────────────────────────── */
+function PreviewCard({ variant }: { variant: "sales" | "expenses" }) {
+  const isSales = variant === "sales";
+  const accent  = isSales ? "#22C55E" : "#F97316";
+  const pillBg  = isSales ? "#F0FDF4" : "#FFF7ED";
+  const pillBorder = isSales ? "#BBF7D0" : "#FFEDD5";
+
   return (
     <div
-      className="flex items-center gap-1.5 px-3 py-2 rounded-full"
+      className="rounded-2xl p-3"
       style={{
-        background: "rgba(0,0,0,0.18)",
-        backdropFilter: "blur(8px)",
-        border: "1px solid rgba(255,255,255,0.2)",
+        width: "220px",
+        background: "#2F5C5C",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
       }}
     >
-      <span className="text-white/80">{icon}</span>
-      <span
-        className="text-white text-[12px] font-semibold"
-        style={{ fontFamily: "var(--font-satoshi)" }}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
-
-/* ── SPAL wordmark ────────────────────────────────────────────────────────── */
-function SPALWordmark() {
-  return (
-    <div className="flex items-baseline gap-0.5">
-      {[
-        { letter: "S", color: "#ffffff" },
-        { letter: "P", color: "rgba(255,255,255,0.85)" },
-        { letter: "A", color: "rgba(255,255,255,0.85)" },
-        { letter: "L", color: "rgba(255,255,255,0.85)" },
-      ].map(({ letter, color }) => (
-        <span
-          key={letter}
-          className="font-black"
-          style={{
-            fontSize: "36px",
-            fontFamily: "var(--font-satoshi)",
-            color,
-            letterSpacing: "-0.04em",
-            lineHeight: 1,
-          }}
-        >
-          {letter}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/* ── Preview card (dark on green) ────────────────────────────────────────── */
-function PreviewCard() {
-  return (
-    <div
-      className="rounded-2xl p-5"
-      style={{
-        background: "rgba(15,23,42,0.85)",
-        backdropFilter: "blur(12px)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-      }}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span
-          className="text-[10px] font-bold tracking-widest uppercase text-white/30"
-          style={{ fontFamily: "var(--font-satoshi)" }}
-        >
-          Today&apos;s Pulse
-        </span>
-        <span
-          className="text-[10px] text-white/20"
-          style={{ fontFamily: "var(--font-satoshi)" }}
-        >
-          Sample
-        </span>
-      </div>
-
-      {/* Profit */}
-      <p className="text-[11px] text-white/30 mb-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
-        Profit
-      </p>
-      <p
-        className="font-bold mb-4"
-        style={{
-          fontSize: "32px",
-          color: "#4ADE80",
-          fontFamily: "var(--font-satoshi)",
-          letterSpacing: "-0.025em",
-        }}
-      >
-        ₦12,500
-      </p>
-
-      {/* Sales / Expenses */}
-      <div className="flex gap-5 mb-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-white/25 mb-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
-            Sales
-          </p>
-          <p className="font-semibold text-[13px] text-white/70" style={{ fontFamily: "var(--font-satoshi)" }}>
-            ₦18,500
-          </p>
+      <div className="bg-white rounded-xl p-3.5">
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="h-2 w-16 rounded-full bg-neutral-200 mb-1.5" />
+            <div className="h-3 w-20 rounded-full" style={{ background: accent, opacity: 0.85 }} />
+          </div>
+          <div
+            className="px-2 py-1 rounded-full text-[8px] font-bold"
+            style={{ background: "#EFF6FF", color: "#497CED", border: "0.5px solid #DBEAFE" }}
+          >
+            Today
+          </div>
         </div>
-        <div className="w-px bg-white/8" />
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-white/25 mb-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
-            Expenses
-          </p>
-          <p className="font-semibold text-[13px]" style={{ fontFamily: "var(--font-satoshi)", color: "#FB923C" }}>
-            ₦6,000
-          </p>
-        </div>
-      </div>
 
-      {/* AI insight strip */}
-      <div
-        className="rounded-xl px-3 py-2.5"
-        style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.2)" }}
-      >
-        <p className="text-[12px] leading-relaxed text-white/60" style={{ fontFamily: "var(--font-satoshi)" }}>
-          ✦ Sales are up from yesterday. Keep it up.
-        </p>
+        {/* Input row (selected) */}
+        <div
+          className="h-7 rounded-lg mb-2"
+          style={{ background: "#FAFAFA", border: "0.6px solid #497CED" }}
+        />
+        {/* Input row */}
+        <div
+          className="h-7 rounded-lg mb-3"
+          style={{ background: "#FAFAFA", border: "0.6px solid #F4F4F5" }}
+        />
+
+        {/* Pill chips grid */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {[28, 24, 40, 26, 30].map((w, i) => (
+            <div
+              key={i}
+              className="h-3.5 rounded-full"
+              style={{ width: `${w}px`, background: pillBg, border: `0.5px solid ${pillBorder}` }}
+            />
+          ))}
+        </div>
+
+        {/* Button */}
+        <div
+          className="h-7 rounded-full"
+          style={{ background: isSales ? "#8FE1AD" : "#FBB889" }}
+        />
       </div>
     </div>
   );
