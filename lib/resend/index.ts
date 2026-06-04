@@ -40,21 +40,69 @@ export async function sendOTPviaEmail(
       body: JSON.stringify({
         from:    "SPAL <hello@spal.ng>",
         to:      email,
-        subject: `${otp} is your SPAL code`,
+        subject: `${otp} — your SPAL verification code`,
         html: `
-          <div style="font-family:Arial,sans-serif;max-width:420px;margin:0 auto;padding:32px 24px;background:#fff;">
-            <h2 style="margin:0 0 8px;color:#0F172A;font-size:22px;">Your SPAL verification code</h2>
-            <p style="margin:0 0 28px;color:#475569;font-size:14px;line-height:1.6;">
-              Enter this code to continue setting up your business account. It expires in 10 minutes.
-            </p>
-            <div style="background:#F8F7F4;border-radius:14px;padding:28px;text-align:center;margin-bottom:28px;">
-              <span style="font-size:44px;font-weight:700;letter-spacing:10px;color:#0F172A;">${otp}</span>
-            </div>
-            <p style="margin:0;color:#94A3B8;font-size:12px;">
-              If you didn&rsquo;t request this, you can safely ignore this email.
-              Never share this code with anyone.
-            </p>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F8F7F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F7F4;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+        <!-- Logo / Brand -->
+        <tr><td style="padding-bottom:32px;" align="center">
+          <div style="display:inline-block;">
+            <span style="font-size:28px;font-weight:900;letter-spacing:-1px;">
+              <span style="color:#22C55E;">S</span><span style="color:#2563EB;">P</span><span style="color:#FF8A00;">A</span><span style="color:#8B5CF6;">L</span>
+            </span>
           </div>
+        </td></tr>
+
+        <!-- Card -->
+        <tr><td style="background:#ffffff;border-radius:20px;padding:40px 36px;box-shadow:0 2px 16px rgba(0,0,0,0.06);">
+
+          <!-- Header -->
+          <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#22C55E;text-transform:uppercase;letter-spacing:1px;">Verification Code</p>
+          <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0F172A;line-height:1.2;">
+            Here&rsquo;s your code
+          </h1>
+          <p style="margin:0 0 32px;font-size:14px;color:#64748B;line-height:1.6;">
+            Enter this code in SPAL to verify your account. It expires in <strong style="color:#0F172A;">10 minutes</strong>.
+          </p>
+
+          <!-- OTP Code Box -->
+          <div style="background:#0F172A;border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:32px;">
+            <span style="font-size:48px;font-weight:900;letter-spacing:14px;color:#ffffff;font-variant-numeric:tabular-nums;">${otp}</span>
+          </div>
+
+          <!-- Divider -->
+          <hr style="border:none;border-top:1px solid #F1F5F9;margin:0 0 24px;">
+
+          <!-- Footer note -->
+          <p style="margin:0;font-size:13px;color:#94A3B8;line-height:1.6;">
+            If you didn&rsquo;t request this code, you can safely ignore this email — your account is not at risk.
+          </p>
+
+        </td></tr>
+
+        <!-- Bottom tagline -->
+        <tr><td style="padding-top:24px;" align="center">
+          <p style="margin:0;font-size:12px;color:#94A3B8;">
+            Sent by <strong style="color:#0F172A;">SPAL</strong> &middot; Your Business Companion
+          </p>
+          <p style="margin:4px 0 0;font-size:11px;color:#CBD5E1;">
+            <a href="https://spal.ng" style="color:#22C55E;text-decoration:none;">spal.ng</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+
+</body>
+</html>
         `,
       }),
     });
