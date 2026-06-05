@@ -104,29 +104,14 @@ function GetStartedContent({
         />
       </motion.div>
 
-      {/* Fanned preview cards */}
+      {/* Animated preview — crossfades between the two card images */}
       <div className="relative flex-1 flex items-center justify-center px-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={ready ? { opacity: 1, scale: 1, y: 0 } : {}}
           transition={{ delay: 0.2, duration: 0.6, ease: [0.34, 1.1, 0.64, 1] }}
-          className="relative"
-          style={{ width: "260px", height: "300px" }}
         >
-          {/* Back card — tilted left */}
-          <div
-            className="absolute left-1/2 top-1/2"
-            style={{ transform: "translate(-50%,-50%) rotate(-5deg)", zIndex: 1 }}
-          >
-            <PreviewCard variant="sales" />
-          </div>
-          {/* Front card — tilted right */}
-          <div
-            className="absolute left-1/2 top-1/2"
-            style={{ transform: "translate(-50%,-50%) rotate(4deg) translateX(14px)", zIndex: 2 }}
-          >
-            <PreviewCard variant="expenses" />
-          </div>
+          <CardCrossfade play={ready} />
         </motion.div>
       </div>
 
@@ -183,65 +168,46 @@ function GetStartedContent({
   );
 }
 
-/* ── Mini preview card (records mockup) ──────────────────────────────── */
-function PreviewCard({ variant }: { variant: "sales" | "expenses" }) {
-  const isSales = variant === "sales";
-  const accent  = isSales ? "#22C55E" : "#F97316";
-  const pillBg  = isSales ? "#F0FDF4" : "#FFF7ED";
-  const pillBorder = isSales ? "#BBF7D0" : "#FFEDD5";
+/* ── Crossfade between the two get-started card images ───────────────── */
+function CardCrossfade({ play }: { play: boolean }) {
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    if (!play) return;
+    const t = setInterval(() => setIdx((i) => (i === 0 ? 1 : 0)), 2600);
+    return () => clearInterval(t);
+  }, [play]);
+
+  const images = [
+    { src: "/get-started-top.svg",    w: 274, h: 290 },
+    { src: "/get-started-bottom.svg", w: 275, h: 308 },
+  ];
 
   return (
-    <div
-      className="rounded-2xl p-3"
-      style={{
-        width: "220px",
-        background: "#2F5C5C",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
-      }}
-    >
-      <div className="bg-white rounded-xl p-3.5">
-        {/* Header row */}
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="h-2 w-16 rounded-full bg-neutral-200 mb-1.5" />
-            <div className="h-3 w-20 rounded-full" style={{ background: accent, opacity: 0.85 }} />
-          </div>
-          <div
-            className="px-2 py-1 rounded-full text-[8px] font-bold"
-            style={{ background: "#EFF6FF", color: "#497CED", border: "0.5px solid #DBEAFE" }}
-          >
-            Today
-          </div>
-        </div>
-
-        {/* Input row (selected) */}
-        <div
-          className="h-7 rounded-lg mb-2"
-          style={{ background: "#FAFAFA", border: "0.6px solid #497CED" }}
-        />
-        {/* Input row */}
-        <div
-          className="h-7 rounded-lg mb-3"
-          style={{ background: "#FAFAFA", border: "0.6px solid #F4F4F5" }}
-        />
-
-        {/* Pill chips grid */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {[28, 24, 40, 26, 30].map((w, i) => (
-            <div
-              key={i}
-              className="h-3.5 rounded-full"
-              style={{ width: `${w}px`, background: pillBg, border: `0.5px solid ${pillBorder}` }}
-            />
-          ))}
-        </div>
-
-        {/* Button */}
-        <div
-          className="h-7 rounded-full"
-          style={{ background: isSales ? "#8FE1AD" : "#FBB889" }}
-        />
-      </div>
+    <div className="relative" style={{ width: "275px", height: "310px" }}>
+      {images.map((img, i) => (
+        <motion.div
+          key={img.src}
+          className="absolute left-1/2 top-1/2"
+          initial={false}
+          animate={{
+            opacity: idx === i ? 1 : 0,
+            scale:   idx === i ? 1 : 0.96,
+            y:       idx === i ? 0 : 8,
+          }}
+          transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+          style={{ transform: "translate(-50%, -50%)", zIndex: idx === i ? 2 : 1 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={img.src}
+            alt=""
+            width={img.w}
+            height={img.h}
+            style={{ width: "260px", height: "auto", display: "block" }}
+          />
+        </motion.div>
+      ))}
     </div>
   );
 }
