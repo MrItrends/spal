@@ -104,14 +104,14 @@ function GetStartedContent({
         />
       </motion.div>
 
-      {/* Animated preview — crossfades between the two card images */}
+      {/* Fanned card stack — matches the Get Started design */}
       <div className="relative flex-1 flex items-center justify-center px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={ready ? { opacity: 1, scale: 1, y: 0 } : {}}
           transition={{ delay: 0.2, duration: 0.6, ease: [0.34, 1.1, 0.64, 1] }}
         >
-          <CardCrossfade play={ready} />
+          <CardStack play={ready} />
         </motion.div>
       </div>
 
@@ -168,44 +168,67 @@ function GetStartedContent({
   );
 }
 
-/* ── Crossfade between the two get-started card images ───────────────── */
-function CardCrossfade({ play }: { play: boolean }) {
-  const [idx, setIdx] = useState(0);
-
-  useEffect(() => {
-    if (!play) return;
-    const t = setInterval(() => setIdx((i) => (i === 0 ? 1 : 0)), 2600);
-    return () => clearInterval(t);
-  }, [play]);
-
-  const images = ["/get-started-top.svg", "/get-started-bottom.svg"];
+/* ── Fanned card stack — two cards tilted at opposite angles, overlapping ─ */
+function CardStack({ play }: { play: boolean }) {
+  // Card width relative to screen; the pair stays centered in the container.
+  const cardW = "min(56vw, 220px)";
 
   return (
     <div
       className="relative mx-auto"
-      style={{ width: "min(82vw, 340px)", height: "min(90vw, 380px)" }}
+      style={{ width: "min(86vw, 330px)", height: "min(82vw, 320px)" }}
     >
-      {images.map((src, i) => (
-        <motion.div
-          key={src}
-          className="absolute inset-0 flex items-center justify-center"
-          initial={false}
-          animate={{
-            opacity: idx === i ? 1 : 0,
-            scale:   idx === i ? 1 : 0.95,
-          }}
-          transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
-          style={{ zIndex: idx === i ? 2 : 1 }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt=""
-            className="w-full h-full"
-            style={{ objectFit: "contain", display: "block" }}
-          />
-        </motion.div>
-      ))}
+      {/* Back card — tilted +4°, upper-right (matches design card 0) */}
+      <motion.div
+        className="absolute top-1/2 left-1/2"
+        initial={{ opacity: 0, rotate: 4, x: "-38%", y: "-58%" }}
+        animate={play ? {
+          opacity: 1,
+          rotate: [4, 5.5, 4],
+          x: "-38%",
+          y: ["-58%", "-55%", "-58%"],
+        } : {}}
+        transition={{
+          opacity: { duration: 0.5, delay: 0.25 },
+          rotate:  { duration: 6, repeat: Infinity, ease: "easeInOut" },
+          y:       { duration: 6, repeat: Infinity, ease: "easeInOut" },
+        }}
+        style={{ width: cardW, zIndex: 1, transformOrigin: "center" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/get-started-top.svg"
+          alt=""
+          className="w-full h-auto block"
+          style={{ filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.35))" }}
+        />
+      </motion.div>
+
+      {/* Front card — tilted −4°, lower-left (matches design card 1) */}
+      <motion.div
+        className="absolute top-1/2 left-1/2"
+        initial={{ opacity: 0, rotate: -4, x: "-62%", y: "-42%" }}
+        animate={play ? {
+          opacity: 1,
+          rotate: [-4, -5.5, -4],
+          x: "-62%",
+          y: ["-42%", "-45%", "-42%"],
+        } : {}}
+        transition={{
+          opacity: { duration: 0.5, delay: 0.35 },
+          rotate:  { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 },
+          y:       { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 },
+        }}
+        style={{ width: cardW, zIndex: 2, transformOrigin: "center" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/get-started-bottom.svg"
+          alt=""
+          className="w-full h-auto block"
+          style={{ filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.4))" }}
+        />
+      </motion.div>
     </div>
   );
 }
