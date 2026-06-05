@@ -173,10 +173,13 @@ export default function VerifyPage() {
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 onFocus={() => setFocusedIdx(i)}
                 onPaste={handlePaste}
-                className="text-center text-2xl font-bold rounded-xl outline-none transition-all duration-150"
+                className="text-center text-2xl font-bold outline-none transition-all duration-150"
                 style={{
                   width: "52px",
                   height: "56px",
+                  borderRadius: "14px",
+                  WebkitAppearance: "none",
+                  appearance: "none",
                   fontFamily: "var(--font-satoshi)",
                   color: "#0F172A",
                   background: isFocused ? "#E8F0FE" : "#FAFAFA",

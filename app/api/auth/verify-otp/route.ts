@@ -7,6 +7,38 @@ function hashOTP(otp: string): string {
   return crypto.createHash("sha256").update(otp).digest("hex");
 }
 
+// Find an existing Supabase auth user by email (handles orphaned auth users
+// that have no row in our `users` table). Paginates defensively.
+async function findAuthUserByEmail(
+  admin: ReturnType<typeof createAdminClient>,
+  email: string,
+): Promise<{ id: string } | null> {
+  const target = email.toLowerCase();
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users?.length) break;
+    const match = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (match) return { id: match.id };
+    if (data.users.length < 1000) break;
+  }
+  return null;
+}
+
+// Find an existing Supabase auth user by phone.
+async function findAuthUserByPhone(
+  admin: ReturnType<typeof createAdminClient>,
+  phone: string,
+): Promise<{ id: string } | null> {
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users?.length) break;
+    const match = data.users.find((u) => u.phone === phone.replace(/^\+/, "") || u.phone === phone);
+    if (match) return { id: match.id };
+    if (data.users.length < 1000) break;
+  }
+  return null;
+}
+
 // POST /api/auth/verify-otp
 export async function POST(req: NextRequest) {
   try {
@@ -105,26 +137,38 @@ export async function POST(req: NextRequest) {
           email_confirm: true,
           password:      tempPassword,
         });
-        if (createErr || !newAuth?.user) {
-          console.error("[verify-otp] Email createUser error:", createErr);
-          return NextResponse.json(
-            { success: false, error: "Could not create your account. Please try again." },
-            { status: 500 }
-          );
-        }
-        userId    = newAuth.user.id;
-        isNewUser = true;
 
-        const { error: profileErr } = await admin.from("users").insert({
+        if (createErr || !newAuth?.user) {
+          // The auth user may already exist (orphaned — no profile row).
+          // Find them and reuse instead of failing.
+          const existingAuth = await findAuthUserByEmail(admin, trimmedEmail);
+          if (!existingAuth) {
+            console.error("[verify-otp] Email createUser error:", createErr);
+            return NextResponse.json(
+              { success: false, error: "Could not create your account. Please try again." },
+              { status: 500 }
+            );
+          }
+          userId    = existingAuth.id;
+          isNewUser = true;
+          await admin.auth.admin.updateUserById(userId, {
+            password:      tempPassword,
+            email_confirm: true,
+          });
+        } else {
+          userId    = newAuth.user.id;
+          isNewUser = true;
+        }
+
+        // Upsert the profile row (handles orphaned auth users with no profile)
+        const { error: profileErr } = await admin.from("users").upsert({
           id:                   userId,
           email:                trimmedEmail,
-          phone_number:         null,
           business_type:        onboardingData?.businessType ?? null,
           business_goals:       onboardingData?.goals        ?? [],
-          onboarding_completed: false,
           streak_days:          0,
-        });
-        if (profileErr) console.error("[verify-otp] Email profile insert error:", profileErr);
+        }, { onConflict: "id" });
+        if (profileErr) console.error("[verify-otp] Email profile upsert error:", profileErr);
       }
 
       // 4. Fetch full user profile
@@ -244,25 +288,36 @@ export async function POST(req: NextRequest) {
         phone_confirm: true,
         password:      tempPassword,
       });
-      if (createErr || !newAuth?.user) {
-        console.error("[verify-otp] createUser error:", createErr);
-        return NextResponse.json(
-          { success: false, error: "Could not create your account. Please try again." },
-          { status: 500 }
-        );
-      }
-      userId    = newAuth.user.id;
-      isNewUser = true;
 
-      const { error: profileErr } = await admin.from("users").insert({
+      if (createErr || !newAuth?.user) {
+        // Auth user may already exist (orphaned). Find and reuse.
+        const existingAuth = await findAuthUserByPhone(admin, phone);
+        if (!existingAuth) {
+          console.error("[verify-otp] createUser error:", createErr);
+          return NextResponse.json(
+            { success: false, error: "Could not create your account. Please try again." },
+            { status: 500 }
+          );
+        }
+        userId    = existingAuth.id;
+        isNewUser = true;
+        await admin.auth.admin.updateUserById(userId, {
+          password:      tempPassword,
+          phone_confirm: true,
+        });
+      } else {
+        userId    = newAuth.user.id;
+        isNewUser = true;
+      }
+
+      const { error: profileErr } = await admin.from("users").upsert({
         id:                   userId,
         phone_number:         phone,
         business_type:        onboardingData?.businessType   ?? null,
         business_goals:       onboardingData?.goals          ?? [],
-        onboarding_completed: false,
         streak_days:          0,
-      });
-      if (profileErr) console.error("[verify-otp] Profile insert error:", profileErr);
+      }, { onConflict: "id" });
+      if (profileErr) console.error("[verify-otp] Profile upsert error:", profileErr);
     }
 
     // ── 4. Fetch full user profile ────────────────────────────────────────────
