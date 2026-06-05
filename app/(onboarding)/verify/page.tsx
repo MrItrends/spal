@@ -18,6 +18,7 @@ export default function VerifyPage() {
 
   const isEmail  = !!onboardingData.email;
   const isReset  = onboardingData.mode === "reset";
+  const isSignup = onboardingData.mode === "signup";
   const contact  = onboardingData.email ?? onboardingData.phoneNumber ?? "your contact";
 
   useEffect(() => {
@@ -90,8 +91,10 @@ export default function VerifyPage() {
       }
 
       setUser(data.data.user);
-      // New users and reset-password flow both create/set a password
-      router.push(data.data.isNewUser || isReset ? "/create-password" : "/home");
+      // Signup and reset flows always set a password; brand-new users too.
+      // Only a plain returning-user OTP login goes straight to home.
+      const needsPassword = isSignup || isReset || data.data.isNewUser;
+      router.push(needsPassword ? "/create-password" : "/home");
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {

@@ -50,7 +50,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[set-password] Password set for user:", user.id);
+    // Mark onboarding complete — locks the account so the same email/phone
+    // can't be used to sign up again (only sign in from now on).
+    await admin
+      .from("users")
+      .update({ onboarding_completed: true })
+      .eq("id", user.id);
+
+    console.log("[set-password] Password set + onboarding completed for user:", user.id);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[set-password] Unexpected error:", err);
