@@ -17,9 +17,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-spal-green text-white " +
+    "bg-[#22C55E] text-white " +
     "shadow-[0_2px_12px_rgba(34,197,94,0.28)] " +
-    "active:bg-spal-green-600 disabled:opacity-50 disabled:shadow-none",
+    "active:bg-spal-green-600 " +
+    "disabled:bg-[#E4E4E7] disabled:text-[#A1A1AA] disabled:shadow-none",
   secondary:
     "bg-white text-spal-navy border border-neutral-200/80 " +
     "shadow-[0_1px_4px_rgba(0,0,0,0.06)] " +

@@ -191,7 +191,7 @@ export default function BusinessTypePage() {
           className="w-full h-14 rounded-full font-bold text-[15px] transition-all duration-200"
           style={{
             fontFamily: "var(--font-satoshi)",
-            background: selected ? "#0F172A" : "#E4E4E7",
+            background: selected ? "#22C55E" : "#E4E4E7",
             color: selected ? "#fff" : "#A1A1AA",
           }}
         >
