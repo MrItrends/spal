@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
 import {
-  Pencil, X, User, Mail, Phone, MessageSquare, Bell, BellOff,
+  Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
   Store, Coins, Zap, ChevronRight, Camera, Flame, Check,
 } from "lucide-react";
 
@@ -136,7 +136,7 @@ export default function ProfilePage() {
                   ) : (
                     user?.full_name?.[0]?.toUpperCase() ??
                     user?.business_name?.[0]?.toUpperCase() ??
-                    <User size={22} strokeWidth={2} color="#fff" />
+                    <UserIcon size={22} strokeWidth={2} color="#fff" />
                   )
                 )}
               </div>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
         <Card padding="none">
           {([
             {
-              icon:    <User size={18} strokeWidth={2} color="#0F172A" />,
+              icon:    <UserIcon size={18} strokeWidth={2} color="#0F172A" />,
               label:   "Your name",
               hint:    user?.full_name ? user.full_name : "Tap to set your name",
               sheet:   "name" as SheetType,
