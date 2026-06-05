@@ -196,9 +196,11 @@ export default function HomePage() {
             <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
               Recent activity
             </p>
-            <button onClick={() => router.push("/records")} className="text-[12px] font-semibold" style={{ color: TEAL }}>
-              View all
-            </button>
+            {records.length > 0 && (
+              <button onClick={() => router.push("/records")} className="text-[12px] font-semibold" style={{ color: TEAL }}>
+                View all
+              </button>
+            )}
           </div>
 
           {loadingRecords ? (

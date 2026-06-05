@@ -16,6 +16,15 @@ export const metadata: Metadata = {
   description:
     "Track your sales, understand your profit, and grow your business with simple AI-powered insights.",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    shortcut: ["/favicon.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -55,7 +64,6 @@ export default function RootLayout({
           href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap"
           rel="stylesheet"
         />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
