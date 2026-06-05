@@ -1,24 +1,22 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
-import { Lock } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
 
 export default function CreatePasswordPage() {
   const router = useRouter();
   const { onboardingData } = useSPALStore();
   const isReset = onboardingData.mode === "reset";
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm]   = useState("");
+  const [show, setShow]         = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
 
-  const tooShort = password.length > 0 && password.length < 8;
-  const mismatch = confirm.length > 0 && password !== confirm;
-  const isValid  = password.length >= 8 && password === confirm;
+  const hasLength = password.length >= 8;
+  const isValid   = hasLength;
 
   async function handleCreate() {
     if (!isValid) return;
@@ -47,101 +45,118 @@ export default function CreatePasswordPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-          style={{ background: isReset ? "#FFF7ED" : "#F0FDF4" }}
-        >
-          <LockIcon color={isReset ? "#F97316" : "#22C55E"} />
-        </div>
-        <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-          {isReset ? "Set a new password" : "Create a password"}
-        </h1>
-        <p className="mt-2 text-neutral-500 text-sm leading-relaxed">
-          {isReset
-            ? "Choose a new password for your SPAL account."
-            : "You'll use this to sign in next time — no code needed."}
-        </p>
-      </motion.div>
+    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.15 }}
-        className="mt-8 flex flex-col gap-4"
-      >
-        {/* Password */}
-        <div>
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
-            Password
-          </label>
-          <input
-            type="password"
-            placeholder="At least 8 characters"
-            value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(""); }}
-            className="w-full h-14 px-4 bg-white border border-neutral-200 rounded-2xl text-spal-navy text-base outline-none focus:border-spal-blue placeholder:text-neutral-300"
-          />
-          {tooShort && (
-            <p className="text-xs text-amber-500 mt-1.5">At least 8 characters required</p>
-          )}
-        </div>
-
-        {/* Confirm */}
-        <div>
-          <label className="text-sm font-semibold text-spal-navy font-[family-name:var(--font-satoshi)] block mb-1.5">
-            Confirm password
-          </label>
-          <input
-            type="password"
-            placeholder="Repeat your password"
-            value={confirm}
-            onChange={(e) => { setConfirm(e.target.value); setError(""); }}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            className={`w-full h-14 px-4 bg-white border rounded-2xl text-spal-navy text-base outline-none placeholder:text-neutral-300 transition-colors ${
-              mismatch
-                ? "border-red-300 focus:border-red-400"
-                : "border-neutral-200 focus:border-spal-blue"
-            }`}
-          />
-          {mismatch && (
-            <p className="text-xs text-red-500 mt-1.5">Passwords don&apos;t match</p>
-          )}
-        </div>
-
-        {error && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-red-500 font-medium -mt-1">
-            {error}
-          </motion.p>
-        )}
-      </motion.div>
-
-      <div className="flex-1" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="mt-8"
-      >
-        <Button fullWidth size="lg" loading={loading} disabled={!isValid} onClick={handleCreate}>
-          {isReset ? "Save new password" : "Create password & continue"}
-        </Button>
-        {!isReset && (
+      {/* Header: back + progress (step 4 of 4) */}
+      <div className="px-6 pt-12">
+        <div className="flex items-center gap-3 mb-2">
           <button
-            className="mt-4 w-full text-center text-sm text-neutral-400 py-2"
-            onClick={() => router.push("/home")}
+            onClick={() => router.back()}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+            style={{ background: "#EAE9E7" }}
+            aria-label="Go back"
           >
-            Skip for now
+            <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
           </button>
-        )}
-      </motion.div>
+          <OnboardProgress step={4} total={4} />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 px-6 pt-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-[28px] font-bold text-spal-navy leading-tight" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.02em" }}>
+            {isReset ? "Set a new password" : "Create a password"}
+          </h1>
+          <p className="mt-2 text-neutral-500 text-[15px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+            You&apos;ll use this with your email or phone to sign in next time.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          className="mt-9"
+        >
+          {/* Password field with show/hide */}
+          <div
+            className="flex items-center h-[52px] px-4 rounded-xl"
+            style={{ background: "#FAFAFA", border: "1px solid #F4F4F5" }}
+          >
+            <input
+              type={show ? "text" : "password"}
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && isValid && handleCreate()}
+              className="flex-1 bg-transparent text-spal-navy text-[15px] outline-none placeholder:text-neutral-300"
+              style={{ fontFamily: "var(--font-satoshi)" }}
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+            <button
+              onClick={() => setShow((s) => !s)}
+              className="ml-2 text-neutral-400 active:scale-90 transition-transform"
+              aria-label={show ? "Hide password" : "Show password"}
+            >
+              {show ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
+            </button>
+          </div>
+
+          {/* Requirement hint */}
+          <div className="mt-3 flex items-center gap-2">
+            <div
+              className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
+              style={{ background: hasLength ? "#22C55E" : "#E4E4E7" }}
+            >
+              {hasLength && <Check size={11} strokeWidth={3} color="#fff" />}
+            </div>
+            <span
+              className="text-[13px]"
+              style={{ fontFamily: "var(--font-satoshi)", color: hasLength ? "#22C55E" : "#A1A1AA" }}
+            >
+              At least 8 characters
+            </span>
+          </div>
+
+          {error && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-sm text-red-500 font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {error}
+            </motion.p>
+          )}
+        </motion.div>
+      </div>
+
+      {/* Bottom button */}
+      <div className="px-6 pb-10" style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 2.5rem))" }}>
+        <button
+          onClick={handleCreate}
+          disabled={!isValid || loading}
+          className="w-full h-[52px] rounded-full font-bold text-[15px] transition-all duration-200"
+          style={{
+            fontFamily: "var(--font-satoshi)",
+            background: isValid && !loading ? "#22C55E" : "#E4E4E7",
+            color: isValid && !loading ? "#fff" : "#A1A1AA",
+          }}
+        >
+          {loading ? "Saving…" : isReset ? "Save new password" : "Create account"}
+        </button>
+      </div>
     </div>
   );
 }
 
-function LockIcon({ color }: { color: string }) {
-  return <Lock size={22} strokeWidth={2} color={color} />;
+function OnboardProgress({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex gap-2 flex-1">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className="h-1 flex-1 rounded-full transition-all duration-300"
+          style={{ background: i < step ? "#22C55E" : "#EAE9E7" }}
+        />
+      ))}
+    </div>
+  );
 }
-
