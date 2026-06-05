@@ -144,20 +144,20 @@ function SetGoalSheet({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 26, stiffness: 300 }}
-        className="relative w-full max-w-[480px] bg-white rounded-t-3xl shadow-2xl overflow-hidden"
-        style={{ maxHeight: "92dvh" }}
+        className="relative w-full max-w-[480px] bg-white rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+        style={{ maxHeight: "90dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-neutral-200 rounded-full" />
         </div>
 
-        {/* Single scrollable zone */}
+        {/* Scroll zone fills remaining height */}
         <div
-          className="overflow-y-auto overscroll-contain px-6 pt-3"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-3"
           style={{
-            maxHeight: "calc(92dvh - 24px)",
+            WebkitOverflowScrolling: "touch",
             paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
           }}
         >

@@ -185,22 +185,22 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden"
-            style={{ maxHeight: "92dvh" }}
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden flex flex-col"
+            style={{ maxHeight: "90dvh" }}
           >
             {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1">
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
 
             {success ? (
               <SuccessState isEdit={isEdit} type={type} amount={amount} />
             ) : (
-              /* Single scrollable zone — form + buttons all in natural flow */
+              /* Scroll zone fills remaining height — reliable iOS momentum scroll */
               <div
-                className="overflow-y-auto overscroll-contain px-5 pt-3 relative"
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-3 relative"
                 style={{
-                  maxHeight: "calc(92dvh - 24px)",
+                  WebkitOverflowScrolling: "touch",
                   paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
                 }}
               >

@@ -427,19 +427,19 @@ function Sheet({ open, onClose, title, children }: {
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden"
-            style={{ maxHeight: "92dvh" }}
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden flex flex-col"
+            style={{ maxHeight: "90dvh" }}
           >
             {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1">
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
 
-            {/* Single scrollable zone — everything including buttons lives here */}
+            {/* Scroll zone fills remaining height — reliable iOS momentum scroll */}
             <div
-              className="overflow-y-auto overscroll-contain px-5 pt-3"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-3"
               style={{
-                maxHeight: "calc(92dvh - 24px)",
+                WebkitOverflowScrolling: "touch",
                 paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
               }}
             >
