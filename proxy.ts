@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_PATHS = [
   "/welcome", "/business-type", "/onboard-goals", "/demo", "/preview",
-  "/signup", "/verify", "/login", "/create-password",
+  "/signup", "/verify", "/login", "/create-password", "/reset-password",
   "/api/auth/send-otp", "/api/auth/verify-otp", "/api/auth/sign-out", "/api/auth/login",
 ];
 

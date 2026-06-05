@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
 import { ArrowLeft } from "lucide-react";
 
-export default function SignupPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
   const { setOnboardingData } = useSPALStore();
 
@@ -38,7 +38,7 @@ export default function SignupPage() {
       setOnboardingData({
         email: email.trim().toLowerCase(),
         phoneNumber: undefined,
-        mode: "signup",
+        mode: "reset",
       });
 
       router.push("/verify");
@@ -51,27 +51,24 @@ export default function SignupPage() {
 
   return (
     <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
-      {/* Back + progress */}
-      <div className="flex items-center gap-3">
+      {/* Back to login */}
+      <div className="flex items-center">
         <button
-          onClick={() => router.push("/business-type")}
+          onClick={() => router.push("/login")}
           className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
           style={{ background: "#EAE9E7" }}
           aria-label="Go back"
         >
           <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
         </button>
-        <div className="flex-1">
-          <StepIndicator current={1} total={4} />
-        </div>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
         <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-          What&apos;s your email?
+          Reset your password
         </h1>
         <p className="mt-2 text-neutral-500 text-sm">
-          We&apos;ll send a 6-digit code to confirm it&apos;s you.
+          Enter the email linked to your account. We&apos;ll send a code to verify it&apos;s you.
         </p>
       </motion.div>
 
@@ -118,25 +115,7 @@ export default function SignupPage() {
         <Button fullWidth size="lg" loading={loading} disabled={!isValid} onClick={handleSendCode}>
           Send code
         </Button>
-        <p className="text-center text-neutral-400 text-xs mt-3">
-          Your email is only used to sign you in. We never share it.
-          <br />You can add your phone number later in your profile.
-        </p>
       </motion.div>
-    </div>
-  );
-}
-
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="flex gap-2">
-      {Array.from({ length: total }, (_, i) => (
-        <div
-          key={i}
-          className="h-1 flex-1 rounded-full transition-all duration-300"
-          style={{ background: i <= current ? "#22C55E" : "#EAE9E7" }}
-        />
-      ))}
     </div>
   );
 }

@@ -178,33 +178,31 @@ function CardCrossfade({ play }: { play: boolean }) {
     return () => clearInterval(t);
   }, [play]);
 
-  const images = [
-    { src: "/get-started-top.svg",    w: 274, h: 290 },
-    { src: "/get-started-bottom.svg", w: 275, h: 308 },
-  ];
+  const images = ["/get-started-top.svg", "/get-started-bottom.svg"];
 
   return (
-    <div className="relative" style={{ width: "275px", height: "310px" }}>
-      {images.map((img, i) => (
+    <div
+      className="relative mx-auto"
+      style={{ width: "min(82vw, 340px)", height: "min(90vw, 380px)" }}
+    >
+      {images.map((src, i) => (
         <motion.div
-          key={img.src}
-          className="absolute left-1/2 top-1/2"
+          key={src}
+          className="absolute inset-0 flex items-center justify-center"
           initial={false}
           animate={{
             opacity: idx === i ? 1 : 0,
-            scale:   idx === i ? 1 : 0.96,
-            y:       idx === i ? 0 : 8,
+            scale:   idx === i ? 1 : 0.95,
           }}
           transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
-          style={{ transform: "translate(-50%, -50%)", zIndex: idx === i ? 2 : 1 }}
+          style={{ zIndex: idx === i ? 2 : 1 }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={img.src}
+            src={src}
             alt=""
-            width={img.w}
-            height={img.h}
-            style={{ width: "260px", height: "auto", display: "block" }}
+            className="w-full h-full"
+            style={{ objectFit: "contain", display: "block" }}
           />
         </motion.div>
       ))}

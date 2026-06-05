@@ -101,7 +101,7 @@ export default function LoginPage() {
 
         {/* Forgot password */}
         <button
-          onClick={() => router.push("/signup?mode=reset")}
+          onClick={() => router.push("/reset-password")}
           className="text-sm text-spal-blue font-semibold text-right -mt-1 font-[family-name:var(--font-satoshi)]"
         >
           Forgot password? →
