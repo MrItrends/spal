@@ -336,10 +336,9 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                 <div className="mt-5">
                   <Button
                     fullWidth size="lg" loading={loading} disabled={!isValid}
-                    className={type === "expense" ? "!bg-spal-orange !shadow-[0_4px_14px_rgba(249,115,22,0.35)]" : ""}
                     onClick={handleSave}
                   >
-                    {isEdit ? `Update ${label}` : `Save ${label}`} ✓
+                    {isEdit ? `Update ${label}` : `Save ${label}`}
                   </Button>
 
                   {isEdit && (
