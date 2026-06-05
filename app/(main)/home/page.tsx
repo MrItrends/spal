@@ -57,14 +57,6 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* ── Ambient background glow (subtle teal, top-right only) ── */}
-        <div className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ height: "320px" }}>
-          <div
-            className="absolute rounded-full"
-            style={{ top: "-178px", right: "-90px", width: "443px", height: "443px", background: "#123232", filter: "blur(110px)", opacity: 0.22 }}
-          />
-        </div>
-
         {/* Foreground content */}
         <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
 
@@ -100,46 +92,47 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         >
-          {/* Beige outer with green→blue glow halo bleeding from the top */}
+          {/* Beige card with vivid green→blue glow contained inside (matches Frame 49) */}
           <div
             className="relative rounded-[24px] overflow-hidden"
-            style={{ background: BEIGE, padding: "8px 8px 8px 8px" }}
+            style={{ background: BEIGE }}
           >
-            {/* Glow circles behind the dark card */}
+            {/* Glow circles — clipped to the card, strongest across the top */}
             <div className="absolute pointer-events-none"
-              style={{ top: "-150px", left: "-120px", width: "300px", height: "300px", borderRadius: "50%", background: "#02D169", filter: "blur(90px)", opacity: 0.45 }} />
+              style={{ top: "-130px", left: "-110px", width: "300px", height: "300px", borderRadius: "50%", background: "#02D169", filter: "blur(75px)", opacity: 0.85 }} />
             <div className="absolute pointer-events-none"
-              style={{ top: "-150px", right: "-120px", width: "300px", height: "300px", borderRadius: "50%", background: "#2E63F9", filter: "blur(90px)", opacity: 0.4 }} />
+              style={{ top: "-130px", right: "-110px", width: "300px", height: "300px", borderRadius: "50%", background: "#2E63F9", filter: "blur(75px)", opacity: 0.8 }} />
 
-            {/* Dark inner card */}
+            {/* Top glow strip — "View report" link sits on the colourful band */}
+            <div className="relative flex justify-end items-center h-6 px-5">
+              <button
+                onClick={() => router.push("/insights")}
+                className="flex items-center gap-1 text-white text-[12px] font-semibold"
+                style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 4px rgba(0,0,0,0.25)" }}
+              >
+                View report <ChevronRight size={13} strokeWidth={2.2} />
+              </button>
+            </div>
+
+            {/* Dark inner card — 8px side/bottom inset, glow halo shows at top */}
             <div
               className="relative rounded-[20px] p-5"
-              style={{ background: "#0F172A", marginTop: "16px" }}
+              style={{ background: "#0F172A", margin: "0 8px 8px 8px" }}
             >
-              {/* Top row: label + details link */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
-                  Today&apos;s {isProfit ? "Profit" : "Net loss"}
-                </span>
-                <button
-                  onClick={() => router.push("/insights")}
-                  className="text-[12px] font-medium flex items-center gap-1 text-white/80"
-                  style={{ fontFamily: "var(--font-satoshi)" }}
-                >
-                  Insights <ChevronRight size={12} strokeWidth={2} />
-                </button>
-              </div>
-
               {loadingSummary ? (
                 <PulseSkeleton />
               ) : summary ? (
                 <>
+                  <p className="text-[12px] font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
+                    Today&apos;s {isProfit ? "Profit" : "Net loss"}
+                  </p>
+
                   {/* Big profit number */}
                   <p
                     className="font-bold leading-none"
                     style={{
                       fontFamily: "var(--font-satoshi)",
-                      fontSize: "clamp(36px, 11vw, 46px)",
+                      fontSize: "clamp(34px, 10vw, 42px)",
                       letterSpacing: "-0.02em",
                       color: "#ffffff",
                     }}
