@@ -8,7 +8,10 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
-import { Pencil, Lock, X } from "lucide-react";
+import {
+  Pencil, X, User, Mail, Phone, MessageSquare, Bell, BellOff,
+  Store, Coins, Zap, ChevronRight, Camera, Flame, Check,
+} from "lucide-react";
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
   food_seller:    "Food Seller",
@@ -133,7 +136,7 @@ export default function ProfilePage() {
                   ) : (
                     user?.full_name?.[0]?.toUpperCase() ??
                     user?.business_name?.[0]?.toUpperCase() ??
-                    "👤"
+                    <User size={22} strokeWidth={2} color="#fff" />
                   )
                 )}
               </div>
@@ -141,7 +144,7 @@ export default function ProfilePage() {
               <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
                 {avatarLoading
                   ? <span className="text-white text-xs animate-pulse">…</span>
-                  : <span className="text-white text-base">📷</span>
+                  : <Camera size={16} strokeWidth={2} color="#fff" />
                 }
               </div>
             </label>
@@ -176,9 +179,20 @@ export default function ProfilePage() {
             Your progress
           </p>
           <div className="grid grid-cols-3 gap-4 text-center">
-            <StatItem value={`${user?.streak_days ?? 0}🔥`} label="Day streak" />
+            <StatItem
+              value={
+                <span className="inline-flex items-center gap-1">
+                  {user?.streak_days ?? 0}
+                  <Flame size={16} strokeWidth={2} color="#F97316" />
+                </span>
+              }
+              label="Day streak"
+            />
             <StatItem value={user?.streak_days != null && user.streak_days > 7 ? "Active" : "Growing"} label="Status" />
-            <StatItem value="✓" label="Verified" />
+            <StatItem
+              value={<Check size={20} strokeWidth={2.5} color="#22C55E" className="inline" />}
+              label="Verified"
+            />
           </div>
         </Card>
       </motion.div>
@@ -186,57 +200,55 @@ export default function ProfilePage() {
       {/* Settings */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Card padding="none">
-          {[
+          {([
             {
-              icon:    "👤",
+              icon:    <User size={18} strokeWidth={2} color="#0F172A" />,
               label:   "Your name",
               hint:    user?.full_name ? user.full_name : "Tap to set your name",
               sheet:   "name" as SheetType,
             },
             ...(!user?.email ? [{
-              icon:    "✉️",
+              icon:    <Mail size={18} strokeWidth={2} color="#2563EB" />,
               label:   "Add email address",
               hint:    "Sign in with email too",
               sheet:   "add-email" as SheetType,
             }] : []),
             ...(!user?.phone_number ? [{
-              icon:    "📞",
+              icon:    <Phone size={18} strokeWidth={2} color="#2563EB" />,
               label:   "Add phone number",
               hint:    "Sign in with phone too",
               sheet:   "add-phone" as SheetType,
-            }] : [
-              user?.phone_number ? {
-                icon:    "📞",
-                label:   "Phone number",
-                hint:    user.phone_number,
-                sheet:   "add-phone" as SheetType,
-              } : null,
-            ].filter(Boolean) as { icon: string; label: string; hint: string; sheet: SheetType }[]),
+            }] : [{
+              icon:    <Phone size={18} strokeWidth={2} color="#0F172A" />,
+              label:   "Phone number",
+              hint:    user.phone_number!,
+              sheet:   "add-phone" as SheetType,
+            }]),
             {
-              icon:    "📱",
+              icon:    <MessageSquare size={18} strokeWidth={2} color="#16A34A" />,
               label:   "WhatsApp reports",
               hint:    user?.whatsapp_number ? `Sending to ${user.whatsapp_number}` : "Set up weekly reports",
               sheet:   "whatsapp" as SheetType,
             },
             {
-              icon:    "🔔",
+              icon:    <Bell size={18} strokeWidth={2} color="#8B5CF6" />,
               label:   "Notifications",
               hint:    "Daily reminders to track",
               sheet:   "notifications" as SheetType,
             },
             {
-              icon:    "🏪",
+              icon:    <Store size={18} strokeWidth={2} color="#F97316" />,
               label:   "Business details",
               hint:    user?.business_name ?? "Add your business name",
               sheet:   "business" as SheetType,
             },
             {
-              icon:    "💱",
+              icon:    <Coins size={18} strokeWidth={2} color="#16A34A" />,
               label:   "Currency",
               hint:    user?.currency ?? "NGN",
               sheet:   "currency" as SheetType,
             },
-          ].map((item, i, arr) => (
+          ] as { icon: React.ReactNode; label: string; hint: string; sheet: SheetType }[]).map((item, i, arr) => (
             <button
               key={item.label}
               onClick={() => setActiveSheet(item.sheet)}
@@ -244,12 +256,14 @@ export default function ProfilePage() {
                 i < arr.length - 1 ? "border-b border-neutral-50" : ""
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <div className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center flex-shrink-0">
+                {item.icon}
+              </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-semibold text-spal-navy">{item.label}</p>
                 <p className="text-xs text-neutral-400 mt-0.5">{item.hint}</p>
               </div>
-              <span className="text-neutral-300 text-lg">›</span>
+              <ChevronRight size={18} strokeWidth={2} className="text-neutral-300" />
             </button>
           ))}
         </Card>
@@ -262,11 +276,13 @@ export default function ProfilePage() {
             onClick={() => router.push("/upgrade")}
             className="w-full flex items-center gap-3 px-4 py-4 active:bg-neutral-50 transition-colors"
           >
-            <span className="text-xl">⚡</span>
+            <div className="w-9 h-9 rounded-full bg-spal-purple-50 flex items-center justify-center flex-shrink-0">
+              <Zap size={18} strokeWidth={2} color="#8B5CF6" />
+            </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-spal-navy">Subscription</p>
               <p className="text-xs text-neutral-400 mt-0.5">
-                {isPro ? "SPAL Pro — all features unlocked ✓" : "Free plan — upgrade to unlock advisors"}
+                {isPro ? "SPAL Pro — all features unlocked" : "Free plan — upgrade to unlock advisors"}
               </p>
             </div>
             {isPro ? (
@@ -382,7 +398,7 @@ function PencilMiniIcon() {
   return <Pencil size={13} strokeWidth={2.2} color="#A1A1AA" />;
 }
 
-function StatItem({ value, label }: { value: string; label: string }) {
+function StatItem({ value, label }: { value: React.ReactNode; label: string }) {
   return (
     <div>
       <p className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">{value}</p>
@@ -530,7 +546,7 @@ function BusinessDetailsSheet({ open, user, onClose, onSave }: {
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="🏪 Business details">
+    <Sheet open={open} onClose={onClose} title="Business details">
       <div className="space-y-4">
         <div>
           <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wide block mb-2">
@@ -592,7 +608,7 @@ function WhatsAppSheet({ open, current, onClose, onSave }: {
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="📱 WhatsApp reports">
+    <Sheet open={open} onClose={onClose} title="WhatsApp reports">
       <div className="space-y-4">
         <p className="text-sm text-neutral-500 leading-relaxed">
           We&apos;ll send your weekly business summary to this WhatsApp number every Sunday.
@@ -656,7 +672,7 @@ function CurrencySheet({ open, current, onClose, onSave }: {
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="💱 Currency">
+    <Sheet open={open} onClose={onClose} title="Currency">
       <div className="space-y-4">
         <div className="space-y-2">
           {CURRENCIES.map(c => (
@@ -869,11 +885,11 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
   const isDenied = permission === "denied";
 
   return (
-    <Sheet open={open} onClose={onClose} title="🔔 Notifications">
+    <Sheet open={open} onClose={onClose} title="Notifications">
       <div className="space-y-4">
         {isDenied ? (
           <div className="bg-red-50 rounded-2xl p-4 flex items-start gap-3">
-            <span className="text-xl mt-0.5">🚫</span>
+            <BellOff size={20} strokeWidth={2} color="#DC2626" className="mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-red-600">Notifications blocked</p>
               <p className="text-sm text-neutral-500 mt-1 leading-relaxed">
