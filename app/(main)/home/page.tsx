@@ -80,9 +80,19 @@ export default function HomePage() {
             <CircleButton onClick={() => router.push("/ask")} aria="Ask SPAL">
               <MessageCircle size={18} strokeWidth={2} color="#fff" />
             </CircleButton>
-            <CircleButton onClick={() => router.push("/profile")} aria="Profile">
-              <User size={18} strokeWidth={2} color="#fff" />
-            </CircleButton>
+            <button
+              onClick={() => router.push("/profile")}
+              aria-label="Profile"
+              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
+              style={{ background: TEAL }}
+            >
+              {user?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={18} strokeWidth={2} color="#fff" />
+              )}
+            </button>
           </div>
         </motion.div>
 
