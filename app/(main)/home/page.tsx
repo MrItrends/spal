@@ -57,15 +57,11 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* ── Ambient background glow (green top-left, teal top-right) ── */}
+        {/* ── Ambient background glow (subtle teal, top-right only) ── */}
         <div className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ height: "320px" }}>
           <div
             className="absolute rounded-full"
-            style={{ top: "-178px", left: "-162px", width: "443px", height: "443px", background: "#37CB6D", filter: "blur(110px)", opacity: 0.5 }}
-          />
-          <div
-            className="absolute rounded-full"
-            style={{ top: "-178px", right: "-90px", width: "443px", height: "443px", background: "#123232", filter: "blur(110px)", opacity: 0.32 }}
+            style={{ top: "-178px", right: "-90px", width: "443px", height: "443px", background: "#123232", filter: "blur(110px)", opacity: 0.22 }}
           />
         </div>
 
