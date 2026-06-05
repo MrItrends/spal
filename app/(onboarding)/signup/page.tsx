@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
+import { ArrowLeft } from "lucide-react";
 
 export default function SignupPage() {
   return (
@@ -60,7 +61,22 @@ function SignupForm() {
 
   return (
     <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
-      <StepIndicator current={1} total={4} />
+      {/* Back + (signup only) progress */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => router.push(isReset ? "/login" : "/business-type")}
+          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+          style={{ background: "#EAE9E7" }}
+          aria-label="Go back"
+        >
+          <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
+        </button>
+        {!isReset && (
+          <div className="flex-1">
+            <StepIndicator current={1} total={4} />
+          </div>
+        )}
+      </div>
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
         <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
