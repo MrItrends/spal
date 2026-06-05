@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useSPALStore } from "@/store";
 import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
 
 interface PaywallGateProps {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ export function PaywallGate({
       className="flex flex-col items-center justify-center text-center px-6 py-12"
     >
       <div className="w-16 h-16 bg-spal-purple-50 rounded-2xl flex items-center justify-center mb-4 border border-spal-purple-100">
-        <span className="text-3xl">🔒</span>
+        <Lock size={28} strokeWidth={2} color="#8B5CF6" />
       </div>
       <h3 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)] mb-2">
         {title}

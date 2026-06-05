@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore } from "@/store";
+import { MessageCircle } from "lucide-react";
 
 type VoiceState = "idle" | "recording" | "transcribing";
 
@@ -347,9 +348,10 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
               transition={{ delay: 0.25 + i * 0.06 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onPrompt(prompt)}
-              className="w-full text-left bg-white rounded-2xl px-4 py-3.5 text-sm text-spal-navy font-medium shadow-sm border border-neutral-100 active:bg-neutral-50 transition-colors"
+              className="w-full text-left bg-white rounded-2xl px-4 py-3.5 text-sm text-spal-navy font-medium shadow-sm border border-neutral-100 active:bg-neutral-50 transition-colors flex items-center gap-2"
             >
-              <span className="mr-2">💬</span>{prompt}
+              <MessageCircle size={15} strokeWidth={2} className="text-spal-blue flex-shrink-0" />
+              {prompt}
             </motion.button>
           ))}
         </div>

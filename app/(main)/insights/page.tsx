@@ -15,6 +15,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { MessageCircle, Trophy, TriangleAlert, TrendingUp, BarChart3 } from "lucide-react";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 
 type Period = "today" | "week" | "month";
@@ -132,25 +133,25 @@ export default function InsightsPage() {
     ...(summary?.ai_message ? [{
       title: "SPAL says",
       message: summary.ai_message,
-      emoji: "💬",
+      icon: <MessageCircle size={20} strokeWidth={2} className="text-spal-blue" />,
       variant: "tip" as const,
     }] : []),
     ...(bestDay?.sales > 0 ? [{
       title: `Best day: ${bestDay.day}`,
       message: `${bestDay.day} was your strongest day with ${formatCurrency(bestDay.sales)} in sales.`,
-      emoji: "🏆",
+      icon: <Trophy size={20} strokeWidth={2} color="#fff" />,
       variant: "celebration" as const,
     }] : []),
     ...(topCat ? [{
       title: "Biggest expense",
       message: `${topCat[0]} is your top cost at ${formatCurrency(topCat[1])}. Worth keeping an eye on.`,
-      emoji: "⚡",
+      icon: <TriangleAlert size={20} strokeWidth={2} className="text-spal-orange-600" />,
       variant: "warning" as const,
     }] : []),
     ...(totals.profit > 0 ? [{
       title: "Looking good",
       message: `You made ${formatCurrency(totals.profit)} profit this ${period === "today" ? "day" : period}.${profitChange != null ? ` That's ${profitChange > 0 ? "+" : ""}${profitChange}% vs last ${period === "today" ? "day" : period}.` : ""}`,
-      emoji: "📈",
+      icon: <TrendingUp size={20} strokeWidth={2} className="text-spal-blue" />,
       variant: "tip" as const,
       ...(profitChange != null ? { metric: `${profitChange > 0 ? "+" : ""}${profitChange}%`, metricLabel: `vs last ${period === "today" ? "day" : period}`, positive: profitChange >= 0 } : {}),
     }] : []),
@@ -286,7 +287,9 @@ export default function InsightsPage() {
       {/* Empty state */}
       {!loading && records.length === 0 && (
         <div className="text-center py-12">
-          <span className="text-4xl">📊</span>
+          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
+            <BarChart3 size={26} strokeWidth={2} className="text-neutral-300" />
+          </div>
           <p className="text-spal-navy font-semibold mt-3">No data yet</p>
           <p className="text-neutral-400 text-sm mt-1">Add some sales and expenses to see your insights here.</p>
         </div>

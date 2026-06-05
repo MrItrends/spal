@@ -6,7 +6,7 @@ interface InsightCardProps {
   title:       string;
   message:     string;
   variant?:    "default" | "celebration" | "warning" | "tip";
-  emoji?:      string;
+  icon?:       React.ReactNode;
   metric?:     string;
   metricLabel?: string;
   positive?:   boolean;
@@ -45,7 +45,7 @@ export function InsightCard({
   title,
   message,
   variant    = "default",
-  emoji,
+  icon,
   metric,
   metricLabel,
   positive,
@@ -57,8 +57,8 @@ export function InsightCard({
       className={`rounded-[18px] p-4 ${variantStyles[variant]}`}
     >
       <div className="flex items-start gap-3">
-        {emoji && (
-          <span className="text-2xl flex-shrink-0 mt-0.5 leading-none">{emoji}</span>
+        {icon && (
+          <span className="flex-shrink-0 mt-0.5">{icon}</span>
         )}
         <div className="flex-1 min-w-0">
           <p className={`font-semibold text-sm font-[family-name:var(--font-satoshi)] ${titleColor[variant]}`}>
