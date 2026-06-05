@@ -9,7 +9,7 @@ import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
-  TrendingUp, TrendingDown, Target, MessageCircle, User,
+  TrendingUp, TrendingDown, Target, MessageCircle, User, Bell,
   ArrowUp, ArrowDown, ChevronRight,
 } from "lucide-react";
 
@@ -77,8 +77,8 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <CircleButton onClick={() => router.push("/ask")} aria="Ask SPAL">
-              <MessageCircle size={18} strokeWidth={2} color="#fff" />
+            <CircleButton onClick={() => router.push("/notifications")} aria="Notifications">
+              <Bell size={18} strokeWidth={2} color="#fff" />
             </CircleButton>
             <button
               onClick={() => router.push("/profile")}

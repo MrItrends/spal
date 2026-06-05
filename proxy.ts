@@ -50,7 +50,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Protect /home, /records, /insights, /learn, /profile, /ask
-  const protectedPaths = ["/home", "/records", "/insights", "/learn", "/profile", "/ask", "/goals", "/upgrade"];
+  const protectedPaths = ["/home", "/records", "/insights", "/learn", "/profile", "/ask", "/goals", "/upgrade", "/notifications", "/billing"];
   if (protectedPaths.some(p => pathname.startsWith(p)) && !user) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
