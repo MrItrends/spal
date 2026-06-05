@@ -1,19 +1,22 @@
 /**
  * SPAL Service Worker
  *
- * Strategy:
- *  - Static assets (/_next/static, /icons) → CacheFirst (long-lived)
- *  - Navigation requests → NetworkFirst with offline fallback (/offline)
- *  - API routes → NetworkOnly (never cached — always fresh data)
- *  - Push notifications + notification clicks handled here
+ * Deliberately minimal to avoid serving stale Next.js build output.
+ * Next.js chunk filenames change on every deploy; caching HTML or chunks
+ * risks pointing the browser at purged files (404 → blank page).
  *
- * Bump CACHE_VERSION when you want to force all clients to update.
+ * Strategy:
+ *  - HTML navigations → network-only, fall back to /offline ONLY when offline
+ *  - /_next/ build output & /api/ → passthrough (never intercepted/cached)
+ *  - icons / manifest → cached for offline shell
+ *  - Push notifications handled here
+ *
+ * Bump CACHE_VERSION to force all clients to drop old caches.
  */
 
-const CACHE_VERSION = "spal-v1";
+const CACHE_VERSION = "spal-v3";
 const OFFLINE_URL   = "/offline";
 
-// Assets to pre-cache on install (critical shell)
 const PRECACHE = [
   OFFLINE_URL,
   "/manifest.json",
@@ -21,69 +24,59 @@ const PRECACHE = [
   "/icons/icon-512.png",
 ];
 
-// ── Install: pre-cache shell assets ──────────────────────────────────────────
+// ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_VERSION)
+    caches.open(CACHE_VERSION)
       .then((cache) => cache.addAll(PRECACHE))
       .then(() => self.skipWaiting()),
   );
 });
 
-// ── Activate: remove old caches ───────────────────────────────────────────────
+// ── Activate: drop ALL old caches, take control immediately ─────────────────────
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((k) => k !== CACHE_VERSION)
-            .map((k) => caches.delete(k)),
-        ),
-      )
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)),
+      ))
       .then(() => self.clients.claim()),
   );
 });
 
-// ── Fetch: routing strategy ───────────────────────────────────────────────────
+// ── Fetch ───────────────────────────────────────────────────────────────────────
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle same-origin requests
   if (url.origin !== location.origin) return;
 
-  // API routes → always network (no caching)
-  if (url.pathname.startsWith("/api/")) return;
+  // NEVER intercept Next.js build output or API — always hit the network fresh.
+  // (Chunks are content-hashed; the CDN handles their caching correctly.)
+  if (url.pathname.startsWith("/_next/") || url.pathname.startsWith("/api/")) {
+    return;
+  }
 
-  // Static Next.js chunks → CacheFirst
-  if (
-    url.pathname.startsWith("/_next/static/") ||
-    url.pathname.startsWith("/icons/")
-  ) {
+  // Icons / manifest → cache-first (safe; rarely change, not build-hashed)
+  if (url.pathname.startsWith("/icons/") || url.pathname === "/manifest.json") {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ??
-          fetch(request).then((response) => {
-            const clone = response.clone();
-            caches.open(CACHE_VERSION).then((c) => c.put(request, clone));
-            return response;
-          }),
+      caches.match(request).then((cached) =>
+        cached ??
+        fetch(request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_VERSION).then((c) => c.put(request, clone));
+          return response;
+        }),
       ),
     );
     return;
   }
 
-  // Navigation (HTML pages) → NetworkFirst with offline fallback
+  // HTML navigations → network-only, offline page only on genuine network failure.
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request).catch(() =>
-        caches
-          .match(OFFLINE_URL)
-          .then((fallback) => fallback ?? Response.error()),
+        caches.match(OFFLINE_URL).then((f) => f ?? Response.error()),
       ),
     );
   }
@@ -92,9 +85,7 @@ self.addEventListener("fetch", (event) => {
 // ── Push notification display ─────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-
   const { title, body, url } = event.data.json();
-
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
@@ -106,19 +97,16 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// ── Notification click: open / focus the app ──────────────────────────────────
+// ── Notification click ──────────────────────────────────────────────────────────
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url ?? "/home";
-
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
-          if (client.url.includes(targetUrl) && "focus" in client) {
-            return client.focus();
-          }
+          if (client.url.includes(targetUrl) && "focus" in client) return client.focus();
         }
         return self.clients.openWindow(targetUrl);
       }),

@@ -25,10 +25,25 @@ export function RegisterSW() {
       .register("/sw.js", { scope: "/" })
       .then((registration) => {
         console.log("[SW] Registered, scope:", registration.scope);
+        // Check for an updated SW on every load
+        registration.update();
       })
       .catch((err) => {
         console.warn("[SW] Registration failed:", err);
       });
+
+    // When a new SW takes control, reload once so the page uses fresh assets.
+    let refreshing = false;
+    const onControllerChange = () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+    };
   }, []);
 
   return null;
