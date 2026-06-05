@@ -36,7 +36,8 @@ export default function CreatePasswordPage() {
         return;
       }
 
-      router.push("/home");
+      // Hard navigation so the proxy middleware sees the refreshed session
+      window.location.href = "/home";
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {

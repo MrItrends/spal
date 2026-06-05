@@ -94,7 +94,12 @@ export default function VerifyPage() {
       // Signup and reset flows always set a password; brand-new users too.
       // Only a plain returning-user OTP login goes straight to home.
       const needsPassword = isSignup || isReset || data.data.isNewUser;
-      router.push(needsPassword ? "/create-password" : "/home");
+      if (needsPassword) {
+        router.push("/create-password");
+      } else {
+        // Hard navigation so the proxy middleware sees the session cookies
+        window.location.href = "/home";
+      }
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {

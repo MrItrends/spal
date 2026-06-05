@@ -16,18 +16,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Read the current user from the session cookie set by verify-otp
-    const supabase = createServerClient(
+    const readClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll: () => req.cookies.getAll(),
-          setAll: () => {}, // no new cookies needed here
+          setAll: () => {},
         },
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await readClient.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
@@ -57,8 +57,38 @@ export async function POST(req: NextRequest) {
       .update({ onboarding_completed: true })
       .eq("id", user.id);
 
-    console.log("[set-password] Password set + onboarding completed for user:", user.id);
-    return NextResponse.json({ success: true });
+    // ── Re-establish the session ────────────────────────────────────────────
+    // Changing the password invalidates the existing session, so we sign in
+    // again with the NEW password and attach fresh cookies to the response.
+    const response = NextResponse.json({ success: true });
+
+    const sessionClient = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => req.cookies.getAll(),
+          setAll: (cookiesToSet) => {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const credentials = user.email
+      ? { email: user.email, password }
+      : { phone: user.phone!, password };
+
+    const { error: signInError } = await sessionClient.auth.signInWithPassword(credentials);
+    if (signInError) {
+      console.error("[set-password] re-signin error:", signInError.message);
+      // Password was set successfully — client can still log in manually.
+    }
+
+    console.log("[set-password] Password set + session refreshed for user:", user.id);
+    return response;
   } catch (err) {
     console.error("[set-password] Unexpected error:", err);
     return NextResponse.json(

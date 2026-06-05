@@ -39,7 +39,8 @@ export default function LoginPage() {
       }
 
       setUser(data.data.user);
-      router.push("/home");
+      // Hard navigation so the proxy middleware re-reads the new session cookies
+      window.location.href = "/home";
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {
