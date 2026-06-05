@@ -55,7 +55,22 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="px-6 pt-7 space-y-6 animate-fade-in" style={{ background: "#F8F7F4" }}>
+      <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
+
+        {/* ── Ambient background glow (green top-left, teal top-right) ── */}
+        <div className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ height: "320px" }}>
+          <div
+            className="absolute rounded-full"
+            style={{ top: "-178px", left: "-162px", width: "443px", height: "443px", background: "#37CB6D", filter: "blur(110px)", opacity: 0.5 }}
+          />
+          <div
+            className="absolute rounded-full"
+            style={{ top: "-178px", right: "-90px", width: "443px", height: "443px", background: "#123232", filter: "blur(110px)", opacity: 0.32 }}
+          />
+        </div>
+
+        {/* Foreground content */}
+        <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
 
         {/* ── Header ── */}
         <motion.div
@@ -89,27 +104,33 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         >
+          {/* Beige outer with green→blue glow halo bleeding from the top */}
           <div
-            className="relative rounded-[24px] p-6 overflow-hidden"
-            style={{ background: BEIGE }}
+            className="relative rounded-[24px] overflow-hidden"
+            style={{ background: BEIGE, padding: "8px 8px 8px 8px" }}
           >
-            {/* Soft decorative glows */}
-            <div className="absolute -top-10 -right-8 w-40 h-40 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(2,209,105,0.16), transparent 70%)" }} />
-            <div className="absolute -bottom-12 -left-6 w-40 h-40 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(46,99,249,0.10), transparent 70%)" }} />
+            {/* Glow circles behind the dark card */}
+            <div className="absolute pointer-events-none"
+              style={{ top: "-150px", left: "-120px", width: "300px", height: "300px", borderRadius: "50%", background: "#02D169", filter: "blur(90px)", opacity: 0.45 }} />
+            <div className="absolute pointer-events-none"
+              style={{ top: "-150px", right: "-120px", width: "300px", height: "300px", borderRadius: "50%", background: "#2E63F9", filter: "blur(90px)", opacity: 0.4 }} />
 
-            <div className="relative">
-              <div className="flex items-center justify-between mb-5">
-                <span className="text-[11px] font-bold tracking-widest uppercase" style={{ fontFamily: "var(--font-satoshi)", color: TEAL, opacity: 0.55 }}>
-                  Today
+            {/* Dark inner card */}
+            <div
+              className="relative rounded-[20px] p-5"
+              style={{ background: "#0F172A", marginTop: "16px" }}
+            >
+              {/* Top row: label + details link */}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
+                  Today&apos;s {isProfit ? "Profit" : "Net loss"}
                 </span>
                 <button
                   onClick={() => router.push("/insights")}
-                  className="text-[11px] font-medium flex items-center gap-0.5"
-                  style={{ color: TEAL, opacity: 0.6 }}
+                  className="text-[12px] font-medium flex items-center gap-1 text-white/80"
+                  style={{ fontFamily: "var(--font-satoshi)" }}
                 >
-                  Details <ChevronRight size={11} strokeWidth={2} />
+                  Insights <ChevronRight size={12} strokeWidth={2} />
                 </button>
               </div>
 
@@ -117,28 +138,41 @@ export default function HomePage() {
                 <PulseSkeleton />
               ) : summary ? (
                 <>
-                  <p className="text-[12px] mb-1" style={{ fontFamily: "var(--font-satoshi)", color: TEAL, opacity: 0.5 }}>
-                    {isProfit ? "Profit" : "Net loss"}
-                  </p>
+                  {/* Big profit number */}
                   <p
-                    className="font-bold leading-none mb-6"
+                    className="font-bold leading-none"
                     style={{
                       fontFamily: "var(--font-satoshi)",
-                      fontSize: "clamp(34px, 10vw, 44px)",
+                      fontSize: "clamp(36px, 11vw, 46px)",
                       letterSpacing: "-0.02em",
-                      color: isProfit ? "#0F172A" : "#C2410C",
+                      color: "#ffffff",
                     }}
                   >
                     {formatCurrency(Math.abs(profit))}
                   </p>
 
-                  <div className="flex gap-3">
-                    <HeroStat label="Sales"    value={formatCurrency(summary.total_sales ?? 0)}    color="#16A34A" icon={<ArrowUp size={12} strokeWidth={2.5} color="#16A34A" />} bg="rgba(22,163,74,0.10)" />
-                    <HeroStat label="Expenses" value={formatCurrency(summary.total_expenses ?? 0)} color="#EA580C" icon={<ArrowDown size={12} strokeWidth={2.5} color="#EA580C" />} bg="rgba(234,88,12,0.10)" />
+                  {/* Divider */}
+                  <div className="h-px my-4" style={{ background: "#384666" }} />
+
+                  {/* Sales | Expenses split */}
+                  <div className="flex items-stretch">
+                    <div className="flex-1">
+                      <p className="text-[12px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Sales</p>
+                      <p className="text-[18px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#22C55E" }}>
+                        {formatCurrency(summary.total_sales ?? 0)}
+                      </p>
+                    </div>
+                    <div className="w-px mx-4" style={{ background: "#384666" }} />
+                    <div className="flex-1">
+                      <p className="text-[12px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Expenses</p>
+                      <p className="text-[18px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#ED712E" }}>
+                        {formatCurrency(summary.total_expenses ?? 0)}
+                      </p>
+                    </div>
                   </div>
 
                   {summary.ai_message && (
-                    <p className="mt-5 text-[12.5px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)", color: TEAL, opacity: 0.75 }}>
+                    <p className="mt-4 pt-4 text-[12.5px] leading-relaxed text-white/55" style={{ fontFamily: "var(--font-satoshi)", borderTop: "1px solid #384666" }}>
                       {summary.ai_message}
                     </p>
                   )}
@@ -250,6 +284,7 @@ export default function HomePage() {
         </motion.div>
 
         <div className="h-5" />
+        </div>
       </div>
 
       {/* Sheets */}
@@ -288,26 +323,6 @@ function CircleButton({ children, onClick, aria }: { children: React.ReactNode; 
   );
 }
 
-function HeroStat({ label, value, color, bg, icon }: {
-  label: string; value: string; color: string; bg: string; icon: React.ReactNode;
-}) {
-  return (
-    <div className="flex-1 rounded-2xl px-3.5 py-3" style={{ background: "rgba(255,255,255,0.55)" }}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: bg }}>
-          {icon}
-        </div>
-        <span className="text-[11px] font-medium" style={{ fontFamily: "var(--font-satoshi)", color: TEAL, opacity: 0.6 }}>
-          {label}
-        </span>
-      </div>
-      <p className="text-[15px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color }}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function Tile({ bg, label, icon, onClick }: {
   bg: string; label: string; icon: React.ReactNode; onClick: () => void;
 }) {
@@ -330,13 +345,13 @@ function Tile({ bg, label, icon, onClick }: {
 function PulseEmpty({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="py-2">
-      <p className="text-[14px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)", color: TEAL, opacity: 0.6 }}>
+      <p className="text-[14px] leading-relaxed text-white/45" style={{ fontFamily: "var(--font-satoshi)" }}>
         Nothing recorded yet today.
       </p>
       <button
         onClick={onAdd}
-        className="mt-3 font-semibold text-[14px]"
-        style={{ fontFamily: "var(--font-satoshi)", color: "#16A34A" }}
+        className="mt-3 font-semibold text-[14px] text-spal-green"
+        style={{ fontFamily: "var(--font-satoshi)" }}
       >
         Record your first sale
       </button>
@@ -347,10 +362,11 @@ function PulseEmpty({ onAdd }: { onAdd: () => void }) {
 function PulseSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="h-11 rounded-xl w-44" style={{ background: "rgba(32,73,72,0.08)" }} />
-      <div className="flex gap-3">
-        <div className="h-16 flex-1 rounded-2xl" style={{ background: "rgba(32,73,72,0.06)" }} />
-        <div className="h-16 flex-1 rounded-2xl" style={{ background: "rgba(32,73,72,0.06)" }} />
+      <div className="h-11 rounded-xl w-44 bg-white/10" />
+      <div className="h-px bg-white/10" />
+      <div className="flex gap-4">
+        <div className="h-12 flex-1 rounded-xl bg-white/8" />
+        <div className="h-12 flex-1 rounded-xl bg-white/8" />
       </div>
     </div>
   );
