@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
 import {
   Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
-  Store, Coins, Zap, ChevronRight, Camera, Flame, Check,
+  Store, Coins, Receipt, ChevronRight, Camera, Flame, Check,
 } from "lucide-react";
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -36,7 +36,7 @@ type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications"
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, setUser, logout, isPro } = useSPALStore();
+  const { user, setUser, logout } = useSPALStore();
   const [signingOut,    setSigningOut]    = useState(false);
   const [activeSheet,   setActiveSheet]   = useState<SheetType>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -269,27 +269,23 @@ export default function ProfilePage() {
         </Card>
       </motion.div>
 
-      {/* Subscription row */}
+      {/* Payment history row */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
         <Card padding="none">
           <button
-            onClick={() => router.push("/upgrade")}
+            onClick={() => router.push("/billing")}
             className="w-full flex items-center gap-3 px-4 py-4 active:bg-neutral-50 transition-colors"
           >
             <div className="w-9 h-9 rounded-full bg-spal-purple-50 flex items-center justify-center flex-shrink-0">
-              <Zap size={18} strokeWidth={2} color="#8B5CF6" />
+              <Receipt size={18} strokeWidth={2} color="#8B5CF6" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-spal-navy">Subscription</p>
+              <p className="text-sm font-semibold text-spal-navy">Payment history</p>
               <p className="text-xs text-neutral-400 mt-0.5">
-                {isPro ? "SPAL Pro — all features unlocked" : "Free plan — upgrade to unlock advisors"}
+                Coach subscriptions, receipts and renewals
               </p>
             </div>
-            {isPro ? (
-              <span className="text-xs bg-spal-green-50 text-spal-green-700 border border-spal-green-100 rounded-full px-2 py-0.5 font-bold">Pro</span>
-            ) : (
-              <span className="text-xs text-spal-purple font-semibold">Upgrade →</span>
-            )}
+            <ChevronRight size={18} strokeWidth={2} className="text-neutral-300" />
           </button>
         </Card>
       </motion.div>
