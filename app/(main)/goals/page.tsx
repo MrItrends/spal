@@ -1,11 +1,16 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import {
+  Target, TrendingUp, Calendar, Trophy, ArrowRight,
+  Plus, X, Sparkles, Check,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils/currency";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Types & constants
+// Types
 // ─────────────────────────────────────────────────────────────────────────────
 
 type GoalType = "daily_sales" | "weekly_profit" | "monthly_sales" | "yearly_revenue";
@@ -15,338 +20,58 @@ interface GoalData {
   goal_type: GoalType;
   target:    number;
   current:   number;
-  progress:  number;   // 0–100
+  progress:  number;
   completed: boolean;
 }
 
-const GOAL_META: Record<GoalType, { label: string; period: string; emoji: string; color: string; ring: string; bg: string; border: string }> = {
-  daily_sales:    { label: "Daily Sales",      period: "today",     emoji: "🌅", color: "text-spal-green",  ring: "#1DB954", bg: "bg-spal-green-50",  border: "border-spal-green-100"  },
-  weekly_profit:  { label: "Weekly Profit",    period: "this week", emoji: "💰", color: "text-spal-blue",   ring: "#3B82F6", bg: "bg-spal-blue-50",   border: "border-spal-blue-100"   },
-  monthly_sales:  { label: "Monthly Sales",    period: "this month",emoji: "📈", color: "text-spal-orange", ring: "#F97316", bg: "bg-spal-orange-50", border: "border-spal-orange-100" },
-  yearly_revenue: { label: "Yearly Revenue",   period: "this year", emoji: "🏆", color: "text-spal-purple", ring: "#8B5CF6", bg: "bg-spal-purple-50", border: "border-spal-purple-100" },
+interface GoalMeta {
+  label:   string;
+  period:  string;
+  hint:    string;
+  icon:    React.ReactNode;
+  accent:  string; // hex
+  tintBg:  string; // pastel bg
+}
+
+const GOAL_META: Record<GoalType, GoalMeta> = {
+  daily_sales: {
+    label: "Daily sales",   period: "today",      hint: "What sales do you want to hit today?",
+    icon: <TrendingUp size={20} strokeWidth={2} color="#16A34A" />,
+    accent: "#16A34A", tintBg: "#E0F4E9",
+  },
+  weekly_profit: {
+    label: "Weekly profit", period: "this week",  hint: "How much profit do you want this week?",
+    icon: <Target size={20} strokeWidth={2} color="#2563EB" />,
+    accent: "#2563EB", tintBg: "#E3E9F8",
+  },
+  monthly_sales: {
+    label: "Monthly sales", period: "this month", hint: "Total sales target for this month?",
+    icon: <Calendar size={20} strokeWidth={2} color="#EA580C" />,
+    accent: "#EA580C", tintBg: "#F3E5DD",
+  },
+  yearly_revenue: {
+    label: "Yearly revenue",period: "this year",  hint: "Big yearly revenue ambition?",
+    icon: <Trophy size={20} strokeWidth={2} color="#8B5CF6" />,
+    accent: "#8B5CF6", tintBg: "#ECE5F9",
+  },
 };
 
 const GOAL_ORDER: GoalType[] = ["daily_sales", "weekly_profit", "monthly_sales", "yearly_revenue"];
 
-function motivationalMsg(pct: number, name: string): string {
-  if (pct === 0)        return `Set a target and let's crush it together! 💪`;
-  if (pct < 25)         return `You've started, ${name}! Every naira counts. Keep going! 🌱`;
-  if (pct < 50)         return `Building momentum — you're doing great! 🔥`;
-  if (pct < 75)         return `Past halfway! You're stronger than you think! ⚡`;
-  if (pct < 100)        return `Almost there! One final push and you've got it! 🚀`;
-  return                `GOAL CRUSHED! You're an absolute boss! 🏆🎉`;
-}
+// localStorage key for "intention" text per goal type
+function intentionKey(type: GoalType) { return `spal_goal_why_${type}`; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SVG Progress ring
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ProgressRing({ pct, color, size = 76 }: { pct: number; color: string; size?: number }) {
-  const r   = (size - 10) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (Math.min(pct, 100) / 100) * circ;
-
-  return (
-    <svg width={size} height={size} className="-rotate-90">
-      {/* Track */}
-      <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={7} stroke="#f3f4f6" fill="none" />
-      {/* Progress */}
-      <motion.circle
-        cx={size / 2} cy={size / 2} r={r}
-        strokeWidth={7} stroke={color} fill="none"
-        strokeLinecap="round"
-        strokeDasharray={circ}
-        initial={{ strokeDashoffset: circ }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
-      />
-    </svg>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Confetti burst — Framer Motion particles, no library needed
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CONFETTI_COLORS = ["#1DB954", "#F97316", "#3B82F6", "#8B5CF6", "#EF4444", "#FBBF24"];
-
-function Confetti({ active }: { active: boolean }) {
-  const particles = useRef(
-    Array.from({ length: 24 }, (_, i) => ({
-      id: i,
-      x: (Math.random() - 0.5) * 220,
-      y: -(Math.random() * 180 + 60),
-      rot: Math.random() * 720 - 360,
-      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-      w: Math.random() * 8 + 5,
-      h: Math.random() * 5 + 3,
-    }))
-  );
-
-  return (
-    <AnimatePresence>
-      {active && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 flex items-center justify-center">
-          {particles.current.map((p) => (
-            <motion.div
-              key={p.id}
-              className="absolute rounded-sm"
-              style={{ width: p.w, height: p.h, background: p.color, top: "50%", left: "50%" }}
-              initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 }}
-              animate={{ x: p.x, y: p.y, opacity: 0, rotate: p.rot, scale: 0.5 }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
-            />
-          ))}
-        </div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Set-goal bottom sheet
-// ─────────────────────────────────────────────────────────────────────────────
-
-function SetGoalSheet({
-  goalType,
-  existing,
-  onSave,
-  onClose,
-}: {
-  goalType: GoalType;
-  existing: number | null;
-  onSave: (amount: number) => void;
-  onClose: () => void;
-}) {
-  const meta = GOAL_META[goalType];
-  const [raw, setRaw] = useState(existing ? String(existing) : "");
-  const [saving, setSaving] = useState(false);
-
-  async function save() {
-    const val = Number(raw.replace(/,/g, ""));
-    if (!val || val <= 0) return;
-    setSaving(true);
-    await onSave(val);
-    setSaving(false);
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-spal-navy/40 backdrop-blur-sm" />
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 26, stiffness: 300 }}
-        className="relative w-full max-w-[480px] bg-white rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: "90dvh" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-neutral-200 rounded-full" />
-        </div>
-
-        {/* Scroll zone fills remaining height */}
-        <div
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-3"
-          style={{
-            WebkitOverflowScrolling: "touch",
-            paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
-          }}
-        >
-
-        <div className="flex items-center gap-3 mb-6">
-          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${meta.bg} border ${meta.border}`}>
-            {meta.emoji}
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
-              Set {meta.label} Target
-            </h2>
-            <p className="text-xs text-neutral-400">How much do you want to {goalType === "weekly_profit" ? "earn as profit" : "make in sales"} {meta.period}?</p>
-          </div>
-        </div>
-
-        {/* Amount input */}
-        <div className="relative mb-6">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-neutral-400">₦</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            placeholder="0"
-            value={raw}
-            onChange={(e) => setRaw(e.target.value)}
-            className="w-full pl-9 pr-4 py-4 text-2xl font-bold text-spal-navy rounded-2xl border-2 border-neutral-100 focus:border-spal-green outline-none bg-neutral-50 transition-colors"
-          />
-        </div>
-
-        {/* Quick presets */}
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {([5000, 10000, 20000, 50000, 100000] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setRaw(String(v))}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                Number(raw) === v
-                  ? `${meta.bg} ${meta.color} ${meta.border}`
-                  : "bg-neutral-50 text-neutral-500 border-neutral-100"
-              }`}
-            >
-              ₦{v >= 1000 ? `${v / 1000}k` : v}
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={save}
-          disabled={!raw || Number(raw) <= 0 || saving}
-          className="w-full h-14 rounded-2xl bg-spal-navy text-white font-bold text-base disabled:opacity-30 active:scale-[0.98] transition-all"
-        >
-          {saving ? "Saving…" : existing ? "Update Goal" : "Set Goal 🎯"}
-        </button>
-
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Goal card
-// ─────────────────────────────────────────────────────────────────────────────
-
-function GoalCard({
-  goal,
-  onEdit,
-}: {
-  goal: GoalData | null;
-  goalType: GoalType;
-  onEdit: () => void;
-}) {
-  const type = goal?.goal_type ?? ("" as GoalType);
-  const meta = GOAL_META[type] ?? GOAL_META.daily_sales;
-  const pct  = goal?.progress ?? 0;
-  const [showConfetti, setShowConfetti] = useState(false);
-  const prevCompleted = useRef(false);
-
-  useEffect(() => {
-    if (goal?.completed && !prevCompleted.current) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 1000);
-    }
-    prevCompleted.current = goal?.completed ?? false;
-  }, [goal?.completed]);
-
-  if (!goal) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`relative rounded-3xl p-4 border ${meta.bg} ${meta.border} overflow-hidden`}
-    >
-      <Confetti active={showConfetti} />
-
-      {/* Top row */}
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <span className="text-lg leading-none">{meta.emoji}</span>
-          <p className="text-xs font-bold text-neutral-600 mt-0.5 font-[family-name:var(--font-satoshi)]">{meta.label}</p>
-        </div>
-        <button onClick={onEdit} className="text-[10px] text-neutral-400 font-semibold underline underline-offset-2">
-          Edit
-        </button>
-      </div>
-
-      {/* Progress ring + % in center */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-shrink-0">
-          <ProgressRing pct={pct} color={meta.ring} size={76} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <motion.span
-              key={pct}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className={`text-sm font-extrabold ${meta.color} font-[family-name:var(--font-satoshi)]`}
-            >
-              {pct}%
-            </motion.span>
-          </div>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className={`text-lg font-extrabold ${meta.color} font-[family-name:var(--font-satoshi)] leading-tight`}>
-            {formatCurrency(goal.current)}
-          </p>
-          <p className="text-xs text-neutral-400 mt-0.5">of {formatCurrency(goal.target)}</p>
-
-          {/* Mini progress bar */}
-          <div className="mt-2 h-1.5 rounded-full bg-white/60 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: meta.ring }}
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(pct, 100)}%` }}
-              transition={{ duration: 1.1, ease: "easeOut", delay: 0.3 }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Celebration badge */}
-      {goal.completed && (
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", damping: 10, stiffness: 200 }}
-          className="mt-3 flex items-center gap-1.5 bg-white/70 rounded-xl px-3 py-1.5 w-fit"
-        >
-          <span className="text-sm">🏆</span>
-          <span className="text-xs font-bold text-spal-navy">Goal crushed!</span>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty goal slot (not set yet)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function EmptyGoalCard({ goalType, onSet }: { goalType: GoalType; onSet: () => void }) {
-  const meta = GOAL_META[goalType];
-  return (
-    <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onSet}
-      className={`w-full rounded-3xl p-4 border-2 border-dashed ${meta.border} bg-white/60 flex flex-col items-center gap-2 py-7`}
-    >
-      <span className="text-2xl opacity-50">{meta.emoji}</span>
-      <p className="text-xs font-bold text-neutral-400 font-[family-name:var(--font-satoshi)]">{meta.label}</p>
-      <span className={`text-xs font-semibold ${meta.color} bg-white rounded-full px-3 py-1 border ${meta.border}`}>
-        + Set target
-      </span>
-    </motion.button>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main page
+// Main Goals page
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function GoalsPage() {
-  const [goals,     setGoals]     = useState<GoalData[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [editing,   setEditing]   = useState<GoalType | null>(null);
+  const router = useRouter();
+  const [goals,   setGoals]   = useState<GoalData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<GoalType | null>(null);
+  // Toast state — appears after saving a goal
+  const [coachToast, setCoachToast] = useState<{ type: GoalType; target: number } | null>(null);
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -358,14 +83,23 @@ export default function GoalsPage() {
 
   useEffect(() => { fetchGoals(); }, [fetchGoals]);
 
-  async function handleSave(goalType: GoalType, amount: number) {
+  async function handleSave(goalType: GoalType, amount: number, intention: string) {
     await fetch("/api/goals", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ goal_type: goalType, target_amount: amount }),
     });
+    // Save intention locally
+    if (intention.trim()) {
+      try { localStorage.setItem(intentionKey(goalType), intention.trim()); } catch {}
+    } else {
+      try { localStorage.removeItem(intentionKey(goalType)); } catch {}
+    }
     setEditing(null);
+    setCoachToast({ type: goalType, target: amount });
     fetchGoals();
+    // Auto-dismiss after 10s if user doesn't act
+    setTimeout(() => setCoachToast((t) => (t?.type === goalType ? null : t)), 10000);
   }
 
   async function handleDelete(goalType: GoalType) {
@@ -374,173 +108,487 @@ export default function GoalsPage() {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ goal_type: goalType }),
     });
+    try { localStorage.removeItem(intentionKey(goalType)); } catch {}
     setEditing(null);
     fetchGoals();
   }
 
+  function openCoachWithGoal(type: GoalType, target: number) {
+    const meta = GOAL_META[type];
+    let intention = "";
+    try { intention = localStorage.getItem(intentionKey(type)) ?? ""; } catch {}
+    const params = new URLSearchParams({
+      goal:      meta.label,
+      target:    String(target),
+      period:    meta.period,
+      ...(intention ? { intention } : {}),
+    });
+    router.push(`/ask?${params.toString()}`);
+    setCoachToast(null);
+  }
+
   const goalsMap = Object.fromEntries(goals.map((g) => [g.goal_type, g])) as Partial<Record<GoalType, GoalData>>;
   const anyGoal  = goals.length > 0;
-
-  // Overall motivation based on average progress across all set goals
-  const avgPct = anyGoal
+  const avgPct   = anyGoal
     ? Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length)
     : 0;
 
   return (
-    <div className="px-4 pt-6 pb-24 space-y-5 animate-fade-in">
+    <div className="px-5 pt-6 pb-6 space-y-5 relative" style={{ background: "#F8F7F4", minHeight: "100%" }}>
 
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">Your Goals 🎯</h1>
-        <p className="text-sm text-neutral-400 mt-0.5">Track what matters most to your business</p>
+      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-[22px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+          Goals
+        </h1>
+        <p className="text-[13px] text-neutral-500 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+          Where do you want to take your business?
+        </p>
       </motion.div>
 
-      {/* SPAL motivational banner */}
-      {!loading && (
+      {/* Motivation banner — only shows if user has at least one goal */}
+      {!loading && anyGoal && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center gap-4 bg-spal-navy rounded-3xl px-5 py-4 overflow-hidden relative"
+          className="rounded-[20px] p-5 relative overflow-hidden"
+          style={{ background: "#0F172A" }}
         >
-          {/* Decorative ring */}
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/5" />
-          <div className="absolute -right-2 -bottom-4 w-16 h-16 rounded-full bg-white/5" />
+          <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(34,197,94,0.25), transparent 70%)" }} />
 
-          {/* SPAL avatar */}
-          <motion.div
-            animate={{ rotate: [0, -5, 5, -5, 0] }}
-            transition={{ duration: 1.2, delay: 0.6, ease: "easeInOut" }}
-            className="w-12 h-12 bg-spal-green rounded-full flex items-center justify-center text-xl font-bold text-white flex-shrink-0 shadow-lg"
-          >
-            S
-          </motion.div>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-semibold leading-snug font-[family-name:var(--font-satoshi)]">
-              {motivationalMsg(avgPct, "Boss")}
+          <p className="text-white/55 text-[11.5px] font-medium uppercase tracking-widest" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Overall progress
+          </p>
+          <div className="flex items-baseline gap-2 mt-1.5">
+            <p className="text-white text-[34px] font-bold leading-none" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.02em" }}>
+              {avgPct}%
             </p>
-            {anyGoal && (
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full bg-white/20 overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-spal-green"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${avgPct}%` }}
-                    transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
-                  />
-                </div>
-                <span className="text-spal-green text-xs font-bold flex-shrink-0">{avgPct}%</span>
-              </div>
-            )}
+            <p className="text-white/50 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+              across {goals.length} goal{goals.length === 1 ? "" : "s"}
+            </p>
           </div>
-        </motion.div>
-      )}
-
-      {/* Goals grid */}
-      {loading ? (
-        <GoalsSkeleton />
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {GOAL_ORDER.map((type, i) => {
-            const goal = goalsMap[type];
-            return goal ? (
-              <motion.div
-                key={type}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-              >
-                <GoalCard
-                  goal={goal}
-                  goalType={type}
-                  onEdit={() => setEditing(type)}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key={type}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-              >
-                <EmptyGoalCard goalType={type} onSet={() => setEditing(type)} />
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* No goals empty state */}
-      {!loading && !anyGoal && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-center py-4"
-        >
-          <p className="text-sm text-neutral-400 leading-relaxed">
-            Set a target above and SPAL will track your progress every day.
-            <br />
-            <span className="font-semibold text-spal-green">Habit starts with one goal.</span>
+          <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-spal-green"
+              initial={{ width: 0 }}
+              animate={{ width: `${avgPct}%` }}
+              transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+            />
+          </div>
+          <p className="mt-3 text-white/55 text-[13px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+            {avgPct < 25  ? "Just getting started — keep recording sales, the chart climbs every entry." :
+             avgPct < 50  ? "Building momentum. Stay consistent." :
+             avgPct < 75  ? "You're past the middle — push through." :
+             avgPct < 100 ? "Almost there. One more push." :
+                            "Goal crushed! Set the next mountain."}
           </p>
         </motion.div>
       )}
 
-      {/* Tips / how it works */}
-      {!loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-3xl border border-neutral-100 p-4 space-y-3 shadow-sm"
-        >
-          <p className="text-xs font-bold text-neutral-500 uppercase tracking-wide">How it works</p>
-          {[
-            { icon: "🎯", text: "Set a target amount for any time period" },
-            { icon: "📊", text: "SPAL tracks your progress automatically from records" },
-            { icon: "🔥", text: "Check back daily — habit builds retention" },
-            { icon: "🎉", text: "Hit your goal and celebrate with confetti!" },
-          ].map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-3">
-              <span className="text-lg flex-shrink-0">{icon}</span>
-              <p className="text-sm text-neutral-500">{text}</p>
-            </div>
-          ))}
+      {/* Goal cards */}
+      {loading ? (
+        <GoalsSkeleton />
+      ) : (
+        <div className="space-y-3">
+          {GOAL_ORDER.map((type) => {
+            const goal = goalsMap[type];
+            return goal
+              ? <GoalCard key={type} type={type} goal={goal} onEdit={() => setEditing(type)} onAskCoach={() => openCoachWithGoal(type, goal.target)} />
+              : <EmptyGoalCard key={type} type={type} onSet={() => setEditing(type)} />;
+          })}
+        </div>
+      )}
+
+      {/* Empty-all helper text */}
+      {!loading && !anyGoal && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mt-6">
+          <p className="text-[13px] text-neutral-400 leading-relaxed">
+            Pick one goal above to start. SPAL tracks your progress from every sale and expense you record.
+          </p>
         </motion.div>
       )}
 
-      {/* Set / edit goal sheet */}
+      <div className="h-6" />
+
+      {/* ── Edit/Set goal sheet ───────────────────────────────────── */}
       <AnimatePresence>
         {editing && (
           <SetGoalSheet
             goalType={editing}
             existing={goalsMap[editing]?.target ?? null}
-            onSave={(amount) => handleSave(editing, amount)}
+            onSave={(amount, intention) => handleSave(editing, amount, intention)}
             onClose={() => setEditing(null)}
+            onDelete={goalsMap[editing] ? () => handleDelete(editing) : undefined}
           />
         )}
       </AnimatePresence>
 
-      {/* Delete option appears in sheet header when editing existing goal */}
+      {/* ── Coach toast — appears after saving ─────────────────────── */}
       <AnimatePresence>
-        {editing && goalsMap[editing] && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed bottom-[calc(env(safe-area-inset-bottom)+310px)] left-1/2 -translate-x-1/2 z-[51] w-full max-w-[480px] px-6"
-          >
-            <button
-              onClick={() => handleDelete(editing)}
-              className="w-full py-3 text-sm text-red-400 font-semibold text-center"
-            >
-              Remove this goal
-            </button>
-          </motion.div>
+        {coachToast && (
+          <CoachToast
+            label={GOAL_META[coachToast.type].label}
+            target={coachToast.target}
+            onAccept={() => openCoachWithGoal(coachToast.type, coachToast.target)}
+            onDismiss={() => setCoachToast(null)}
+          />
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Goal card (active)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function GoalCard({
+  type, goal, onEdit, onAskCoach,
+}: {
+  type: GoalType;
+  goal: GoalData;
+  onEdit: () => void;
+  onAskCoach: () => void;
+}) {
+  const meta = GOAL_META[type];
+  const pct  = Math.min(100, goal.progress);
+  const [intention, setIntention] = useState<string>("");
+
+  useEffect(() => {
+    try { setIntention(localStorage.getItem(intentionKey(type)) ?? ""); } catch {}
+  }, [type]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-[20px] p-5"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: meta.tintBg }}>
+            {meta.icon}
+          </div>
+          <div>
+            <p className="text-[13px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {meta.label}
+            </p>
+            <p className="text-[11px] text-neutral-400 mt-0.5">{meta.period}</p>
+          </div>
+        </div>
+        <button
+          onClick={onEdit}
+          className="text-[11.5px] font-semibold text-spal-navy/60 hover:text-spal-navy"
+          style={{ fontFamily: "var(--font-satoshi)" }}
+        >
+          Edit
+        </button>
+      </div>
+
+      {/* Amount + progress */}
+      <div className="flex items-baseline justify-between mb-2">
+        <p className="text-[22px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: meta.accent, letterSpacing: "-0.02em" }}>
+          {formatCurrency(goal.current)}
+        </p>
+        <p className="text-[12px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
+          of {formatCurrency(goal.target)}
+        </p>
+      </div>
+      <div className="h-2 rounded-full bg-neutral-100 overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: meta.accent }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.15 }}
+        />
+      </div>
+      <p className="text-[11px] mt-1.5 font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: meta.accent }}>
+        {pct}% {goal.completed ? "· Crushed!" : ""}
+      </p>
+
+      {/* User's "why" */}
+      {intention && (
+        <div className="mt-4 rounded-xl p-3" style={{ background: meta.tintBg, border: `1px solid ${meta.accent}22` }}>
+          <p className="text-[11px] font-bold mb-0.5 uppercase tracking-wider" style={{ fontFamily: "var(--font-satoshi)", color: meta.accent }}>
+            Your why
+          </p>
+          <p className="text-[13px] text-spal-navy leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
+            {intention}
+          </p>
+        </div>
+      )}
+
+      {/* Soft CTA to coach */}
+      <button
+        onClick={onAskCoach}
+        className="mt-4 w-full flex items-center justify-center gap-2 h-11 rounded-full bg-neutral-50 hover:bg-neutral-100 active:scale-[0.99] transition-all"
+        style={{ border: "1px solid rgba(15,23,42,0.08)" }}
+      >
+        <Sparkles size={14} strokeWidth={2.2} className="text-spal-navy" />
+        <span className="text-[13px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+          Ask a coach how to hit this
+        </span>
+      </button>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Empty goal card (not set)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function EmptyGoalCard({ type, onSet }: { type: GoalType; onSet: () => void }) {
+  const meta = GOAL_META[type];
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onSet}
+      className="w-full bg-white rounded-[20px] p-4 flex items-center gap-3 text-left active:bg-neutral-50 transition-colors"
+      style={{ border: "1px dashed rgba(15,23,42,0.12)" }}
+    >
+      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: meta.tintBg }}>
+        {meta.icon}
+      </div>
+      <div className="flex-1">
+        <p className="text-[13px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+          {meta.label}
+        </p>
+        <p className="text-[11.5px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+          {meta.hint}
+        </p>
+      </div>
+      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: meta.accent }}>
+        <Plus size={15} strokeWidth={2.5} color="#fff" />
+      </div>
+    </motion.button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Set Goal Sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SetGoalSheet({
+  goalType, existing, onSave, onClose, onDelete,
+}: {
+  goalType: GoalType;
+  existing: number | null;
+  onSave: (amount: number, intention: string) => void;
+  onClose: () => void;
+  onDelete?: () => void;
+}) {
+  const meta = GOAL_META[goalType];
+  const [raw,        setRaw]        = useState(existing ? String(existing) : "");
+  const [intention,  setIntention]  = useState("");
+  const [saving,     setSaving]     = useState(false);
+
+  useEffect(() => {
+    try { setIntention(localStorage.getItem(intentionKey(goalType)) ?? ""); } catch {}
+  }, [goalType]);
+
+  async function save() {
+    const val = Number(raw.replace(/,/g, ""));
+    if (!val || val <= 0) return;
+    setSaving(true);
+    await onSave(val, intention);
+    setSaving(false);
+  }
+
+  const valid = Number(raw) > 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-spal-navy/40 backdrop-blur-sm" />
+      <motion.div
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
+        className="relative w-full max-w-[480px] bg-white rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+        style={{ maxHeight: "90dvh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 bg-neutral-200 rounded-full" />
+        </div>
+
+        {/* Scroll zone */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-3"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: meta.tintBg }}>
+                {meta.icon}
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {meta.label}
+                </h2>
+                <p className="text-[12px] text-neutral-400 mt-0.5">{meta.hint}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100"
+              aria-label="Close"
+            >
+              <X size={15} strokeWidth={2} className="text-neutral-500" />
+            </button>
+          </div>
+
+          {/* Target amount */}
+          <label className="block text-[11.5px] font-bold text-neutral-500 uppercase tracking-wide mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Target amount
+          </label>
+          <div className="relative mb-4">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-neutral-400">₦</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="0"
+              value={raw}
+              onChange={(e) => setRaw(e.target.value)}
+              className="w-full pl-10 pr-4 py-4 text-2xl font-bold text-spal-navy rounded-2xl border-2 border-neutral-100 focus:border-spal-green outline-none bg-neutral-50 transition-colors"
+              style={{ fontFamily: "var(--font-satoshi)" }}
+            />
+          </div>
+
+          {/* Quick presets */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {[5000, 10000, 20000, 50000, 100000, 500000].map((v) => (
+              <button
+                key={v}
+                onClick={() => setRaw(String(v))}
+                className="px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
+                style={{
+                  fontFamily: "var(--font-satoshi)",
+                  background:  Number(raw) === v ? meta.tintBg : "#FAFAFA",
+                  color:       Number(raw) === v ? meta.accent : "#67738F",
+                  border:      `1px solid ${Number(raw) === v ? meta.accent + "33" : "#F1F5F9"}`,
+                }}
+              >
+                ₦{v >= 1000 ? `${v / 1000}k` : v}
+              </button>
+            ))}
+          </div>
+
+          {/* Why text */}
+          <label className="block text-[11.5px] font-bold text-neutral-500 uppercase tracking-wide mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Why does this matter? <span className="text-neutral-300 font-medium normal-case tracking-normal">(optional)</span>
+          </label>
+          <textarea
+            value={intention}
+            onChange={(e) => setIntention(e.target.value)}
+            placeholder="e.g. I want to open a second shop by December"
+            rows={3}
+            className="w-full px-4 py-3 text-[14px] text-spal-navy rounded-2xl border-2 border-neutral-100 focus:border-spal-green outline-none bg-neutral-50 transition-colors resize-none"
+            style={{ fontFamily: "var(--font-satoshi)" }}
+          />
+          <p className="text-[11px] text-neutral-400 mt-2 leading-relaxed">
+            A clear &ldquo;why&rdquo; helps you stay motivated — and gives the AI coach context.
+          </p>
+
+          {/* Save button */}
+          <button
+            onClick={save}
+            disabled={!valid || saving}
+            className="mt-6 w-full h-14 rounded-full font-bold text-[15px] transition-all duration-200"
+            style={{
+              fontFamily: "var(--font-satoshi)",
+              background: valid && !saving ? "#22C55E" : "#E4E4E7",
+              color:      valid && !saving ? "#fff" : "#A1A1AA",
+            }}
+          >
+            {saving ? "Saving…" : existing ? "Update goal" : "Set goal"}
+          </button>
+
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="w-full py-3 mt-2 text-sm text-red-500 font-medium"
+              style={{ fontFamily: "var(--font-satoshi)" }}
+            >
+              Remove this goal
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Coach toast — soft prompt after saving a goal
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CoachToast({
+  label, target, onAccept, onDismiss,
+}: {
+  label: string;
+  target: number;
+  onAccept: () => void;
+  onDismiss: () => void;
+}) {
+  void target;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      transition={{ type: "spring", damping: 24, stiffness: 280 }}
+      className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[420px] z-50"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div
+        className="rounded-2xl p-4 flex items-start gap-3"
+        style={{ background: "#0F172A", boxShadow: "0 12px 40px rgba(0,0,0,0.25)" }}
+      >
+        <div className="w-9 h-9 rounded-full bg-spal-green/15 flex items-center justify-center flex-shrink-0">
+          <Sparkles size={16} strokeWidth={2.2} className="text-spal-green" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white text-[13.5px] font-bold leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Goal saved — nice one
+          </p>
+          <p className="text-white/60 text-[12.5px] mt-0.5 leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Want a coach to help you plan how to hit your {label.toLowerCase()}?
+          </p>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={onAccept}
+              className="flex-1 h-9 rounded-full bg-spal-green text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5"
+              style={{ fontFamily: "var(--font-satoshi)" }}
+            >
+              Talk to a coach <ArrowRight size={13} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={onDismiss}
+              className="px-4 h-9 rounded-full text-white/70 text-[12.5px] font-semibold"
+              style={{ fontFamily: "var(--font-satoshi)" }}
+            >
+              Later
+            </button>
+          </div>
+        </div>
+        <button onClick={onDismiss} className="text-white/40 -mt-1 -mr-1" aria-label="Dismiss">
+          <X size={15} strokeWidth={2} />
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -550,11 +598,13 @@ export default function GoalsPage() {
 
 function GoalsSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-3">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="rounded-3xl bg-neutral-100 animate-pulse h-40" />
+        <div key={i} className="rounded-[20px] bg-white animate-pulse h-[120px]" />
       ))}
     </div>
   );
 }
 
+// Unused but kept for tree-shaking signals
+void Check;
