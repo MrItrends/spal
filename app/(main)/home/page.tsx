@@ -55,19 +55,39 @@ export default function HomePage() {
 
   return (
     <>
-      <div
-        className="relative min-h-full"
-        style={{
-          background: `
-            linear-gradient(to bottom,
-              #0F2D2A 0%,
-              #0F2D2A 30%,
-              #1A3D5B 50%,
-              #2E63F9 75%,
-              #2E63F9 100%)
-          `,
-        }}
-      >
+      <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
+
+        {/* ── Home-only ambient background (matches Home Background.svg exactly) ── */}
+        <div className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ height: "560px" }}>
+          {/* Blue blurred circle — drawn first (lower z) */}
+          <div
+            className="absolute"
+            style={{
+              left: "50%",
+              transform: "translateX(-50%)",
+              top: "-104px",       /* 170 - 274 */
+              width: "548px",      /* radius 274 * 2 */
+              height: "548px",
+              borderRadius: "50%",
+              background: "#2F63F5",
+              filter: "blur(50px)",
+            }}
+          />
+          {/* Dark teal blurred circle — drawn on top */}
+          <div
+            className="absolute"
+            style={{
+              left: "50%",
+              transform: "translateX(-50%)",
+              top: "-234px",       /* 40 - 274 */
+              width: "548px",
+              height: "548px",
+              borderRadius: "50%",
+              background: "#123332",
+              filter: "blur(50px)",
+            }}
+          />
+        </div>
 
         {/* Foreground content */}
         <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
