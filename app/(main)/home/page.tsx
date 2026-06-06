@@ -57,6 +57,19 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
+        {/* ── Home-only ambient gradient (green TL → teal TR → cream) ── */}
+        <div
+          className="absolute top-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: "560px",
+            background: `
+              radial-gradient(115% 75% at 0% 0%, #22C55E 0%, rgba(34,197,94,0) 55%),
+              radial-gradient(110% 70% at 100% 0%, #123232 0%, rgba(18,50,50,0) 55%),
+              linear-gradient(to bottom, rgba(248,247,244,0) 65%, #F8F7F4 100%)
+            `,
+          }}
+        />
+
         {/* Foreground content */}
         <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
 
@@ -68,10 +81,10 @@ export default function HomePage() {
           className="flex items-center justify-between"
         >
           <div>
-            <p className="text-neutral-400 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+            <p className="text-white/75 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
               {greeting}
             </p>
-            <h1 className="text-[22px] font-bold text-spal-navy mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+            <h1 className="text-white text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>
               {name}
             </h1>
           </div>
@@ -83,8 +96,11 @@ export default function HomePage() {
             <button
               onClick={() => router.push("/profile")}
               aria-label="Profile"
-              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
-              style={{ background: TEAL }}
+              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform backdrop-blur-md"
+              style={{
+                background: "rgba(255,255,255,0.18)",
+                border: "1px solid rgba(255,255,255,0.22)",
+              }}
             >
               {user?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -316,8 +332,11 @@ function CircleButton({ children, onClick, aria }: { children: React.ReactNode; 
     <button
       onClick={onClick}
       aria-label={aria}
-      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform"
-      style={{ background: TEAL }}
+      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform backdrop-blur-md"
+      style={{
+        background: "rgba(255,255,255,0.18)",
+        border: "1px solid rgba(255,255,255,0.22)",
+      }}
     >
       {children}
     </button>
