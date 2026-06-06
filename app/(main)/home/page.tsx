@@ -57,22 +57,38 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* ── Vivid green→blue gradient at the top, fading to cream below the banner ── */}
+        {/* ── Home-only background: vivid diagonal gradient softly melting into cream ── */}
+        {/*
+            Senior-level fade technique:
+            1. Diagonal gradient ends in cream itself (so colors literally blend into the surface tone)
+            2. A multi-stop ease-curve overlay smooths the transition gently across ~300px
+            3. Generous vertical headroom so no hard cut-off is visible
+        */}
         <div
           className="absolute top-0 left-0 right-0 pointer-events-none"
           style={{
-            height: "560px",
+            height: "780px",
             background: `
+              /* Cream wash — eased ramp, mimics ease-in-out across a long stretch */
               linear-gradient(to bottom,
-                rgba(248,247,244,0) 0%,
-                rgba(248,247,244,0) 62%,
-                #F8F7F4 90%
+                rgba(248,247,244,0)    0%,
+                rgba(248,247,244,0)    38%,
+                rgba(248,247,244,0.08) 50%,
+                rgba(248,247,244,0.28) 60%,
+                rgba(248,247,244,0.55) 70%,
+                rgba(248,247,244,0.82) 80%,
+                rgba(248,247,244,0.96) 90%,
+                #F8F7F4                100%
               ),
-              linear-gradient(135deg,
-                #22C55E 0%,
-                #1FA572 22%,
-                #2A6DB8 60%,
-                #2F63F5 100%
+              /* Colour gradient — last stop is cream so the hue dissolves naturally */
+              linear-gradient(150deg,
+                #22C55E  0%,
+                #1FA572  18%,
+                #2685A0  42%,
+                #2A6DB8  60%,
+                #2F63F5  78%,
+                #6F88E5  92%,
+                #F8F7F4  100%
               )
             `,
           }}
