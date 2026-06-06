@@ -25,19 +25,13 @@ interface CoachSub {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Local subscription state (stub — replace with real API when wired)
+// Subscription state — real-time from /api/payments/coach/list
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SUBS_KEY = "spal_coach_subs";
-
-function loadSubs(): CoachSub[] {
-  try { return JSON.parse(localStorage.getItem(SUBS_KEY) ?? "[]"); } catch { return []; }
-}
-function saveSubs(subs: CoachSub[]) {
-  try { localStorage.setItem(SUBS_KEY, JSON.stringify(subs)); } catch {}
-}
 function isSubscribed(subs: CoachSub[], coachId: string): boolean {
-  return subs.some((s) => s.coach_id === coachId && s.active);
+  return subs.some(
+    (s) => s.coach_id === coachId && s.active && (!s.renews_at || new Date(s.renews_at) > new Date()),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,14 +42,29 @@ export default function LearnPage() {
   const router = useRouter();
   const _ = useSPALStore(); void _;
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loadingConvs,  setLoadingConvs]  = useState(true);
-  const [deleteTarget,  setDeleteTarget]  = useState<string | null>(null);
-  const [subs,          setSubs]          = useState<CoachSub[]>([]);
-  const [previewCoach,  setPreviewCoach]  = useState<Advisor | null>(null);
+  const [conversations,   setConversations]   = useState<Conversation[]>([]);
+  const [loadingConvs,    setLoadingConvs]    = useState(true);
+  const [deleteTarget,    setDeleteTarget]    = useState<string | null>(null);
+  const [subs,            setSubs]            = useState<CoachSub[]>([]);
+  const [previewCoach,    setPreviewCoach]    = useState<Advisor | null>(null);
+  const [subscribing,     setSubscribing]     = useState(false);
+  const [subscribeError,  setSubscribeError]  = useState<string | null>(null);
 
   useEffect(() => {
-    setSubs(loadSubs());
+    // Real subscriptions from the server
+    fetch("/api/payments/coach/list")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.success) return;
+        const list = (d.data.subscriptions ?? []).map((s: { coach_id: string; status: string; current_period_end: string | null }) => ({
+          coach_id:  s.coach_id,
+          active:    s.status === "active" && (!s.current_period_end || new Date(s.current_period_end) > new Date()),
+          renews_at: s.current_period_end,
+        }));
+        setSubs(list);
+      })
+      .catch(() => {});
+
     fetch("/api/advisors/conversations")
       .then((r) => r.json())
       .then((d) => { if (d.success) setConversations(d.data); })
@@ -71,18 +80,27 @@ export default function LearnPage() {
     router.push(`/learn/${coach.id}`);
   }
 
-  function handleSubscribe(coachId: string) {
-    // STUB — would launch Paystack here. For now, mark active for 30 days.
-    const renews = new Date();
-    renews.setDate(renews.getDate() + 30);
-    const next = [
-      ...subs.filter((s) => s.coach_id !== coachId),
-      { coach_id: coachId, active: true, renews_at: renews.toISOString() },
-    ];
-    setSubs(next);
-    saveSubs(next);
-    setPreviewCoach(null);
-    router.push(`/learn/${coachId}`);
+  async function handleSubscribe(coachId: string) {
+    setSubscribing(true);
+    setSubscribeError(null);
+    try {
+      const res = await fetch("/api/payments/coach/initialize", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ coach_id: coachId }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.data?.authorization_url) {
+        setSubscribeError(data.error ?? "Couldn't start payment. Please try again.");
+        setSubscribing(false);
+        return;
+      }
+      // Hand off to Paystack — webhook activates the subscription server-side
+      window.location.href = data.data.authorization_url;
+    } catch {
+      setSubscribeError("Network problem. Please try again.");
+      setSubscribing(false);
+    }
   }
 
   async function handleDelete(id: string) {
@@ -211,7 +229,9 @@ export default function LearnPage() {
           <CoachPreviewSheet
             coach={previewCoach}
             subscribed={isSubscribed(subs, previewCoach.id)}
-            onClose={() => setPreviewCoach(null)}
+            subscribing={subscribing}
+            error={subscribeError}
+            onClose={() => { setPreviewCoach(null); setSubscribeError(null); }}
             onStart={() => {
               setPreviewCoach(null);
               router.push(`/learn/${previewCoach.id}`);
@@ -370,10 +390,12 @@ function Tag({ label, color, bg }: { label: string; color: string; bg: string })
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CoachPreviewSheet({
-  coach, subscribed, onClose, onStart, onSubscribe,
+  coach, subscribed, subscribing, error, onClose, onStart, onSubscribe,
 }: {
   coach: Advisor;
   subscribed: boolean;
+  subscribing: boolean;
+  error: string | null;
   onClose: () => void;
   onStart: () => void;
   onSubscribe: () => void;
@@ -478,13 +500,22 @@ function CoachPreviewSheet({
                   Cancel anytime. You stay subscribed only to the coach(es) you choose.
                 </p>
               </div>
+              {error && (
+                <p className="text-[12px] text-red-500 mb-2 text-center" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {error}
+                </p>
+              )}
               <button
                 onClick={onSubscribe}
-                className="w-full h-14 rounded-full bg-spal-navy text-white font-bold text-[15px]"
+                disabled={subscribing}
+                className="w-full h-14 rounded-full bg-spal-navy text-white font-bold text-[15px] disabled:opacity-60"
                 style={{ fontFamily: "var(--font-satoshi)" }}
               >
-                Subscribe to {coach.name}
+                {subscribing ? "Opening Paystack…" : `Subscribe to ${coach.name}`}
               </button>
+              <p className="text-[11px] text-neutral-400 text-center mt-2" style={{ fontFamily: "var(--font-satoshi)" }}>
+                Secure payment via Paystack
+              </p>
             </>
           )}
         </div>

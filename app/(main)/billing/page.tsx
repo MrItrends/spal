@@ -1,48 +1,76 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Receipt, CalendarClock, AlertCircle, Mic, Sparkles,
+  ArrowLeft, Receipt, CalendarClock, AlertCircle, Mic, Sparkles, CheckCircle2,
 } from "lucide-react";
 import { ADVISORS, type Advisor } from "@/lib/advisors/config";
 import { formatCurrency } from "@/lib/utils/currency";
 
 interface CoachSub {
   coach_id: string;
-  active: boolean;
-  renews_at: string | null;
+  status: "active" | "cancelled" | "expired";
+  current_period_end: string | null;
+  amount: number;
 }
 
 interface PaymentRecord {
-  id:         string;
-  coach_id:   string;
-  amount:     number;
-  paid_at:    string;
-  status:     "succeeded" | "failed" | "refunded";
-  receipt_url?: string;
+  id:                 string;
+  coach_id:           string;
+  amount:             number;        // kobo
+  paid_at:            string;
+  status:             "succeeded" | "failed" | "refunded";
+  paystack_reference: string;
 }
 
-const SUBS_KEY     = "spal_coach_subs";
-const PAYMENTS_KEY = "spal_payments";
-
 export default function BillingPage() {
+  return (
+    <Suspense>
+      <BillingPageInner />
+    </Suspense>
+  );
+}
+
+function BillingPageInner() {
   const router = useRouter();
-  const [subs, setSubs]         = useState<CoachSub[]>([]);
+  const params = useSearchParams();
+  const paidCoachId = params.get("paid");
+
+  const [subs,     setSubs]     = useState<CoachSub[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  // Webhook may still be processing right after payment redirect — poll briefly
+  const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => {
-    try { setSubs(JSON.parse(localStorage.getItem(SUBS_KEY) ?? "[]")); } catch {}
-    try { setPayments(JSON.parse(localStorage.getItem(PAYMENTS_KEY) ?? "[]")); } catch {}
-  }, []);
+    let cancelled = false;
+    async function load() {
+      const r = await fetch("/api/payments/coach/list").then((r) => r.json()).catch(() => null);
+      if (cancelled) return;
+      if (r?.success) {
+        setSubs(r.data.subscriptions ?? []);
+        setPayments(r.data.payments     ?? []);
+      }
+    }
+    load();
+    // If we just came back from Paystack, poll for up to ~30s for the webhook to land
+    if (paidCoachId && pollCount < 10) {
+      const t = setTimeout(() => { setPollCount((n) => n + 1); load(); }, 3000);
+      return () => { cancelled = true; clearTimeout(t); };
+    }
+    return () => { cancelled = true; };
+  }, [paidCoachId, pollCount]);
 
-  const activeSubs = subs.filter((s) => s.active);
+  const activeSubs = subs.filter(
+    (s) => s.status === "active" &&
+           (!s.current_period_end || new Date(s.current_period_end) > new Date()),
+  );
 
   // Coaches with renewal coming in <=7 days
   const dueSoon = activeSubs.filter((s) => {
-    if (!s.renews_at) return false;
-    const days = Math.floor((new Date(s.renews_at).getTime() - Date.now()) / 86400000);
+    if (!s.current_period_end) return false;
+    const days = Math.floor((new Date(s.current_period_end).getTime() - Date.now()) / 86400000);
     return days >= 0 && days <= 7;
   });
 
@@ -62,6 +90,28 @@ export default function BillingPage() {
           Payment history
         </h1>
       </div>
+
+      {/* Payment success banner (shown after Paystack redirect, while we poll for the webhook) */}
+      {paidCoachId && (
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl p-4 flex items-start gap-3"
+          style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}
+        >
+          <CheckCircle2 size={18} className="text-spal-green flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-[13px] font-bold text-spal-green-700" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {subs.some((s) => s.coach_id === paidCoachId && s.status === "active")
+                ? "Subscription active"
+                : "Payment received"}
+            </p>
+            <p className="text-[12px] text-neutral-600 mt-0.5 leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {subs.some((s) => s.coach_id === paidCoachId && s.status === "active")
+                ? `${ADVISORS[paidCoachId]?.name ?? "Your coach"} is unlocked. Voice sessions are ready.`
+                : "We're confirming your payment with Paystack. This usually takes a few seconds…"}
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Renewal notice */}
       {dueSoon.length > 0 && (
@@ -96,7 +146,7 @@ export default function BillingPage() {
             {activeSubs.map((s) => {
               const c = ADVISORS[s.coach_id];
               if (!c) return null;
-              return <ActiveCoachRow key={s.coach_id} coach={c} renewsAt={s.renews_at} />;
+              return <ActiveCoachRow key={s.coach_id} coach={c} renewsAt={s.current_period_end} amountKobo={s.amount} />;
             })}
           </div>
         )}
@@ -141,7 +191,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function ActiveCoachRow({ coach, renewsAt }: { coach: Advisor; renewsAt: string | null }) {
+function ActiveCoachRow({ coach, renewsAt, amountKobo }: { coach: Advisor; renewsAt: string | null; amountKobo: number }) {
+  const amountNaira = amountKobo > 0 ? amountKobo / 100 : (coach.priceMonthly ?? 0);
   return (
     <div className="bg-white rounded-2xl p-4 flex items-center gap-3.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
       <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${coach.avatarColor} ${coach.avatarTextColor}`}>
@@ -168,7 +219,7 @@ function ActiveCoachRow({ coach, renewsAt }: { coach: Advisor; renewsAt: string 
       </div>
       <div className="text-right flex-shrink-0">
         <p className="text-[13px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-          {formatCurrency(coach.priceMonthly ?? 0)}
+          {formatCurrency(amountNaira)}
         </p>
         <p className="text-[10.5px] text-neutral-400">/ month</p>
       </div>
@@ -195,7 +246,7 @@ function PaymentRow({ payment, coach }: { payment: PaymentRecord; coach: Advisor
       </div>
       <div className="text-right flex-shrink-0">
         <p className="text-[13px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-          {formatCurrency(payment.amount)}
+          {formatCurrency(payment.amount / 100)}
         </p>
         <p className="text-[10.5px] font-semibold uppercase" style={{ color: statusColor, fontFamily: "var(--font-satoshi)" }}>
           {payment.status}
