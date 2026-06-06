@@ -57,29 +57,20 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* Home-only background: vivid diagonal gradient that finishes blending just past the banner */}
+        {/* Home-only background — single radial gradient, OKLAB interpolation, no overlay banding */}
         <div
           className="absolute top-0 left-0 right-0 pointer-events-none"
           style={{
-            height: "360px",
-            background: `
-              linear-gradient(to bottom,
-                rgba(248,247,244,0)    0%,
-                rgba(248,247,244,0)    52%,
-                rgba(248,247,244,0.18) 64%,
-                rgba(248,247,244,0.46) 74%,
-                rgba(248,247,244,0.78) 84%,
-                #F8F7F4                94%
-              ),
-              linear-gradient(150deg,
-                #22C55E  0%,
-                #1FA572  22%,
-                #2685A0  48%,
-                #2A6DB8  68%,
-                #2F63F5  90%,
-                #F8F7F4  100%
-              )
-            `,
+            height: "380px",
+            background:
+              "radial-gradient(140% 95% at 22% -8% in oklab, " +
+                "#22C55E 0%, " +
+                "#2A6DB8 38%, " +
+                "#2F63F5 58%, " +
+                "#F8F7F4 96%" +
+              ")",
+            // Tiny blur kills any residual hardware-level banding without visible softness
+            filter: "blur(0.4px)",
           }}
         />
 
