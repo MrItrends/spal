@@ -55,20 +55,19 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
-
-        {/* ── Home-only ambient gradient (dark teal top → blue radial → cream) ── */}
-        <div
-          className="absolute top-0 left-0 right-0 pointer-events-none"
-          style={{
-            height: "620px",
-            background: `
-              radial-gradient(85% 55% at 50% 78%, #2E63F9 0%, rgba(46,99,249,0.55) 35%, rgba(46,99,249,0) 70%),
-              linear-gradient(to bottom, #0F2D2A 0%, #0F2D2A 28%, rgba(15,45,42,0.55) 50%, rgba(15,45,42,0) 78%),
-              linear-gradient(to bottom, rgba(248,247,244,0) 70%, #F8F7F4 100%)
-            `,
-          }}
-        />
+      <div
+        className="relative min-h-full"
+        style={{
+          background: `
+            linear-gradient(to bottom,
+              #0F2D2A 0%,
+              #0F2D2A 30%,
+              #1A3D5B 50%,
+              #2E63F9 75%,
+              #2E63F9 100%)
+          `,
+        }}
+      >
 
         {/* Foreground content */}
         <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
