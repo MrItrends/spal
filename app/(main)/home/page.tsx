@@ -57,34 +57,54 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* ── Home-only ambient background (matches Home Background.svg exactly) ── */}
-        <div className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ height: "560px" }}>
-          {/* Blue blurred circle — drawn first (lower z) */}
+        {/* ── Subtle home-only ambient accents (low opacity, heavily blurred) ── */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Dark teal — top-left */}
           <div
             className="absolute"
             style={{
-              left: "50%",
-              transform: "translateX(-50%)",
-              top: "-104px",       /* 170 - 274 */
-              width: "548px",      /* radius 274 * 2 */
-              height: "548px",
-              borderRadius: "50%",
-              background: "#2F63F5",
-              filter: "blur(50px)",
-            }}
-          />
-          {/* Dark teal blurred circle — drawn on top */}
-          <div
-            className="absolute"
-            style={{
-              left: "50%",
-              transform: "translateX(-50%)",
-              top: "-234px",       /* 40 - 274 */
-              width: "548px",
-              height: "548px",
+              top: "-160px", left: "-140px",
+              width: "420px", height: "420px",
               borderRadius: "50%",
               background: "#123332",
-              filter: "blur(50px)",
+              opacity: 0.10,
+              filter: "blur(90px)",
+            }}
+          />
+          {/* Orange — top-right */}
+          <div
+            className="absolute"
+            style={{
+              top: "-100px", right: "-120px",
+              width: "360px", height: "360px",
+              borderRadius: "50%",
+              background: "#F35902",
+              opacity: 0.07,
+              filter: "blur(90px)",
+            }}
+          />
+          {/* Blue — mid-right */}
+          <div
+            className="absolute"
+            style={{
+              top: "340px", right: "-160px",
+              width: "380px", height: "380px",
+              borderRadius: "50%",
+              background: "#2F63F5",
+              opacity: 0.06,
+              filter: "blur(100px)",
+            }}
+          />
+          {/* Purple — mid-left lower */}
+          <div
+            className="absolute"
+            style={{
+              top: "580px", left: "-180px",
+              width: "400px", height: "400px",
+              borderRadius: "50%",
+              background: "#8A3CFA",
+              opacity: 0.05,
+              filter: "blur(100px)",
             }}
           />
         </div>
@@ -100,10 +120,10 @@ export default function HomePage() {
           className="flex items-center justify-between"
         >
           <div>
-            <p className="text-white/75 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+            <p className="text-neutral-500 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
               {greeting}
             </p>
-            <h1 className="text-white text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>
+            <h1 className="text-spal-navy text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
               {name}
             </h1>
           </div>
@@ -115,11 +135,8 @@ export default function HomePage() {
             <button
               onClick={() => router.push("/profile")}
               aria-label="Profile"
-              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform backdrop-blur-md"
-              style={{
-                background: "rgba(255,255,255,0.18)",
-                border: "1px solid rgba(255,255,255,0.22)",
-              }}
+              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
+              style={{ background: TEAL }}
             >
               {user?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -351,11 +368,8 @@ function CircleButton({ children, onClick, aria }: { children: React.ReactNode; 
     <button
       onClick={onClick}
       aria-label={aria}
-      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform backdrop-blur-md"
-      style={{
-        background: "rgba(255,255,255,0.18)",
-        border: "1px solid rgba(255,255,255,0.22)",
-      }}
+      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform"
+      style={{ background: TEAL }}
     >
       {children}
     </button>
