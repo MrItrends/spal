@@ -57,15 +57,15 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* ── Home-only ambient gradient (green TL → teal TR → cream) ── */}
+        {/* ── Home-only ambient gradient (dark teal top → blue radial → cream) ── */}
         <div
           className="absolute top-0 left-0 right-0 pointer-events-none"
           style={{
-            height: "560px",
+            height: "620px",
             background: `
-              radial-gradient(115% 75% at 0% 0%, #22C55E 0%, rgba(34,197,94,0) 55%),
-              radial-gradient(110% 70% at 100% 0%, #123232 0%, rgba(18,50,50,0) 55%),
-              linear-gradient(to bottom, rgba(248,247,244,0) 65%, #F8F7F4 100%)
+              radial-gradient(85% 55% at 50% 78%, #2E63F9 0%, rgba(46,99,249,0.55) 35%, rgba(46,99,249,0) 70%),
+              linear-gradient(to bottom, #0F2D2A 0%, #0F2D2A 28%, rgba(15,45,42,0.55) 50%, rgba(15,45,42,0) 78%),
+              linear-gradient(to bottom, rgba(248,247,244,0) 70%, #F8F7F4 100%)
             `,
           }}
         />
