@@ -215,12 +215,12 @@ export default function ProfilePage() {
             }] : []),
             ...(!user?.phone_number ? [{
               icon:    <Phone size={18} strokeWidth={2} color="#2563EB" />,
-              label:   "Add phone number",
-              hint:    "Sign in with phone too",
+              label:   "Business phone",
+              hint:    "Add your business contact number",
               sheet:   "add-phone" as SheetType,
             }] : [{
               icon:    <Phone size={18} strokeWidth={2} color="#0F172A" />,
-              label:   "Phone number",
+              label:   "Business phone",
               hint:    user.phone_number!,
               sheet:   "add-phone" as SheetType,
             }]),
@@ -718,14 +718,31 @@ function AddContactSheet({ open, type, onClose, onSaved }: {
   useEffect(() => { if (open) { setStep("enter"); setContact(""); setOtp(["","","","","",""]); setError(null); } }, [open]);
 
   const isEmail = type === "email";
-  const title   = isEmail ? "Add email address" : "Add phone number";
+  const title   = isEmail ? "Add email address" : "Add business phone";
   const valid   = isEmail
     ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.trim())
     : /^\+?\d{7,15}$/.test(contact.trim().replace(/[\s\-().]/g, ""));
 
   async function handleSendCode() {
     setLoading(true); setError(null);
-    const body = isEmail ? { email: contact.trim().toLowerCase() } : { phone: contact.trim() };
+
+    // PHONE: no OTP — save directly to user profile as business contact info.
+    if (!isEmail) {
+      const cleaned = contact.trim();
+      const res  = await fetch("/api/user/profile", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ phone_number: cleaned }),
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (!data.success) { setError(data.error ?? "Couldn't save phone number."); return; }
+      onSaved(data.data);
+      return;
+    }
+
+    // EMAIL: still uses OTP for verified sign-in addition.
+    const body = { email: contact.trim().toLowerCase() };
     const res  = await fetch("/api/auth/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     setLoading(false);
@@ -776,7 +793,7 @@ function AddContactSheet({ open, type, onClose, onSaved }: {
           <p className="text-sm text-neutral-500 leading-relaxed">
             {isEmail
               ? "Add your email so you can also sign in with it. We'll send a code to confirm."
-              : "Add your phone number so you can also sign in with it. We'll send a code to confirm."}
+              : "Save your business phone for receipts, WhatsApp reports, and contact details."}
           </p>
           <input
             type={isEmail ? "email" : "tel"}
@@ -789,7 +806,7 @@ function AddContactSheet({ open, type, onClose, onSaved }: {
           />
           {error && <p className="text-xs text-red-500">{error}</p>}
           <Button fullWidth loading={loading} disabled={!valid} onClick={handleSendCode}>
-            Send verification code
+            {isEmail ? "Send verification code" : "Save phone number"}
           </Button>
         </div>
       ) : (

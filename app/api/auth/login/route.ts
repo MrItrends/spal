@@ -3,18 +3,25 @@ import { createServerClient } from "@supabase/ssr";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // POST /api/auth/login
-// Accepts: { contact: "email@example.com" | "+2348012345678", password }
-// Falls back to cross-reference if user registered with the other method
+// Email + password only. Phone numbers in profile are for business contact,
+// not sign-in (Termii integration is not yet enabled).
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    // Support both { email, password } (legacy) and { contact, password }
-    const contact  = (body.contact ?? body.email ?? "").trim().toLowerCase();
+    // Support both { email, password } (preferred) and legacy { contact, password }
+    const email    = (body.email ?? body.contact ?? "").trim().toLowerCase();
     const password = body.password ?? "";
 
-    if (!contact || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: "Email/phone and password are required." },
+        { success: false, error: "Email and password are required." },
+        { status: 400 }
+      );
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json(
+        { success: false, error: "Please enter a valid email address." },
         { status: 400 }
       );
     }
@@ -35,78 +42,24 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    const admin = createAdminClient();
-    const isPhone = /^\+?\d{7,15}$/.test(contact.replace(/[\s\-().]/g, ""));
+    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    // Normalise phone to E.164 format
-    const normalised = isPhone
-      ? (contact.startsWith("+") ? contact : `+${contact}`).replace(/[\s\-().]/g, "")
-      : contact;
-
-    let authResult = null;
-    let authError  = null;
-
-    if (isPhone) {
-      // 1. Try phone auth directly (user registered via phone)
-      const r = await supabase.auth.signInWithPassword({ phone: normalised, password });
-      authResult = r.data;
-      authError  = r.error;
-
-      if (authError) {
-        // 2. Phone not in Supabase auth — maybe they registered via email and added phone later
-        const { data: profile } = await admin
-          .from("users")
-          .select("email")
-          .eq("phone_number", normalised)
-          .maybeSingle();
-
-        if (profile?.email) {
-          const r2 = await supabase.auth.signInWithPassword({ email: profile.email, password });
-          authResult = r2.data;
-          authError  = r2.error;
-        }
-      }
-    } else {
-      // 1. Try email auth directly (user registered via email)
-      const r = await supabase.auth.signInWithPassword({ email: normalised, password });
-      authResult = r.data;
-      authError  = r.error;
-
-      if (authError) {
-        // 2. Email not in Supabase auth — maybe they registered via phone and added email later
-        const { data: profile } = await admin
-          .from("users")
-          .select("id")
-          .eq("email", normalised)
-          .maybeSingle();
-
-        if (profile?.id) {
-          // Find their Supabase auth phone from auth.users
-          const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
-          if (authUser?.user?.phone) {
-            const r2 = await supabase.auth.signInWithPassword({
-              phone:    authUser.user.phone,
-              password,
-            });
-            authResult = r2.data;
-            authError  = r2.error;
-          }
-        }
-      }
-    }
-
-    if (authError || !authResult?.user) {
+    if (signInError || !authData?.user) {
       return NextResponse.json(
-        { success: false, error: "Incorrect email, phone number, or password." },
+        { success: false, error: "Incorrect email or password." },
         { status: 401 }
       );
     }
 
     // Fetch user profile
+    const admin = createAdminClient();
     const { data: userProfile } = await admin
       .from("users")
       .select("*")
-      .eq("id", authResult.user.id)
+      .eq("id", authData.user.id)
       .maybeSingle();
 
     const response = NextResponse.json({ success: true, data: { user: userProfile } });
