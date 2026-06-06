@@ -57,57 +57,26 @@ export default function HomePage() {
     <>
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
-        {/* ── Subtle home-only ambient accents (low opacity, heavily blurred) ── */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Dark teal — top-left */}
-          <div
-            className="absolute"
-            style={{
-              top: "-160px", left: "-140px",
-              width: "420px", height: "420px",
-              borderRadius: "50%",
-              background: "#123332",
-              opacity: 0.10,
-              filter: "blur(90px)",
-            }}
-          />
-          {/* Orange — top-right */}
-          <div
-            className="absolute"
-            style={{
-              top: "-100px", right: "-120px",
-              width: "360px", height: "360px",
-              borderRadius: "50%",
-              background: "#F35902",
-              opacity: 0.07,
-              filter: "blur(90px)",
-            }}
-          />
-          {/* Blue — mid-right */}
-          <div
-            className="absolute"
-            style={{
-              top: "340px", right: "-160px",
-              width: "380px", height: "380px",
-              borderRadius: "50%",
-              background: "#2F63F5",
-              opacity: 0.06,
-              filter: "blur(100px)",
-            }}
-          />
-          {/* Purple — mid-left lower */}
-          <div
-            className="absolute"
-            style={{
-              top: "580px", left: "-180px",
-              width: "400px", height: "400px",
-              borderRadius: "50%",
-              background: "#8A3CFA",
-              opacity: 0.05,
-              filter: "blur(100px)",
-            }}
-          />
-        </div>
+        {/* ── Vivid green→blue gradient at the top, fading to cream below the banner ── */}
+        <div
+          className="absolute top-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: "560px",
+            background: `
+              linear-gradient(to bottom,
+                rgba(248,247,244,0) 0%,
+                rgba(248,247,244,0) 62%,
+                #F8F7F4 90%
+              ),
+              linear-gradient(135deg,
+                #22C55E 0%,
+                #1FA572 22%,
+                #2A6DB8 60%,
+                #2F63F5 100%
+              )
+            `,
+          }}
+        />
 
         {/* Foreground content */}
         <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
@@ -120,10 +89,10 @@ export default function HomePage() {
           className="flex items-center justify-between"
         >
           <div>
-            <p className="text-neutral-500 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+            <p className="text-white/85 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 3px rgba(0,0,0,0.10)" }}>
               {greeting}
             </p>
-            <h1 className="text-spal-navy text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+            <h1 className="text-white text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>
               {name}
             </h1>
           </div>
@@ -135,8 +104,11 @@ export default function HomePage() {
             <button
               onClick={() => router.push("/profile")}
               aria-label="Profile"
-              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
-              style={{ background: TEAL }}
+              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform backdrop-blur-md"
+              style={{
+                background: "rgba(255,255,255,0.20)",
+                border: "1px solid rgba(255,255,255,0.30)",
+              }}
             >
               {user?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -368,8 +340,11 @@ function CircleButton({ children, onClick, aria }: { children: React.ReactNode; 
     <button
       onClick={onClick}
       aria-label={aria}
-      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform"
-      style={{ background: TEAL }}
+      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform backdrop-blur-md"
+      style={{
+        background: "rgba(255,255,255,0.20)",
+        border: "1px solid rgba(255,255,255,0.30)",
+      }}
     >
       {children}
     </button>
