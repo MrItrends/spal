@@ -420,8 +420,8 @@ function FeaturesSection() {
     const onWheel = (e: WheelEvent) => {
       if (!wrapperRef.current) return;
       const rect = wrapperRef.current.getBoundingClientRect();
-      // Section is "stuck" when its top edge is at (or just past) 0
-      const isSticky = rect.top <= 1 && rect.bottom >= window.innerHeight - 1;
+      // Section is "stuck" when its top edge is at the navbar bottom (98px)
+      const isSticky = rect.top <= 99 && rect.bottom >= window.innerHeight - 1;
       if (!isSticky) return;
 
       const cur = activeRef.current;
@@ -521,7 +521,7 @@ function FeaturesSection() {
         className="hidden lg:block"
         style={{ height: "100vh" }}
       >
-        <div className="sticky top-0 h-screen flex items-center relative">
+        <div className="sticky top-[98px] flex items-center relative" style={{ height: "calc(100vh - 98px)" }}>
 
           {/* ── Vertical arrow navigation (Figma: left:52px, gap:24px) ── */}
           <div className="absolute left-[52px] top-1/2 -translate-y-1/2 flex flex-col gap-6 z-20">
@@ -607,7 +607,7 @@ function FeaturesSection() {
                   <p className="font-['Satoshi'] font-bold text-[18px] text-[#0f172a] tracking-[0.18px] leading-[26px]">{f.title}</p>
                   <p className="font-['Satoshi'] text-[16px] text-[#0f172a] mt-2 leading-[24px] tracking-[0.16px]">{f.desc}</p>
                 </div>
-                {/* crossfading component images — left-aligned at 28px to match text */}
+                {/* crossfading component images — centered horizontally */}
                 {FEATURES_DATA.map((feat, i) => (
                   <img
                     key={feat.id}
@@ -616,10 +616,10 @@ function FeaturesSection() {
                     className="absolute transition-all duration-500 pointer-events-none block"
                     style={{
                       top: 132,
-                      left: 28,
+                      left: "50%",
                       width: feat.compW,
                       opacity: i === active ? 1 : 0,
-                      transform: i === active ? "translateY(0px)" : "translateY(16px)",
+                      transform: i === active ? "translateX(-50%) translateY(0px)" : "translateX(-50%) translateY(16px)",
                     }}
                   />
                 ))}
