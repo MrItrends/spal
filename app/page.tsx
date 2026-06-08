@@ -2,6 +2,74 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 
+// ─── Preloader ───────────────────────────────────────────────────────────────────
+function Preloader() {
+  const [phase, setPhase] = useState<"loading" | "done" | "gone">("loading");
+
+  useEffect(() => {
+    // Wait for window load, then start exit animation
+    function finish() {
+      setPhase("done");
+      setTimeout(() => setPhase("gone"), 700);
+    }
+    if (document.readyState === "complete") {
+      // Already loaded — still show briefly so it doesn't flash
+      setTimeout(finish, 800);
+    } else {
+      window.addEventListener("load", () => setTimeout(finish, 400), { once: true });
+      // Safety fallback: never show more than 4s
+      setTimeout(finish, 4000);
+    }
+  }, []);
+
+  if (phase === "gone") return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0f172a]"
+      style={{
+        opacity: phase === "done" ? 0 : 1,
+        transition: "opacity 0.7s cubic-bezier(0.4,0,0.2,1)",
+        pointerEvents: phase === "done" ? "none" : "all",
+      }}
+    >
+      {/* Animated glow blob */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "600px",
+          height: "600px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(47,99,245,0.08) 50%, transparent 70%)",
+          animation: "preloader-pulse 2s ease-in-out infinite",
+        }}
+      />
+
+      {/* Logo */}
+      <div
+        style={{
+          opacity: phase === "loading" ? 1 : 0,
+          transform: phase === "loading" ? "scale(1) translateY(0)" : "scale(0.92) translateY(-8px)",
+          transition: "opacity 0.5s ease, transform 0.5s ease",
+        }}
+      >
+        <img
+          src="/spal-wordmark.png"
+          alt="SPAL"
+          style={{ height: 48, width: "auto", filter: "brightness(0) invert(1)" }}
+          onError={(e) => { (e.target as HTMLImageElement).src = "/spal-wordmark.svg"; }}
+        />
+      </div>
+
+      {/* Loading bar */}
+      <div
+        className="absolute bottom-0 left-0 h-[2px] bg-[#22c55e]"
+        style={{ animation: "preloader-bar 1.8s cubic-bezier(0.4,0,0.2,1) forwards" }}
+      />
+    </div>
+  );
+}
+
 // ─── Scroll-reveal hook ──────────────────────────────────────────────────────────
 function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
@@ -865,6 +933,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
+      <Preloader />
       <Navbar onJoin={scrollToHero} />
       <div ref={heroRef}>
         <Hero />

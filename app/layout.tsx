@@ -48,6 +48,15 @@ export default function RootLayout({
           type="text/tailwindcss"
           dangerouslySetInnerHTML={{
             __html: `
+              @keyframes preloader-pulse {
+                0%, 100% { transform: scale(1); opacity: 0.8; }
+                50%       { transform: scale(1.15); opacity: 1; }
+              }
+              @keyframes preloader-bar {
+                0%   { width: 0%; opacity: 1; }
+                80%  { width: 90%; opacity: 1; }
+                100% { width: 100%; opacity: 0; }
+              }
               @keyframes rocket-liftoff {
                 0%, 50%, 100% { transform: translateY(0px) rotate(0deg); }
                 60%            { transform: translateY(-7px) rotate(-20deg); }
