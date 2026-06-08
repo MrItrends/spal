@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /mnt/c/Projects/spal && grep -r \"createSession\" node_modules/@supabase/supabase-js/dist --include=\"*.js\" -l 2>/dev/null | head -5)",
+      "Bash(npx tsc *)",
+      "PowerShell(if \\(!\\(Test-Path \"C:\\\\Projects\\\\spal\\\\.claude\"\\)\\) { New-Item -ItemType Directory -Path \"C:\\\\Projects\\\\spal\\\\.claude\" })",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(dir \"C:\\\\Projects\\\\spal\\\\app\\\\api\" /s /b)",
+      "Bash(cd /c/Projects/spal && find . -type f -name \"*.tsx\" -o -name \"*.ts\" | head -20)",
+      "Bash(cd /c/Projects/spal && find . -type f -name \"*.ts\" -o -name \"*.tsx\" | head -20)",
+      "Bash(xargs grep -l \"useSPALStore\\\\|createStore\")",
+      "Bash(xargs grep -l \"streak\\\\|badge\\\\|gamif\\\\|medal\\\\|achievement\\\\|xp\\\\|level\\\\|point\")",
+      "Bash(xargs grep -l \"subscription\\\\|payment\\\\|stripe\\\\|paystack\\\\|billing\\\\|purchase\\\\|premium\")",
+      "Bash(Get-ChildItem -Path . -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "mcp__Windows-MCP__PowerShell",
+      "mcp__Desktop_Commander__list_directory",
+      "mcp__Desktop_Commander__read_file",
+      "Bash(dir \"C:\\\\Projects\\\\spal\" /A)"
+    ]
+  }
+}

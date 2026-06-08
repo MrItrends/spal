@@ -1,0 +1,30 @@
+/* Base CSS — Tailwind utility classes are handled via CDN script in layout.tsx */
+
+:root {
+  --color-navy: #0F172A;
+  --color-cream: #F8F7F4;
+  --color-green: #22C55E;
+  --color-blue: #2F63F5;
+  --color-orange: #F35902;
+  --color-purple: #8B5CF6;
+  --color-teal: #123332;
+  --color-disabled: #E4E4E7;
+  --color-muted: #67738F;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: #ffffff;
+  color: #0F172A;
+  font-family: "Inter Tight", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
