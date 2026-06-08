@@ -1,13 +1,13 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { PillChip } from "@/components/ui/PillChip";
 import { useSPALStore } from "@/store";
 import type { BusinessRecord } from "@/lib/types";
 import type { Badge } from "@/lib/gamification/badges";
-import { Camera, X, CheckCircle2 } from "lucide-react";
+import { Camera, X, CheckCircle2, Minus, Plus, Zap } from "lucide-react";
 
 const SALE_CATEGORIES    = ["Drinks", "Food", "Clothing", "Services", "Products", "Other"];
 const EXPENSE_CATEGORIES = ["Stock", "Fuel", "Transport", "Rent", "Salary", "Utilities", "Other"];
@@ -19,6 +19,14 @@ interface AddRecordSheetProps {
   onSuccess?: () => void;
   /** When provided, sheet opens in edit mode pre-filled with this record */
   record?:    BusinessRecord | null;
+}
+
+interface SavedItem {
+  name:          string;
+  default_price: number;
+  category:      string | null;
+  count:         number;
+  last_used:     string;
 }
 
 export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRecordSheetProps) {
@@ -33,8 +41,14 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   const [scanning,      setScanning]      = useState(false);
   const [scanError,     setScanError]     = useState("");
   const [wasScanned,    setWasScanned]    = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Quick-recall state
+  const [savedItems,    setSavedItems]    = useState<SavedItem[]>([]);
+  const [selectedItem,  setSelectedItem]  = useState<SavedItem | null>(null);
+  const [quantity,      setQuantity]      = useState(1);
+  const [showSuggest,   setShowSuggest]   = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isEdit = !!record;
 
   // Pre-fill when editing
@@ -47,10 +61,68 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
     }
   }, [record, open]);
 
+  // Fetch the user's saved items whenever the sheet opens in add mode
+  useEffect(() => {
+    if (!open || isEdit) return;
+    fetch(`/api/records/items?type=${type}&limit=20`)
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setSavedItems(d.data ?? []); })
+      .catch(() => {});
+  }, [open, isEdit, type]);
+
   const categories = type === "sale" ? SALE_CATEGORIES : EXPENSE_CATEGORIES;
   const isValid    = amount && parseFloat(amount) > 0;
   const label      = type === "sale" ? "Sale" : "Expense";
   const emoji      = type === "sale" ? "💰" : "🧾";
+
+  // Type-ahead suggestions filtered by current description text
+  const suggestions = useMemo(() => {
+    if (!description.trim() || selectedItem) return [];
+    const q = description.toLowerCase();
+    return savedItems
+      .filter((it) => it.name.toLowerCase().includes(q) && it.name.toLowerCase() !== q)
+      .slice(0, 4);
+  }, [description, savedItems, selectedItem]);
+
+  // ── Item selection helpers ─────────────────────────────────────────────────
+
+  function selectItem(item: SavedItem) {
+    setSelectedItem(item);
+    setQuantity(1);
+    setAmount(String(item.default_price));
+    setDescription(item.name);
+    setCategory(item.category ?? "");
+    setShowSuggest(false);
+  }
+
+  function clearSelection() {
+    setSelectedItem(null);
+    setQuantity(1);
+  }
+
+  function handleQuantityChange(next: number) {
+    const q = Math.max(1, Math.min(999, next));
+    setQuantity(q);
+    if (selectedItem) {
+      setAmount(String(selectedItem.default_price * q));
+    }
+  }
+
+  function handleAmountChange(v: string) {
+    setAmount(v);
+    // Manual edit while a saved item is selected → break free of the unit-price link
+    if (selectedItem) clearSelection();
+  }
+
+  function handleDescriptionChange(v: string) {
+    setDescription(v);
+    setShowSuggest(true);
+    if (selectedItem && v.toLowerCase() !== selectedItem.name.toLowerCase()) {
+      clearSelection();
+    }
+  }
+
+  // ── Persistence ────────────────────────────────────────────────────────────
 
   async function handleSave() {
     if (!isValid) return;
@@ -58,7 +130,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
 
     try {
       if (isEdit && record) {
-        // PATCH existing record
         const res = await fetch("/api/records", {
           method:  "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -72,21 +143,24 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
       } else {
-        // POST new record
+        // For quantity-based entries, include quantity hint in description
+        const finalDesc = selectedItem && quantity > 1
+          ? `${selectedItem.name} × ${quantity}`
+          : description.trim() || undefined;
+
         const res = await fetch("/api/records", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({
             type,
             amount:      parseFloat(amount),
-            description: description.trim() || undefined,
+            description: finalDesc,
             category:    category || undefined,
-            input_method: wasScanned ? "scan" : "text",
+            input_method: wasScanned ? "scan" : (selectedItem ? "quick" : "text"),
           }),
         });
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
-        // Show badge celebration if any earned
         if (data.newBadges?.length > 0) {
           setTimeout(() => setNewBadge(data.newBadges[0] as Badge), 1200);
         }
@@ -100,7 +174,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
         onSuccess?.();
       }, 1000);
     } catch {
-      // silent — don't crash the sheet
+      // silent
     } finally {
       setLoading(false);
     }
@@ -109,7 +183,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   async function handleDelete() {
     if (!record) return;
     if (!deleteConfirm) { setDeleteConfirm(true); return; }
-
     setDeleting(true);
     try {
       await fetch(`/api/records?id=${record.id}`, { method: "DELETE" });
@@ -126,7 +199,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   async function handleScanFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!fileInputRef.current) return;
-    fileInputRef.current.value = ""; // reset so same file can be re-selected
+    fileInputRef.current.value = "";
     if (!file) return;
 
     setScanError("");
@@ -143,15 +216,12 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
       }
 
       const { type: detectedType, amount: detectedAmount, description: desc, category: cat } = data.data;
-
-      // Pre-fill fields — only overwrite blanks so manual edits are preserved
       if (!amount)      setAmount(String(detectedAmount));
       if (!description) setDescription(desc ?? "");
       if (!category)    setCategory(cat ?? "");
       setWasScanned(true);
+      clearSelection();
 
-      // If AI detected a different type than the sheet is opened for, note it
-      // (we can't change the sheet type mid-flow, but at least auto-fill is still useful)
       if (detectedType !== type) {
         setScanError(`Looks like a ${detectedType} receipt — fields pre-filled, but this sheet records a ${type}. Tap ✕ and use the correct button if needed.`);
       }
@@ -166,29 +236,31 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
     setAmount(""); setDescription(""); setCategory("");
     setSuccess(false); setDeleteConfirm(false);
     setScanError(""); setScanning(false); setWasScanned(false);
+    clearSelection();
+    setShowSuggest(false);
   }
 
   function handleClose() { reset(); onClose(); }
+
+  // Top 5 chips for quick-add (most-used surfaces first)
+  const topItems = savedItems.slice(0, 5);
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 sheet-backdrop z-[55]"
             onClick={handleClose}
           />
 
-          {/* Sheet */}
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-[60] shadow-2xl overflow-hidden flex flex-col"
             style={{ maxHeight: "90dvh" }}
           >
-            {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
@@ -196,7 +268,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
             {success ? (
               <SuccessState isEdit={isEdit} type={type} amount={amount} />
             ) : (
-              /* Scroll zone fills remaining height — reliable iOS momentum scroll */
               <div
                 className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-3 relative"
                 style={{
@@ -208,13 +279,10 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                 <AnimatePresence>
                   {scanning && (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                       className="absolute inset-0 z-20 bg-white/92 backdrop-blur-sm rounded-t-3xl flex flex-col items-center justify-center gap-4"
                     >
                       <div className="relative">
-                        {/* Pulsing ring */}
                         <motion.div
                           animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.2, 0.5] }}
                           transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
@@ -232,22 +300,14 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   )}
                 </AnimatePresence>
 
-                {/* Hidden file input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleScanFile}
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleScanFile} />
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
+                  <h2 className="text-lg font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                     {emoji} {isEdit ? `Edit ${label}` : `Add ${label}`}
                   </h2>
                   <div className="flex items-center gap-2">
-                    {/* Scan button — only in add mode */}
                     {!isEdit && (
                       <motion.button
                         whileTap={{ scale: 0.93 }}
@@ -269,11 +329,9 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   </div>
                 </div>
 
-                {/* Scan error / type mismatch notice */}
                 {scanError && (
                   <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
                     className="mb-4 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-2xl px-3 py-2.5"
                   >
                     <span className="text-sm flex-shrink-0 mt-0.5">⚠️</span>
@@ -281,7 +339,58 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   </motion.div>
                 )}
 
-                {/* Amount */}
+                {/* ── Quick-add chips (only in ADD mode + if user has past items) ── */}
+                {!isEdit && topItems.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Zap size={13} strokeWidth={2.2} className="text-spal-green" />
+                      <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide" style={{ fontFamily: "var(--font-satoshi)" }}>
+                        Quick add
+                      </label>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 scroll-container">
+                      {topItems.map((it) => {
+                        const active = selectedItem?.name.toLowerCase() === it.name.toLowerCase();
+                        return (
+                          <motion.button
+                            key={it.name}
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => active ? clearSelection() : selectItem(it)}
+                            className="flex-shrink-0 flex flex-col items-start px-3.5 py-2 rounded-2xl transition-all duration-150"
+                            style={{
+                              background: active ? (type === "sale" ? "#22C55E" : "#F35902") : "#FAFAFA",
+                              border:     `1.5px solid ${active ? (type === "sale" ? "#22C55E" : "#F35902") : "#F1F5F9"}`,
+                              minWidth: "fit-content",
+                            }}
+                          >
+                            <span
+                              className="text-[12px] font-semibold leading-tight"
+                              style={{
+                                fontFamily: "var(--font-satoshi)",
+                                color: active ? "#fff" : "#0F172A",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {it.name}
+                            </span>
+                            <span
+                              className="text-[11px] font-bold mt-0.5"
+                              style={{
+                                fontFamily: "var(--font-satoshi)",
+                                color: active ? "rgba(255,255,255,0.85)" : (type === "sale" ? "#16A34A" : "#EA580C"),
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              ₦{it.default_price.toLocaleString()}
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Amount ── */}
                 <div className="mb-4">
                   <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wide block mb-2">
                     How much?
@@ -293,14 +402,51 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                       inputMode="decimal"
                       placeholder="0"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => handleAmountChange(e.target.value)}
                       className="flex-1 text-3xl font-bold text-spal-navy bg-transparent outline-none placeholder:text-neutral-200"
                     />
                   </div>
+
+                  {/* Quantity stepper — only when a saved item is selected */}
+                  {selectedItem && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 flex items-center justify-between bg-spal-green-50 border border-spal-green-100 rounded-2xl px-3 py-2.5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                          Quantity
+                        </span>
+                        <span className="text-[11px] text-neutral-500">
+                          × ₦{selectedItem.default_price.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleQuantityChange(quantity - 1)}
+                          disabled={quantity <= 1}
+                          className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center active:scale-90 transition disabled:opacity-30"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={14} strokeWidth={2.5} className="text-spal-navy" />
+                        </button>
+                        <span className="w-9 text-center text-[15px] font-bold text-spal-navy tabular-nums" style={{ fontFamily: "var(--font-satoshi)" }}>
+                          {quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(quantity + 1)}
+                          className="w-8 h-8 rounded-full bg-spal-green text-white flex items-center justify-center active:scale-90 transition"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={14} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
-                {/* Description */}
-                <div className="mb-4">
+                {/* ── Description with type-ahead ── */}
+                <div className="mb-4 relative">
                   <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wide block mb-2">
                     What was this for? <span className="text-neutral-300">(optional)</span>
                   </label>
@@ -308,12 +454,41 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                     type="text"
                     placeholder={type === "sale" ? "e.g. Suya, Drinks, Rice..." : "e.g. Fuel, Stock, Salary..."}
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
+                    onFocus={() => setShowSuggest(true)}
+                    onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
                     className="w-full h-12 px-4 bg-neutral-50 rounded-2xl border-2 border-neutral-100 focus:border-spal-blue text-sm text-spal-navy placeholder:text-neutral-300 outline-none transition-colors"
                   />
+
+                  {/* Suggestions dropdown */}
+                  <AnimatePresence>
+                    {showSuggest && suggestions.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                        className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl border border-neutral-100 overflow-hidden z-10"
+                        style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+                      >
+                        {suggestions.map((s) => (
+                          <button
+                            key={s.name}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => selectItem(s)}
+                            className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-neutral-50 active:bg-neutral-100 text-left transition-colors"
+                          >
+                            <span className="text-[13.5px] font-medium text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                              {s.name}
+                            </span>
+                            <span className="text-[12px] font-bold flex-shrink-0" style={{ fontFamily: "var(--font-satoshi)", color: type === "sale" ? "#16A34A" : "#EA580C" }}>
+                              ₦{s.default_price.toLocaleString()}
+                            </span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                {/* Category pills */}
+                {/* ── Category pills ── */}
                 <div className="mb-5">
                   <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wide block mb-2">
                     Category
@@ -332,7 +507,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   </div>
                 </div>
 
-                {/* Save button — in natural scroll flow, always reachable */}
+                {/* ── Save / Delete ── */}
                 <div className="mt-5">
                   <Button
                     fullWidth size="lg" loading={loading} disabled={!isValid}
@@ -365,6 +540,8 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   );
 }
 
+void CheckCircle2;
+
 function SuccessState({ isEdit, type, amount }: { isEdit: boolean; type: string; amount: string }) {
   const messages = {
     sale:    ["Nice one! 🎉", "Great sale! 💪", "Recorded! Keep it up! 🔥"],
@@ -392,4 +569,3 @@ function SuccessState({ isEdit, type, amount }: { isEdit: boolean; type: string;
     </motion.div>
   );
 }
-

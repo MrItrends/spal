@@ -38,16 +38,36 @@ await sharp(iosSvg, { density: 400 })
   .toFile(join(ICONS, "apple-touch-icon.png"));
 console.log("apple-touch-icon.png");
 
-// Favicons — use the android source (filled white square) so it reads in a tab
+// Favicons — wordmark fills 88% of canvas for actual visibility at 16/32px.
+// We trim transparent edges off the wordmark PNG first, then center it on white.
 void faviconSvg;
+const wordmarkBuf = await sharp(join(PUB, "spal-wordmark.png"))
+  .trim({ threshold: 1 })
+  .toBuffer();
+const wmMeta = await sharp(wordmarkBuf).metadata();
+const aspect = (wmMeta.width || 1) / (wmMeta.height || 1);
+
 for (const s of [16, 32, 48, 96, 192]) {
-  await sharp(androidSvg, { density: 400 })
-    .resize(s, s, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .png()
-    .toFile(join(PUB, `favicon-${s}.png`));
+  // 88% width fill, center vertically
+  const wmWidth  = Math.max(1, Math.round(s * 0.88));
+  const wmHeight = Math.max(1, Math.round(wmWidth / aspect));
+  const resized  = await sharp(wordmarkBuf).resize(wmWidth, wmHeight).png().toBuffer();
+
+  await sharp({
+    create: {
+      width:  s,
+      height: s,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  })
+  .composite([{ input: resized, gravity: "center" }])
+  .png()
+  .toFile(join(PUB, `favicon-${s}.png`));
 }
-await sharp(androidSvg, { density: 400 }).resize(32, 32).png().toFile(join(PUB, "favicon.png"));
-console.log("favicons done");
+// favicon.png shortcut (32px) — used by some browsers as the default
+await sharp(join(PUB, "favicon-32.png")).png().toFile(join(PUB, "favicon.png"));
+console.log("favicons done (tight wordmark fill)");
 
 // Write favicon.ico (use 32px png bytes — most browsers accept png-in-ico via .png link anyway)
 writeFileSync(join(PUB, "favicon.ico"), readFileSync(join(PUB, "favicon-32.png")));
