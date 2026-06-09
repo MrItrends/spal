@@ -29,17 +29,14 @@ export default function WelcomePage() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="absolute inset-0 z-50 flex items-center justify-center"
-            style={{ background: TEAL }}
+            className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
+            style={{
+              backgroundImage: "url(/splash-background.png)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
           >
-            {/* Glow */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                top: "-180px", left: "-160px", width: "440px", height: "440px",
-                borderRadius: "50%", background: GREEN, filter: "blur(110px)", opacity: 0.55,
-              }}
-            />
             <motion.div
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
