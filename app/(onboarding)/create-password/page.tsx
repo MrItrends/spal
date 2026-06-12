@@ -36,8 +36,12 @@ export default function CreatePasswordPage() {
         return;
       }
 
-      // Hard navigation so the proxy middleware sees the refreshed session
-      window.location.href = "/home";
+      // Go to business name screen for new users; reset flow goes home
+      if (isReset) {
+        window.location.href = "/home";
+      } else {
+        router.push("/business-name");
+      }
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {

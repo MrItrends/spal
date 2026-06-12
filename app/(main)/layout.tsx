@@ -3,6 +3,7 @@ import { UserHydration } from "@/components/UserHydration";
 import { VoiceRecorder } from "@/components/voice/VoiceRecorder";
 import { BadgeCelebration } from "@/components/gamification/BadgeCelebration";
 import { PWAInstallPrompt } from "@/components/shared/PWAInstallPrompt";
+import { SparkAvatar } from "@/components/shared/SparkAvatar";
 
 export default function MainLayout({
   children,
@@ -18,6 +19,8 @@ export default function MainLayout({
         {children}
       </main>
       <BottomNav />
+      {/* Floating Spark avatar — opens Ask SPAL from anywhere */}
+      <SparkAvatar />
       {/* Voice recorder overlay — triggered from anywhere via store */}
       <VoiceRecorder />
       {/* Badge celebration — rendered above everything */}

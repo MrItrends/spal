@@ -7,6 +7,7 @@ import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
+import { HomeCoachmarks } from "@/components/shared/HomeCoachmarks";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
   TrendingUp, TrendingDown, Target, MessageCircle, User, Bell,
@@ -55,6 +56,8 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Coachmarks — shown once to first-time users */}
+      <HomeCoachmarks />
       <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
 
         {/* Home-only background — single radial gradient, OKLAB interpolation, no overlay banding */}
@@ -203,17 +206,17 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* ── Quick actions (2×2 pastel grid) ── */}
+        {/* ── Quick actions (2-column grid, Ask SPAL moved to floating Spark button) ── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.16, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="grid grid-cols-2 gap-3"
         >
-          <Tile bg="#E0F4E9" label="Add Sale"     icon={<TrendingUp    size={18} strokeWidth={2} color="#16A34A" />} onClick={() => setAddSheet("sale")} />
-          <Tile bg="#F3E5DD" label="Add Expense"  icon={<TrendingDown  size={18} strokeWidth={2} color="#EA580C" />} onClick={() => setAddSheet("expense")} />
-          <Tile bg="#E3E9F8" label="Goals"        icon={<Target        size={18} strokeWidth={2} color="#2563EB" />} onClick={() => router.push("/goals")} />
-          <Tile bg="#ECE5F9" label="Ask SPAL"     icon={<MessageCircle size={18} strokeWidth={2} color="#8B5CF6" />} onClick={() => router.push("/ask")} />
+          <Tile bg="#E0F4E9" label="Add Sale"    icon={<TrendingUp   size={18} strokeWidth={2} color="#16A34A" />} onClick={() => setAddSheet("sale")} />
+          <Tile bg="#F3E5DD" label="Add Expense" icon={<TrendingDown size={18} strokeWidth={2} color="#EA580C" />} onClick={() => setAddSheet("expense")} />
+          <Tile bg="#E3E9F8" label="Goals"       icon={<Target       size={18} strokeWidth={2} color="#2563EB" />} onClick={() => router.push("/goals")} />
+          <Tile bg="#ECE5F9" label="Records"     icon={<MessageCircle size={18} strokeWidth={2} color="#8B5CF6" />} onClick={() => router.push("/records")} />
         </motion.div>
 
         {/* ── Recent activity ── */}

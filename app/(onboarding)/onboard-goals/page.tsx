@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type BusinessGoal } from "@/store";
-import { ArrowLeft, Check, BarChart3, Clock, Scissors, TrendingUp, Search } from "lucide-react";
+import { ArrowLeft, Check, BarChart3, Scissors, TrendingUp, Search, DollarSign } from "lucide-react";
 
 const GOALS: {
   goal: BusinessGoal;
@@ -12,6 +12,7 @@ const GOALS: {
   sub: string;
   icon: React.ReactNode;
   accent: string;
+  nudge: string;
 }[] = [
   {
     goal: "track_sales",
@@ -19,13 +20,15 @@ const GOALS: {
     sub: "Know exactly how much I make each day",
     icon: <BarChart3 size={20} strokeWidth={1.7} />,
     accent: "#22C55E",
+    nudge: "SPAL will help you record every sale in seconds — no forms, just a quick tap or voice note.",
   },
   {
     goal: "know_profit",
     label: "Know my real profit",
     sub: "See what I actually keep after expenses",
-    icon: <Clock size={20} strokeWidth={1.7} />,
+    icon: <DollarSign size={20} strokeWidth={1.7} />,
     accent: "#2563EB",
+    nudge: "SPAL will show you exactly what you keep after every sale — not just what you make.",
   },
   {
     goal: "reduce_expenses",
@@ -33,6 +36,7 @@ const GOALS: {
     sub: "Find where money is leaking out",
     icon: <Scissors size={20} strokeWidth={1.7} />,
     accent: "#F97316",
+    nudge: "SPAL will spot your biggest spending patterns and tell you where money is quietly leaving.",
   },
   {
     goal: "grow_business",
@@ -40,6 +44,7 @@ const GOALS: {
     sub: "Make better decisions to scale up",
     icon: <TrendingUp size={20} strokeWidth={1.7} />,
     accent: "#8B5CF6",
+    nudge: "SPAL will track your best-selling days, products, and patterns so you can do more of what works.",
   },
   {
     goal: "understand_spending",
@@ -47,8 +52,19 @@ const GOALS: {
     sub: "See patterns in how I spend money",
     icon: <Search size={20} strokeWidth={1.7} />,
     accent: "#2563EB",
+    nudge: "SPAL will show you a simple breakdown of where your money goes every week — no guessing.",
   },
 ];
+
+function buildNudge(goals: Set<BusinessGoal>): string {
+  if (goals.size === 0) return "";
+  // Priority order for nudge copy
+  if (goals.has("know_profit")) return GOALS.find(g => g.goal === "know_profit")!.nudge;
+  if (goals.has("track_sales")) return GOALS.find(g => g.goal === "track_sales")!.nudge;
+  if (goals.has("reduce_expenses")) return GOALS.find(g => g.goal === "reduce_expenses")!.nudge;
+  if (goals.has("grow_business")) return GOALS.find(g => g.goal === "grow_business")!.nudge;
+  return GOALS.find(g => g.goal === "understand_spending")!.nudge;
+}
 
 export default function GoalsPage() {
   const router = useRouter();
@@ -66,8 +82,10 @@ export default function GoalsPage() {
 
   function handleContinue() {
     setOnboardingData({ goals: Array.from(selected) });
-    router.push("/demo");
+    router.push("/signup");
   }
+
+  const nudge = buildNudge(selected);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F8F7F4" }}>
@@ -76,14 +94,14 @@ export default function GoalsPage() {
       <div className="px-5 pt-12 pb-0">
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => router.push("/business-type")}
+            onClick={() => router.push("/tracking-methods")}
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
             <ArrowLeft size={18} strokeWidth={2} />
           </button>
-          <div className="flex-1"><OnboardProgress step={2} total={4} /></div>
+          <div className="flex-1"><OnboardProgress step={3} total={3} /></div>
         </div>
 
         <motion.div
@@ -92,13 +110,15 @@ export default function GoalsPage() {
           transition={{ delay: 0.05, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
           className="mt-7"
         >
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 mb-2"
-            style={{ fontFamily: "var(--font-satoshi)" }}>
-            Step 2 of 4
+          <p
+            className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 mb-2"
+            style={{ fontFamily: "var(--font-satoshi)" }}
+          >
+            Step 3 of 3
           </p>
           <h1
             className="text-spal-navy font-bold leading-[1.1]"
-            style={{ fontSize: "clamp(30px, 8.5vw, 36px)", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.025em" }}
+            style={{ fontSize: "clamp(28px, 8vw, 34px)", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.025em" }}
           >
             What do you want<br />to achieve?
           </h1>
@@ -109,7 +129,7 @@ export default function GoalsPage() {
       </div>
 
       {/* List */}
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-container px-5 pt-6 pb-44">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-container px-5 pt-6 pb-52">
         <div className="space-y-2.5">
           {GOALS.map((item, i) => {
             const isSelected = selected.has(item.goal);
@@ -166,15 +186,32 @@ export default function GoalsPage() {
         </div>
       </div>
 
-      {/* Bottom gradient + CTA */}
+      {/* Bottom — nudge + CTA */}
       <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-10 pt-16"
-        style={{ background: "linear-gradient(to top, #F8F7F4 60%, transparent)" }}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-10 pt-6"
+        style={{ background: "linear-gradient(to top, #F8F7F4 65%, transparent)" }}
       >
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.3 }}
+        {/* Nudge */}
+        <AnimatePresence>
+          {nudge && (
+            <motion.div
+              key={nudge}
+              initial={{ opacity: 0, y: 6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="mb-4 rounded-2xl px-4 py-3 flex items-start gap-3"
+              style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)" }}
+            >
+              <span className="text-[18px] mt-0.5" role="img" aria-label="spark">✦</span>
+              <p className="text-[13px] text-spal-navy leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+                {nudge}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
           onClick={handleContinue}
           disabled={selected.size === 0}
           className="w-full h-14 rounded-full font-bold text-[15px] transition-all duration-200"
@@ -185,9 +222,9 @@ export default function GoalsPage() {
           }}
         >
           Continue{selected.size > 0 ? ` (${selected.size} selected)` : ""}
-        </motion.button>
+        </button>
         <button
-          onClick={() => { setOnboardingData({ goals: [] }); router.push("/demo"); }}
+          onClick={() => { setOnboardingData({ goals: [] }); router.push("/signup"); }}
           className="w-full mt-3 text-center text-[13px] text-neutral-400 py-1"
           style={{ fontFamily: "var(--font-satoshi)" }}
         >
@@ -211,5 +248,3 @@ function OnboardProgress({ step, total }: { step: number; total: number }) {
     </div>
   );
 }
-
-// Icons via Lucide — imported above

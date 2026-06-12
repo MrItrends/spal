@@ -3,20 +3,73 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Activity, FileText, BarChart3, GraduationCap, User } from "lucide-react";
+import Image from "next/image";
+import { Activity, FileText, BarChart3, User } from "lucide-react";
 
 interface NavItem {
-  href:  string;
-  label: string;
-  icon:  React.ReactNode;
+  href:    string;
+  label:   string;
+  icon:    React.ReactNode;
+  iconActive?: React.ReactNode;
 }
 
 const navItems: NavItem[] = [
-  { href: "/home",     label: "Home",    icon: <Activity    size={21} strokeWidth={1.7} /> },
-  { href: "/records",  label: "Records", icon: <FileText    size={21} strokeWidth={1.7} /> },
-  { href: "/insights", label: "Insights",icon: <BarChart3   size={21} strokeWidth={1.7} /> },
-  { href: "/learn",    label: "Coach",   icon: <GraduationCap size={21} strokeWidth={1.7} /> },
-  { href: "/profile",  label: "Profile", icon: <User        size={21} strokeWidth={1.7} /> },
+  {
+    href:  "/home",
+    label: "Home",
+    icon:  <Activity size={21} strokeWidth={1.7} />,
+    iconActive: (
+      <Image
+        src="/home icon.svg"
+        alt="Home"
+        width={21}
+        height={21}
+        style={{ width: 21, height: 21 }}
+      />
+    ),
+  },
+  {
+    href:  "/records",
+    label: "Records",
+    icon:  <FileText size={21} strokeWidth={1.7} />,
+    iconActive: (
+      <Image
+        src="/records_icon.svg"
+        alt="Records"
+        width={21}
+        height={21}
+        style={{ width: 21, height: 21 }}
+      />
+    ),
+  },
+  {
+    href:  "/insights",
+    label: "Insights",
+    icon:  <BarChart3 size={21} strokeWidth={1.7} />,
+    iconActive: (
+      <Image
+        src="/insights_icon.svg"
+        alt="Insights"
+        width={21}
+        height={21}
+        style={{ width: 21, height: 21 }}
+      />
+    ),
+  },
+  {
+    href:  "/profile",
+    label: "Profile",
+    icon:  <User size={21} strokeWidth={1.7} />,
+    iconActive: (
+      <Image
+        src="/profile_icon.svg"
+        alt="Profile"
+        width={21}
+        height={21}
+        style={{ width: 21, height: 21 }}
+      />
+    ),
+  },
 ];
 
 export function BottomNav() {
@@ -42,11 +95,17 @@ export function BottomNav() {
                   transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                 />
               )}
-              <span className={`relative z-10 transition-all duration-200 ${isActive ? "text-spal-navy scale-110" : "text-neutral-400"}`}>
-                {item.icon}
+              <span
+                className={`relative z-10 transition-all duration-200 ${
+                  isActive ? "text-spal-navy scale-110" : "text-neutral-400"
+                }`}
+              >
+                {isActive && item.iconActive ? item.iconActive : item.icon}
               </span>
               <span
-                className={`relative z-10 text-[9.5px] font-semibold tracking-tight transition-colors duration-200 ${isActive ? "text-spal-navy" : "text-neutral-400"}`}
+                className={`relative z-10 text-[9.5px] font-semibold tracking-tight transition-colors duration-200 ${
+                  isActive ? "text-spal-navy" : "text-neutral-400"
+                }`}
                 style={{ fontFamily: "var(--font-satoshi)" }}
               >
                 {item.label}

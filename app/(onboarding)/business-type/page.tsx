@@ -76,7 +76,7 @@ export default function BusinessTypePage() {
   function handleContinue() {
     if (!selected) return;
     setOnboardingData({ businessType: selected, mode: "signup" });
-    router.push("/signup");
+    router.push("/tracking-methods");
   }
 
   return (
@@ -95,7 +95,7 @@ export default function BusinessTypePage() {
             <ArrowLeft size={18} strokeWidth={2} />
           </button>
           <div className="flex-1">
-            <OnboardProgress step={1} total={4} />
+            <OnboardProgress step={1} total={3} />
           </div>
         </div>
 
@@ -107,7 +107,7 @@ export default function BusinessTypePage() {
         >
           <p className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 mb-2"
             style={{ fontFamily: "var(--font-satoshi)" }}>
-            Step 1 of 4
+            Step 1 of 3
           </p>
           <h1
             className="text-spal-navy font-bold leading-[1.1]"

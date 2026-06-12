@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArrowRight, LogIn } from "lucide-react";
 
-const TEAL   = "#123232";
-const GREEN  = "#37CB6D";
-
 export default function WelcomePage() {
   const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
@@ -20,7 +17,7 @@ export default function WelcomePage() {
   }, []);
 
   return (
-    <div className="flex-1 relative overflow-hidden" style={{ background: TEAL }}>
+    <div className="flex-1 relative overflow-hidden" style={{ background: "#0F172A" }}>
 
       {/* ── Splash overlay ───────────────────────────────────────────── */}
       <AnimatePresence>

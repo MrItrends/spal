@@ -21,6 +21,14 @@ export type BusinessGoal =
   | "grow_business"
   | "understand_spending";
 
+export type TrackingMethod =
+  | "notebook"
+  | "spreadsheet"
+  | "another_app"
+  | "memory"
+  | "whatsapp"
+  | "nothing";
+
 export interface User {
   id: string;
   phone_number?: string | null;
@@ -55,6 +63,7 @@ interface SPALStore {
   // Onboarding
   onboardingData: {
     businessType?: BusinessType;
+    trackingMethods?: TrackingMethod[];
     goals?: BusinessGoal[];
     phoneNumber?: string;
     email?: string;
