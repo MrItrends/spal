@@ -41,7 +41,7 @@ console.log("apple-touch-icon.png");
 // Favicons — wordmark fills 88% of canvas for actual visibility at 16/32px.
 // We trim transparent edges off the wordmark PNG first, then center it on white.
 void faviconSvg;
-const wordmarkBuf = await sharp(join(PUB, "spal-wordmark.png"))
+const wordmarkBuf = await sharp(join(PUB, "spal-wordmark.webp"))
   .trim({ threshold: 1 })
   .toBuffer();
 const wmMeta = await sharp(wordmarkBuf).metadata();

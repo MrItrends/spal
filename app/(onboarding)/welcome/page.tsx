@@ -31,7 +31,7 @@ export default function WelcomePage() {
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
             style={{
-              backgroundImage: "url(/splash-background.png)",
+              backgroundImage: "url(/splash-background.webp)",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -44,7 +44,7 @@ export default function WelcomePage() {
               className="relative"
             >
               <Image
-                src="/spal-wordmark.png"
+                src="/spal-wordmark.webp"
                 alt="SPAL"
                 width={210}
                 height={75}
@@ -74,158 +74,122 @@ function GetStartedContent({
   ready: boolean;
 }) {
   return (
-    <div className="absolute inset-0 flex flex-col">
-
-      {/* Background glow — top left */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: "-180px", left: "-160px", width: "440px", height: "440px",
-          borderRadius: "50%", background: GREEN, filter: "blur(110px)", opacity: 0.45,
-        }}
-      />
-
-      {/* Logo top center */}
+    <div
+      className="absolute inset-0 flex flex-col"
+      style={{
+        backgroundImage: "url(/splash-background.webp)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* SPAL wordmark — top center */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={ready ? { opacity: 1, y: 0 } : {}}
         transition={{ delay: 0.1, duration: 0.4 }}
-        className="relative pt-16 flex justify-center"
+        className="relative pt-14 flex justify-center"
       >
         <Image
-          src="/spal-wordmark.png"
+          src="/spal-wordmark.webp"
           alt="SPAL"
-          width={90}
-          height={32}
-          style={{ width: "84px", height: "auto" }}
+          width={120}
+          height={42}
+          priority
+          style={{ width: "104px", height: "auto" }}
         />
       </motion.div>
 
-      {/* Fanned card stack — matches the Get Started design */}
-      <div className="relative flex-1 flex items-center justify-center px-6">
+      {/* Fanned UI mockup cards */}
+      <div className="relative flex-1 flex items-center justify-center px-3">
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          initial={{ opacity: 0, scale: 0.94, y: 12 }}
           animate={ready ? { opacity: 1, scale: 1, y: 0 } : {}}
-          transition={{ delay: 0.2, duration: 0.6, ease: [0.34, 1.1, 0.64, 1] }}
+          transition={{ delay: 0.18, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
+          className="relative w-full"
+          style={{ maxWidth: "360px", aspectRatio: "10 / 9" }}
         >
-          <CardStack play={ready} />
+          {/* Back card — Add Sale (empty), top-left, lifted up */}
+          <motion.div
+            initial={{ opacity: 0, x: -16, y: 8 }}
+            animate={ready ? { opacity: 1, x: 0, y: 0 } : {}}
+            transition={{ delay: 0.28, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
+            className="absolute"
+            style={{
+              top: "0%",
+              left: "0%",
+              width: "62%",
+              filter: "drop-shadow(0 14px 36px rgba(0,0,0,0.30))",
+            }}
+          >
+            <Image
+              src="/addsales_getstartedscreen.webp"
+              alt="Add Sale preview"
+              width={500}
+              height={550}
+              priority
+              style={{ width: "100%", height: "auto", display: "block" }}
+            />
+          </motion.div>
+
+          {/* Front card — Add Expense (filled), bottom-right, on top */}
+          <motion.div
+            initial={{ opacity: 0, x: 16, y: 8 }}
+            animate={ready ? { opacity: 1, x: 0, y: 0 } : {}}
+            transition={{ delay: 0.38, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
+            className="absolute"
+            style={{
+              bottom: "0%",
+              right: "0%",
+              width: "62%",
+              filter: "drop-shadow(0 18px 40px rgba(0,0,0,0.34))",
+            }}
+          >
+            <Image
+              src="/addexpense_getstartedscreen.webp"
+              alt="Add Expense preview"
+              width={500}
+              height={550}
+              priority
+              style={{ width: "100%", height: "auto", display: "block" }}
+            />
+          </motion.div>
         </motion.div>
       </div>
 
-      {/* Headline + CTAs */}
+      {/* Bottom CTA — single green Get Started button */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={ready ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.35, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ delay: 0.5, duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
         className="relative px-6 pb-10"
         style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 2.5rem))" }}
       >
-        <h1
-          className="text-white font-black leading-[1.08] mb-3"
-          style={{ fontSize: "clamp(30px, 8vw, 38px)", fontFamily: "var(--font-satoshi)", letterSpacing: "-0.03em" }}
-        >
-          Your business.
-          <br />
-          <span style={{ color: GREEN }}>Understood.</span>
-        </h1>
-        <p
-          className="text-white/55 text-[15px] leading-relaxed mb-7"
-          style={{ fontFamily: "var(--font-satoshi)", maxWidth: "300px" }}
-        >
-          Track sales, know your real profit, and grow — no accounting needed.
-        </p>
-
-        {/* Primary — Get started */}
         <button
           onClick={() => router.push("/business-type")}
-          className="w-full h-14 rounded-full font-bold text-[15px] flex items-center justify-center gap-2 mb-3"
-          style={{ fontFamily: "var(--font-satoshi)", background: "#ffffff", color: TEAL }}
+          className="w-full h-14 rounded-full font-bold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+          style={{
+            fontFamily: "var(--font-satoshi)",
+            background: "#22C55E",
+            color: "#ffffff",
+            boxShadow: "0 6px 20px rgba(34,197,94,0.35)",
+          }}
         >
-          Get started
+          Get Started
           <ArrowRight size={18} strokeWidth={2.5} />
         </button>
 
-        {/* Secondary — Sign in */}
+        {/* Subtle sign-in link for returning users */}
         <button
           onClick={() => router.push("/login")}
-          className="w-full h-14 rounded-full font-semibold text-[15px] flex items-center justify-center gap-2"
-          style={{
-            fontFamily: "var(--font-satoshi)",
-            background: "rgba(255,255,255,0.08)",
-            color: "#ffffff",
-            border: "1px solid rgba(255,255,255,0.15)",
-          }}
+          className="w-full mt-4 text-center text-[13px] active:opacity-60 transition-opacity"
+          style={{ fontFamily: "var(--font-satoshi)", color: "rgba(255,255,255,0.55)" }}
         >
-          <LogIn size={17} strokeWidth={2} />
-          I already have an account
+          Already have an account?{" "}
+          <span style={{ color: "#fff", fontWeight: 600 }}>Sign in</span>
         </button>
       </motion.div>
-
     </div>
   );
 }
 
-/* ── Fanned card stack — two cards tilted at opposite angles, overlapping ─ */
-function CardStack({ play }: { play: boolean }) {
-  // Card width relative to screen; the pair stays centered in the container.
-  const cardW = "min(56vw, 220px)";
-
-  return (
-    <div
-      className="relative mx-auto"
-      style={{ width: "min(86vw, 330px)", height: "min(82vw, 320px)" }}
-    >
-      {/* Back card — tilted +4°, upper-right (matches design card 0) */}
-      <motion.div
-        className="absolute top-1/2 left-1/2"
-        initial={{ opacity: 0, rotate: 4, x: "-38%", y: "-58%" }}
-        animate={play ? {
-          opacity: 1,
-          rotate: [4, 5.5, 4],
-          x: "-38%",
-          y: ["-58%", "-55%", "-58%"],
-        } : {}}
-        transition={{
-          opacity: { duration: 0.5, delay: 0.25 },
-          rotate:  { duration: 6, repeat: Infinity, ease: "easeInOut" },
-          y:       { duration: 6, repeat: Infinity, ease: "easeInOut" },
-        }}
-        style={{ width: cardW, zIndex: 1, transformOrigin: "center" }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/get-started-top.svg"
-          alt=""
-          className="w-full h-auto block"
-          style={{ filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.35))" }}
-        />
-      </motion.div>
-
-      {/* Front card — tilted −4°, lower-left (matches design card 1) */}
-      <motion.div
-        className="absolute top-1/2 left-1/2"
-        initial={{ opacity: 0, rotate: -4, x: "-62%", y: "-42%" }}
-        animate={play ? {
-          opacity: 1,
-          rotate: [-4, -5.5, -4],
-          x: "-62%",
-          y: ["-42%", "-45%", "-42%"],
-        } : {}}
-        transition={{
-          opacity: { duration: 0.5, delay: 0.35 },
-          rotate:  { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 },
-          y:       { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 },
-        }}
-        style={{ width: cardW, zIndex: 2, transformOrigin: "center" }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/get-started-bottom.svg"
-          alt=""
-          className="w-full h-auto block"
-          style={{ filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.4))" }}
-        />
-      </motion.div>
-    </div>
-  );
-}

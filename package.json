@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "to-webp": "node scripts/to-webp.mjs",
+    "gen-icons": "node scripts/gen-icons.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
