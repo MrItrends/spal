@@ -46,10 +46,10 @@ export default function BusinessNamePage() {
     setError("");
 
     try {
-      const res = await fetch("/api/profile/update", {
-        method: "POST",
+      const res = await fetch("/api/auth/update-profile", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business_name: trimmed }),
+        body: JSON.stringify({ business_name: trimmed, onboarding_completed: true }),
       });
       const data = await res.json();
 
