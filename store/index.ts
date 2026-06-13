@@ -23,10 +23,11 @@ export type BusinessGoal =
 
 export type TrackingMethod =
   | "notebook"
-  | "spreadsheet"
-  | "another_app"
-  | "memory"
   | "whatsapp"
+  | "excel"
+  | "google_sheets"
+  | "notes_app"
+  | "receipts"
   | "nothing";
 
 export interface User {

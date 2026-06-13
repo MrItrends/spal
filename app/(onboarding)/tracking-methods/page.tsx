@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { useSPALStore, type TrackingMethod } from "@/store";
 
 const METHODS: {
@@ -16,43 +16,50 @@ const METHODS: {
 }[] = [
   {
     method: "notebook",
-    label: "Notebook or paper",
-    sub: "I write things down by hand",
+    label: "Notebook",
+    sub: "You write on a note or paper",
     icon: <NotebookIcon />,
     accent: "#22C55E",
   },
   {
-    method: "spreadsheet",
-    label: "Spreadsheet",
-    sub: "Excel, Google Sheets or similar",
-    icon: <SpreadsheetIcon />,
-    accent: "#2563EB",
-  },
-  {
-    method: "another_app",
-    label: "Another app",
-    sub: "I use a different business app",
-    icon: <AppIcon />,
-    accent: "#8B5CF6",
-  },
-  {
-    method: "memory",
-    label: "I remember it",
-    sub: "I keep it all in my head",
-    icon: <MemoryIcon />,
+    method: "whatsapp",
+    label: "Whatsapp",
+    sub: "You save on your whatsapp chat",
+    icon: <WhatsAppIcon />,
     accent: "#F97316",
   },
   {
-    method: "whatsapp",
-    label: "WhatsApp messages",
-    sub: "I send records to myself or a group",
-    icon: <WhatsAppIcon />,
+    method: "excel",
+    label: "Microsoft Excel",
+    sub: "I use excel to track my records",
+    icon: <ExcelIcon />,
+    accent: "#8B5CF6",
+  },
+  {
+    method: "google_sheets",
+    label: "Google Sheets",
+    sub: "I track using google sheet",
+    icon: <SheetsIcon />,
+    accent: "#2563EB",
+  },
+  {
+    method: "notes_app",
+    label: "Notes App",
+    sub: "I have a note app either android or ios",
+    icon: <NotesAppIcon />,
     accent: "#22C55E",
+  },
+  {
+    method: "receipts",
+    label: "Receipts",
+    sub: "I save my receipts and have pictures of them",
+    icon: <ReceiptsIcon />,
+    accent: "#F97316",
   },
   {
     method: "nothing",
     label: "I don't track anything",
-    sub: "I haven't started yet",
+    sub: "Oh! no this is me for reals :)",
     icon: <NothingIcon />,
     accent: "#A1A1AA",
     exclusive: true,
@@ -103,7 +110,7 @@ export default function TrackingMethodsPage() {
           >
             <ArrowLeft size={18} strokeWidth={2} />
           </button>
-          <div className="flex-1"><OnboardProgress step={2} total={3} /></div>
+          <div className="flex-1"><OnboardProgress step={2} total={7} /></div>
         </div>
 
         <motion.div
@@ -116,7 +123,7 @@ export default function TrackingMethodsPage() {
             className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 mb-2"
             style={{ fontFamily: "var(--font-satoshi)" }}
           >
-            Step 2 of 3
+            Step 2 of 7
           </p>
           <h1
             className="text-spal-navy font-bold leading-[1.1]"
@@ -125,7 +132,7 @@ export default function TrackingMethodsPage() {
             How do you currently<br />track your business?
           </h1>
           <p className="mt-2 text-neutral-400 text-[13px]" style={{ fontFamily: "var(--font-satoshi)" }}>
-            Select all that apply. This helps SPAL get you set up faster.
+            You can select multiple options
           </p>
         </motion.div>
       </div>
@@ -170,22 +177,17 @@ export default function TrackingMethodsPage() {
                   </p>
                 </div>
 
-                <AnimatePresence>
-                  {isSelected ? (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={{ duration: 0.18, ease: [0.34, 1.4, 0.64, 1] }}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: item.accent }}
-                    >
-                      <Check size={13} strokeWidth={2.5} color="white" />
-                    </motion.div>
-                  ) : (
-                    <div className="w-6 h-6 rounded-lg border-2 border-neutral-200 flex-shrink-0" />
+                <div
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150"
+                  style={{
+                    border: isSelected ? `2px solid ${item.accent}` : "2px solid #D4D4D8",
+                    background: isSelected ? item.accent : "transparent",
+                  }}
+                >
+                  {isSelected && (
+                    <div className="w-2 h-2 rounded-full bg-white" />
                   )}
-                </AnimatePresence>
+                </div>
               </motion.button>
             );
           })}
@@ -238,13 +240,32 @@ function OnboardProgress({ step, total }: { step: number; total: number }) {
 function NotebookIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      <line x1="8" y1="7" x2="15" y2="7" />
+      <line x1="8" y1="11" x2="15" y2="11" />
     </svg>
   );
 }
 
-function SpreadsheetIcon() {
+function WhatsAppIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  );
+}
+
+function ExcelIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+    </svg>
+  );
+}
+
+function SheetsIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -253,29 +274,21 @@ function SpreadsheetIcon() {
   );
 }
 
-function AppIcon() {
+function NotesAppIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="2" width="14" height="20" rx="2" />
-      <path d="M12 18h.01" />
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="13" y2="17" />
     </svg>
   );
 }
 
-function MemoryIcon() {
+function ReceiptsIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.44-4.24Z" />
-      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.44-4.24Z" />
-    </svg>
-  );
-}
-
-function WhatsAppIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      <path d="M8 10h.01M12 10h.01M16 10h.01" />
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   );
 }
@@ -284,7 +297,9 @@ function NothingIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
-      <path d="M8 12h8" />
+      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+      <line x1="9" y1="9" x2="9.01" y2="9" />
+      <line x1="15" y1="9" x2="15.01" y2="9" />
     </svg>
   );
 }
