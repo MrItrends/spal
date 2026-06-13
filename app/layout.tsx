@@ -69,10 +69,25 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SPAL" />
       </head>
-      <body className="h-full overflow-hidden bg-spal-bg antialiased">
+      {/*
+        Desktop shell: body = full-viewport dark canvas.
+        #app-root is capped at 480 px and centred.
+        transform: translateZ(0) creates a new stacking context so every
+        position:fixed child is contained by this element, not the viewport —
+        keeping all overlays, sheets, and nav inside the mobile frame on desktop.
+      */}
+      <body className="h-full overflow-hidden antialiased" style={{ background: "#06090F" }}>
         {/* Registers /sw.js in production for PWA / offline support */}
         <RegisterSW />
-        <div id="app-root" className="h-full flex flex-col overflow-hidden">
+        <div
+          id="app-root"
+          className="h-full flex flex-col overflow-hidden bg-spal-bg mx-auto relative"
+          style={{
+            maxWidth: 480,
+            transform: "translateZ(0)",   // new stacking context — contains fixed children
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 0 80px rgba(0,0,0,0.8)",
+          }}
+        >
           {children}
         </div>
       </body>
