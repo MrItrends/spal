@@ -11,7 +11,7 @@ import { HomeCoachmarks } from "@/components/shared/HomeCoachmarks";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
   TrendingUp, TrendingDown, User, Bell,
-  ArrowUp, ArrowDown, ChevronRight, ScanLine, FolderInput, Package,
+  ArrowUp, ArrowDown, ScanLine, FolderInput, Package,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -123,13 +123,6 @@ export default function HomePage() {
               {new Date().toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" })}
             </p>
           </div>
-          <button
-            onClick={() => router.push("/insights")}
-            className="flex items-center gap-1 text-white/80 text-[13px] font-semibold active:opacity-60 transition-opacity"
-            style={{ fontFamily: "var(--font-satoshi)" }}
-          >
-            View Details <ChevronRight size={14} strokeWidth={2.2} />
-          </button>
         </motion.div>
 
         {/* ── Hero summary card ── */}
@@ -139,7 +132,9 @@ export default function HomePage() {
           transition={{ delay: 0.1, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         >
           <div
-            className="relative rounded-[24px] overflow-hidden"
+            role="button"
+            onClick={() => router.push("/records")}
+            className="relative rounded-[24px] overflow-hidden active:scale-[0.99] transition-transform cursor-pointer"
             style={{ background: "#F3EFE4" }}
           >
             {/* Glow circles clipped to card top */}
