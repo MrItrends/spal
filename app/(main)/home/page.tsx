@@ -223,7 +223,7 @@ export default function HomePage() {
               label="Add Sale"
               icon={<TrendingUp size={20} strokeWidth={2} color="#fff" />}
               labelColor="#fff"
-              onClick={() => setAddSheet("sale")}
+              onClick={() => router.push("/records/add-sale")}
             />
             <Tile3
               bg="#F97316"

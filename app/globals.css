@@ -11,7 +11,7 @@
   --color-spal-orange: #F97316;
   --color-spal-purple: #8B5CF6;
   --color-spal-navy:   #0F172A;
-  --color-spal-bg:     #F8F7F4;
+  --color-spal-bg:     #F7F9F5;
 
   /* Green shades */
   --color-spal-green-50:  #F0FDF4;
@@ -68,7 +68,7 @@
    ============================================= */
 
 :root {
-  --background: #F8F7F4;
+  --background: #F7F9F5;
   --foreground: #0F172A;
   --sab: env(safe-area-inset-bottom, 0px);
   --sat: env(safe-area-inset-top, 0px);
