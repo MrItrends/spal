@@ -44,6 +44,8 @@ export interface User {
   streak_days: number;
   onboarding_completed: boolean;
   subscription_plan?: string; // 'free' | 'pro'
+  inventory_setup_done?: boolean;
+  inventory_track_sales?: boolean;
 }
 
 export interface DailySummary {

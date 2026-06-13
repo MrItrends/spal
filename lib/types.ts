@@ -36,6 +36,18 @@ export interface User {
 export type RecordType = "sale" | "expense";
 export type InputMethod = "voice" | "text" | "quick";
 
+export interface InventoryItem {
+  id: string;
+  user_id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  low_stock_threshold: number;
+  cost_price?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BusinessRecord {
   id: string;
   user_id: string;
