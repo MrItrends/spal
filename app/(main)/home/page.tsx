@@ -230,7 +230,7 @@ export default function HomePage() {
               label="Add Expense"
               icon={<TrendingDown size={20} strokeWidth={2} color="#fff" />}
               labelColor="#fff"
-              onClick={() => setAddSheet("expense")}
+              onClick={() => router.push("/records/add-expense")}
             />
             <Tile3
               bg="#fff"
