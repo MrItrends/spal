@@ -10,12 +10,9 @@ import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { HomeCoachmarks } from "@/components/shared/HomeCoachmarks";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
-  TrendingUp, TrendingDown, Target, MessageCircle, User, Bell,
-  ArrowUp, ArrowDown, ChevronRight,
+  TrendingUp, TrendingDown, User, Bell,
+  ArrowUp, ArrowDown, ChevronRight, ScanLine, FolderInput, Package,
 } from "lucide-react";
-
-const BEIGE  = "#F3EFE4";
-const TEAL   = "#204948";
 
 export default function HomePage() {
   const router = useRouter();
@@ -78,7 +75,7 @@ export default function HomePage() {
         />
 
         {/* Foreground content */}
-        <div className="relative px-6 pt-7 space-y-6 animate-fade-in">
+        <div className="relative px-5 pt-7 space-y-5 animate-fade-in">
 
         {/* ── Header ── */}
         <motion.div
@@ -119,35 +116,50 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* ── Hero summary card (beige) ── */}
+        {/* ── Today's Snapshot section header ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="flex items-center justify-between"
+        >
+          <div>
+            <p className="text-[15px] font-bold text-white" style={{ fontFamily: "var(--font-satoshi)" }}>
+              Today&apos;s Snapshot
+            </p>
+            <p className="text-[12px] text-white/60 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {new Date().toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" })}
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/insights")}
+            className="flex items-center gap-1 text-white/80 text-[13px] font-semibold active:opacity-60 transition-opacity"
+            style={{ fontFamily: "var(--font-satoshi)" }}
+          >
+            View Details <ChevronRight size={14} strokeWidth={2.2} />
+          </button>
+        </motion.div>
+
+        {/* ── Hero summary card ── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ delay: 0.1, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         >
-          {/* Beige card with vivid green→blue glow contained inside (matches Frame 49) */}
           <div
             className="relative rounded-[24px] overflow-hidden"
-            style={{ background: BEIGE }}
+            style={{ background: "#F3EFE4" }}
           >
-            {/* Glow circles — clipped to the card, strongest across the top */}
+            {/* Glow circles clipped to card top */}
             <div className="absolute pointer-events-none"
-              style={{ top: "-130px", left: "-110px", width: "300px", height: "300px", borderRadius: "50%", background: "#02D169", filter: "blur(75px)", opacity: 0.85 }} />
+              style={{ top: "-120px", left: "-100px", width: "280px", height: "280px", borderRadius: "50%", background: "#02D169", filter: "blur(70px)", opacity: 0.85 }} />
             <div className="absolute pointer-events-none"
-              style={{ top: "-130px", right: "-110px", width: "300px", height: "300px", borderRadius: "50%", background: "#2E63F9", filter: "blur(75px)", opacity: 0.8 }} />
+              style={{ top: "-120px", right: "-100px", width: "280px", height: "280px", borderRadius: "50%", background: "#2E63F9", filter: "blur(70px)", opacity: 0.8 }} />
 
-            {/* Top glow strip — "View report" link sits on the colourful band */}
-            <div className="relative flex justify-end items-center h-6 px-5">
-              <button
-                onClick={() => router.push("/insights")}
-                className="flex items-center gap-1 text-white text-[12px] font-semibold"
-                style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 4px rgba(0,0,0,0.25)" }}
-              >
-                View report <ChevronRight size={13} strokeWidth={2.2} />
-              </button>
-            </div>
+            {/* Coloured glow band at top — 28px */}
+            <div className="relative h-7" />
 
-            {/* Dark inner card — 8px side/bottom inset, glow halo shows at top */}
+            {/* Dark inner card */}
             <div
               className="relative rounded-[20px] p-5"
               style={{ background: "#0F172A", margin: "0 8px 8px 8px" }}
@@ -156,11 +168,14 @@ export default function HomePage() {
                 <PulseSkeleton />
               ) : summary ? (
                 <>
-                  <p className="text-[12px] font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
-                    Today&apos;s {isProfit ? "Profit" : "Net loss"}
+                  <p className="text-[12px] font-medium mb-1" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
+                    Today&apos;s Record
+                  </p>
+                  <p className="text-[13px] font-semibold mb-2" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>
+                    {isProfit ? "Profit" : "Net Loss"}
                   </p>
 
-                  {/* Big profit number */}
+                  {/* Big number */}
                   <p
                     className="font-bold leading-none"
                     style={{
@@ -173,10 +188,8 @@ export default function HomePage() {
                     {formatCurrency(Math.abs(profit))}
                   </p>
 
-                  {/* Divider */}
                   <div className="h-px my-4" style={{ background: "#384666" }} />
 
-                  {/* Sales | Expenses split */}
                   <div className="flex items-stretch">
                     <div className="flex-1">
                       <p className="text-[12px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Sales</p>
@@ -206,17 +219,56 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* ── Quick actions (2-column grid, Ask SPAL moved to floating Spark button) ── */}
+        {/* ── Quick Actions ── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.16, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="grid grid-cols-2 gap-3"
+          transition={{ delay: 0.18, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
-          <Tile bg="#E0F4E9" label="Add Sale"    icon={<TrendingUp   size={18} strokeWidth={2} color="#16A34A" />} onClick={() => setAddSheet("sale")} />
-          <Tile bg="#F3E5DD" label="Add Expense" icon={<TrendingDown size={18} strokeWidth={2} color="#EA580C" />} onClick={() => setAddSheet("expense")} />
-          <Tile bg="#E3E9F8" label="Goals"       icon={<Target       size={18} strokeWidth={2} color="#2563EB" />} onClick={() => router.push("/goals")} />
-          <Tile bg="#ECE5F9" label="Records"     icon={<MessageCircle size={18} strokeWidth={2} color="#8B5CF6" />} onClick={() => router.push("/records")} />
+          <p className="text-[15px] font-bold text-spal-navy mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Quick Actions
+          </p>
+
+          {/* Row 1 — 3 tiles */}
+          <div className="grid grid-cols-3 gap-2.5 mb-2.5">
+            <Tile3
+              bg="#22C55E"
+              label="Add Sale"
+              icon={<TrendingUp size={20} strokeWidth={2} color="#fff" />}
+              labelColor="#fff"
+              onClick={() => setAddSheet("sale")}
+            />
+            <Tile3
+              bg="#F97316"
+              label="Add Expense"
+              icon={<TrendingDown size={20} strokeWidth={2} color="#fff" />}
+              labelColor="#fff"
+              onClick={() => setAddSheet("expense")}
+            />
+            <Tile3
+              bg="#fff"
+              label="Scan to Upload"
+              icon={<ScanLine size={20} strokeWidth={2} color="#0F172A" />}
+              labelColor="#0F172A"
+              onClick={() => router.push("/scan")}
+            />
+          </div>
+
+          {/* Row 2 — 2 tiles */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <Tile2
+              bg="#fff"
+              label="Import Record"
+              icon={<FolderInput size={20} strokeWidth={2} color="#0F172A" />}
+              onClick={() => router.push("/records/import")}
+            />
+            <Tile2
+              bg="#fff"
+              label="Manage Inventory"
+              icon={<Package size={20} strokeWidth={2} color="#0F172A" />}
+              onClick={() => router.push("/inventory")}
+            />
+          </div>
         </motion.div>
 
         {/* ── Recent activity ── */}
@@ -350,19 +402,34 @@ function CircleButton({ children, onClick, aria }: { children: React.ReactNode; 
   );
 }
 
-function Tile({ bg, label, icon, onClick }: {
+function Tile3({ bg, label, icon, labelColor, onClick }: {
+  bg: string; label: string; icon: React.ReactNode; labelColor: string; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
+      style={{ background: bg, boxShadow: bg === "#fff" ? "0 1px 4px rgba(0,0,0,0.06)" : undefined, minHeight: "76px" }}
+    >
+      {icon}
+      <span className="text-[11px] font-semibold text-center leading-tight px-1" style={{ fontFamily: "var(--font-satoshi)", color: labelColor }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function Tile2({ bg, label, icon, onClick }: {
   bg: string; label: string; icon: React.ReactNode; onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 rounded-2xl px-4 h-14 active:scale-[0.98] transition-transform"
-      style={{ background: bg }}
+      className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
+      style={{ background: bg, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", minHeight: "76px" }}
     >
-      <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-        {icon}
-      </div>
-      <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+      {icon}
+      <span className="text-[11px] font-semibold text-spal-navy text-center leading-tight px-1" style={{ fontFamily: "var(--font-satoshi)" }}>
         {label}
       </span>
     </button>
