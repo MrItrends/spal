@@ -16,7 +16,9 @@ export default function MainLayout({
       <UserHydration />
       {/* Main content scrolls, bottom nav is fixed */}
       <main className="flex-1 overflow-y-auto scroll-container pb-safe">
-        {children}
+        <div className="max-w-[480px] mx-auto min-h-full relative">
+          {children}
+        </div>
       </main>
       <BottomNav />
       {/* Floating Spark avatar — opens Ask SPAL from anywhere */}

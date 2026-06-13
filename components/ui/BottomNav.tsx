@@ -76,7 +76,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] glass-nav bottom-nav z-50">
+    <nav data-coachmark="bottom_nav" className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] glass-nav bottom-nav z-50">
       <div className="flex items-center justify-around px-2 pt-2 pb-2">
         {navItems.map((item) => {
           const isActive =

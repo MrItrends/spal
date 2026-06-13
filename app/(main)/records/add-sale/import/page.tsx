@@ -106,7 +106,7 @@ export default function ImportEntryPage() {
     if (records.length === 0 || saving) return;
     setSaving(true);
     try {
-      await Promise.all(
+      const responses = await Promise.all(
         records.map((r) =>
           fetch("/api/records", {
             method: "POST",
@@ -122,7 +122,13 @@ export default function ImportEntryPage() {
           })
         )
       );
+      const failed = responses.find((r) => !r.ok);
+      if (failed) {
+        const err = await failed.json().catch(() => ({}));
+        throw new Error(err.error ?? `Server error ${failed.status}`);
+      }
       bumpRecordSaved();
+      router.refresh();
       router.push("/home");
     } catch {
       setSaving(false);
@@ -293,7 +299,7 @@ export default function ImportEntryPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-0 left-0 right-0 px-5 pb-6 pt-3"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-6 pt-3"
             style={{ background: "linear-gradient(to top, #F7F9F5 80%, transparent)" }}
           >
             <button

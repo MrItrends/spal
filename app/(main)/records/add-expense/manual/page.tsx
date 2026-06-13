@@ -34,6 +34,7 @@ export default function ManualExpensePage() {
   const [items, setItems] = useState<Item[]>([{ name: "", qty: "", unitPrice: "" }]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const updateItem = useCallback((idx: number, field: keyof Item, val: string) => {
     setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: val } : it));
@@ -49,8 +50,9 @@ export default function ManualExpensePage() {
   async function handleSave() {
     if (validItems.length === 0 || saving) return;
     setSaving(true);
+    setSaveError(null);
     try {
-      await Promise.all(
+      const responses = await Promise.all(
         validItems.map((it) =>
           fetch("/api/records", {
             method: "POST",
@@ -66,9 +68,16 @@ export default function ManualExpensePage() {
           })
         )
       );
+      const failed = responses.find((r) => !r.ok);
+      if (failed) {
+        const err = await failed.json().catch(() => ({}));
+        throw new Error(err.error ?? `Server error ${failed.status}`);
+      }
       bumpRecordSaved();
+      router.refresh();
       router.push("/home");
-    } catch {
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Could not save. Please try again.");
       setSaving(false);
     }
   }
@@ -252,9 +261,14 @@ export default function ManualExpensePage() {
 
       {/* Fixed CTA */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-5 pb-6 pt-3"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-6 pt-3"
         style={{ background: "linear-gradient(to top, #F7F9F5 80%, transparent)" }}
       >
+        {saveError && (
+          <p className="text-[12px] text-red-600 font-medium text-center mb-2" style={{ fontFamily }}>
+            ⚠️ {saveError}
+          </p>
+        )}
         <button
           onClick={handleSave}
           disabled={validItems.length === 0 || saving}

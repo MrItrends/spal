@@ -26,7 +26,7 @@ function dateLabel(recordDate: string): string {
 }
 
 export default function RecordsPage() {
-  const { addSheetOpen, setAddSheet } = useSPALStore();
+  const { addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
   const [filter,      setFilter]      = useState<Filter>("all");
   const [records,     setRecords]     = useState<BusinessRecord[]>([]);
   const [loading,     setLoading]     = useState(true);
@@ -45,6 +45,8 @@ export default function RecordsPage() {
   }, []);
 
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (recordSavedAt) fetchRecords(); }, [recordSavedAt]);
 
   const filtered = records.filter((r) => filter === "all" ? true : r.type === filter);
   const grouped  = filtered.reduce<Record<string, BusinessRecord[]>>((acc, r) => {

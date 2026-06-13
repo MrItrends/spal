@@ -11,6 +11,7 @@ export function SparkAvatar() {
       initial={{ opacity: 0, scale: 0.7 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.6, duration: 0.4, ease: [0.34, 1.2, 0.64, 1] }}
+      data-coachmark="spark"
       onClick={() => router.push("/ask")}
       aria-label="Ask SPAL"
       className="fixed z-40 flex items-center justify-center active:scale-90 transition-transform"

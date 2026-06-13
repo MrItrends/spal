@@ -71,6 +71,7 @@ export default function HomePage() {
 
         {/* ── Header ── */}
         <motion.div
+          data-coachmark="header"
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
@@ -115,14 +116,12 @@ export default function HomePage() {
           transition={{ delay: 0.06, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="flex items-center justify-between"
         >
-          <div>
-            <p className="text-[15px] font-bold text-white" style={{ fontFamily: "var(--font-satoshi)" }}>
-              Today&apos;s Snapshot
-            </p>
-            <p className="text-[12px] text-white/60 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
-              {new Date().toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" })}
-            </p>
-          </div>
+          <p className="text-[15px] font-bold text-white" style={{ fontFamily: "var(--font-satoshi)" }}>
+            Today&apos;s Snapshot
+          </p>
+          <p className="text-[12px] text-white/60" style={{ fontFamily: "var(--font-satoshi)" }}>
+            {new Date().toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" })}
+          </p>
         </motion.div>
 
         {/* ── Hero summary card ── */}
@@ -132,6 +131,7 @@ export default function HomePage() {
           transition={{ delay: 0.1, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         >
           <div
+            data-coachmark="summary_card"
             role="button"
             onClick={() => router.push("/records")}
             className="relative rounded-[24px] overflow-hidden active:scale-[0.99] transition-transform cursor-pointer"
@@ -208,6 +208,7 @@ export default function HomePage() {
 
         {/* ── Quick Actions ── */}
         <motion.div
+          data-coachmark="quick_actions"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
@@ -260,6 +261,7 @@ export default function HomePage() {
 
         {/* ── Recent activity ── */}
         <motion.div
+          data-coachmark="recent_activity"
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.24, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
