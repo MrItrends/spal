@@ -8,9 +8,7 @@ interface Step {
   id: string;
   title?: string;
   body: string[];
-  // Where the tooltip card sits (top-offset from screen top, or bottom-anchored)
   cardPosition: "center" | { top: number } | { bottom: number };
-  // The spotlight highlight region (null = full-screen dim, no cutout)
   spotlight: null | { top: number; height: number; left?: number; right?: number };
 }
 
@@ -27,7 +25,6 @@ const STEPS: Step[] = [
   },
   {
     id: "summary_card",
-    title: undefined,
     body: [
       "This is where you see what you've recorded for the day",
       "To view for the week, month and year, click the view details button above",
@@ -37,36 +34,32 @@ const STEPS: Step[] = [
   },
   {
     id: "quick_actions",
-    title: undefined,
     body: [
       "You can track your sales, expenses inventories here. and if you want a quick scan or import . Here is where you can achieve it",
     ],
-    cardPosition: { top: 300 },
+    cardPosition: { top: 290 },
     spotlight: { top: 430, height: 180 },
   },
   {
     id: "recent_activity",
-    title: undefined,
     body: [
       "This is where your recent expenses and sales will be shown. It only shows your daily sales",
       "To view all sales, click the records button below",
     ],
-    cardPosition: { top: 300 },
+    cardPosition: { top: 290 },
     spotlight: { top: 625, height: 130 },
   },
   {
     id: "bottom_nav",
-    title: undefined,
     body: [
       "Easily navigate across home, records insights and profile",
       "To view your business health, click insight to view a deep analysis of your business and use profile to customize your name, number, etc.",
     ],
-    cardPosition: { bottom: 120 },
+    cardPosition: { bottom: 130 },
     spotlight: { top: 680, height: 90 },
   },
   {
     id: "header",
-    title: undefined,
     body: [
       "You can also access your profile from the avatar above",
       "To view new updates on the app, you can check your notifications",
@@ -76,17 +69,17 @@ const STEPS: Step[] = [
   },
   {
     id: "spark",
-    title: undefined,
     body: [
-      "This is your SPAL AI assistant. Tap it to ask anything about your business",
-      "Get insights, tips and advice — available anytime, right from this button",
+      "Oh! I'm also a feature on the App",
+      "I'm your Assistant, I can hold conversations about your activities on the app. Just click on me",
     ],
-    cardPosition: { bottom: 180 },
+    cardPosition: { bottom: 190 },
     spotlight: { top: 620, height: 60 },
   },
 ];
 
 const STORAGE_KEY = "spal_coachmarks_v2_done";
+const CARD_WIDTH = 300;
 
 export function HomeCoachmarks() {
   const [step, setStep]       = useState(0);
@@ -97,43 +90,41 @@ export function HomeCoachmarks() {
     if (!done) setVisible(true);
   }, []);
 
-  function next() {
-    if (step < STEPS.length - 1) setStep((s) => s + 1);
-    else dismiss();
-  }
-
-  function prev() {
-    if (step > 1) setStep((s) => s - 1);
-  }
-
-  function dismiss() {
-    localStorage.setItem(STORAGE_KEY, "1");
-    setVisible(false);
-  }
+  function next()    { if (step < STEPS.length - 1) setStep((s) => s + 1); else dismiss(); }
+  function prev()    { if (step > 1) setStep((s) => s - 1); }
+  function dismiss() { localStorage.setItem(STORAGE_KEY, "1"); setVisible(false); }
 
   if (!visible) return null;
 
-  const current = STEPS[step];
-  const isLast  = step === STEPS.length - 1;
+  const current   = STEPS[step];
+  const isLast    = step === STEPS.length - 1;
   const isWelcome = step === 0;
-  // Step 2 (index 1) has no Previous button
-  const hasPrev = step > 1;
-  // Progress bar only shows from step 2 onward
+  const hasPrev   = step > 1;
   const showProgress = step >= 2;
 
-  // Compute tooltip card position
-  let cardStyle: React.CSSProperties = {};
+  // Card positioning — fixed left:20, max-width 300px
+  let cardStyle: React.CSSProperties = { left: 20, width: CARD_WIDTH };
   if (current.cardPosition === "center") {
-    cardStyle = { top: "50%", transform: "translateY(-50%)" };
+    cardStyle = { left: "50%", transform: "translateX(-50%)", width: CARD_WIDTH };
   } else if ("top" in current.cardPosition) {
-    cardStyle = { top: `${current.cardPosition.top}px` };
+    cardStyle.top = current.cardPosition.top;
   } else {
-    cardStyle = { bottom: `${current.cardPosition.bottom}px` };
+    cardStyle.bottom = current.cardPosition.bottom;
+  }
+
+  // Mascot sits just above the card
+  let mascotStyle: React.CSSProperties = { left: 20 };
+  if (current.cardPosition === "center") {
+    mascotStyle = { left: "50%", transform: "translateX(-50%)" };
+  } else if ("top" in current.cardPosition) {
+    mascotStyle.top = current.cardPosition.top - 68;
+  } else {
+    mascotStyle.bottom = current.cardPosition.bottom + 200;
   }
 
   return (
     <AnimatePresence>
-      {/* Dark overlay */}
+      {/* Full-screen dim overlay */}
       <motion.div
         key="overlay"
         initial={{ opacity: 0 }}
@@ -144,48 +135,46 @@ export function HomeCoachmarks() {
         style={{ background: "rgba(10,14,26,0.82)" }}
       />
 
-      {/* Spotlight cutout — separate element so border/glow sit above overlay */}
+      {/* Spotlight — punches a hole + green glow ring */}
       {current.spotlight && (
         <motion.div
           key={`spot-${step}`}
-          initial={{ opacity: 0, scale: 0.97 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
           className="fixed z-[101] pointer-events-none"
           style={{
-            top: `${current.spotlight.top}px`,
-            height: `${current.spotlight.height}px`,
-            left: current.spotlight.left ?? 20,
-            right: current.spotlight.left ? undefined : 20,
-            width: current.spotlight.left ? 80 : undefined,
+            top:    current.spotlight.top,
+            height: current.spotlight.height,
+            left:   current.spotlight.left ?? 20,
+            right:  current.spotlight.left ? undefined : 20,
+            width:  current.spotlight.left ? 80 : undefined,
             borderRadius: 20,
-            // Punch hole through overlay
-            boxShadow: "0 0 0 9999px rgba(10,14,26,0.82), 0 0 0 2px rgba(34,197,94,0.7), 0 0 20px 4px rgba(34,197,94,0.25)",
+            boxShadow:
+              "0 0 0 9999px rgba(10,14,26,0.82)," +
+              "0 0 0 2.5px rgba(34,197,94,0.85)," +
+              "0 0 24px 6px rgba(34,197,94,0.22)",
             background: "transparent",
           }}
         />
       )}
 
-      {/* SPAL blob mascot — shown above the card except on welcome (shown inline) */}
+      {/* SPAL mascot blob — above card */}
       {!isWelcome && (
         <motion.div
           key={`mascot-${step}`}
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: [0.34, 1.2, 0.64, 1] }}
+          initial={{ opacity: 0, scale: 0.75, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.34, 1.2, 0.64, 1] }}
           className="fixed z-[102] pointer-events-none"
-          style={{
-            ...getMascotPosition(current.cardPosition),
-            left: 20,
-          }}
+          style={mascotStyle}
         >
           <Image
             src="/spal AI.png"
             alt="SPAL"
-            width={64}
-            height={64}
-            style={{ width: 64, height: 64, objectFit: "contain" }}
+            width={60}
+            height={60}
+            style={{ width: 60, height: 60, objectFit: "contain" }}
           />
         </motion.div>
       )}
@@ -195,16 +184,31 @@ export function HomeCoachmarks() {
         key={`card-${step}`}
         initial={{ opacity: 0, y: 10, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -8, scale: 0.97 }}
-        transition={{ duration: 0.3, ease: [0.34, 1.1, 0.64, 1] }}
+        exit={{ opacity: 0, y: -6, scale: 0.97 }}
+        transition={{ duration: 0.28, ease: [0.34, 1.1, 0.64, 1] }}
         className="fixed z-[102] pointer-events-auto"
-        style={{ left: 20, right: 20, ...cardStyle }}
+        style={cardStyle}
       >
+        {/* Upward pointer triangle (tail) connecting to mascot */}
+        {!isWelcome && (
+          <div
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: "10px solid transparent",
+              borderRight: "10px solid transparent",
+              borderBottom: "12px solid #fff",
+              marginLeft: 18,
+              marginBottom: -1,
+            }}
+          />
+        )}
+
         <div
           className="rounded-3xl px-5 py-5"
-          style={{ background: "#fff", boxShadow: "0 16px 48px rgba(0,0,0,0.20)" }}
+          style={{ background: "#fff", boxShadow: "0 12px 40px rgba(0,0,0,0.18)" }}
         >
-          {/* Welcome step — blob above text */}
+          {/* Welcome — blob shown inline, centered */}
           {isWelcome && (
             <div className="flex justify-center mb-4">
               <Image
@@ -243,12 +247,12 @@ export function HomeCoachmarks() {
             </h3>
           )}
 
-          {/* Body paragraphs */}
+          {/* Body */}
           <div className="space-y-2">
             {current.body.map((line, i) => (
               <p
                 key={i}
-                className="text-[13.5px] leading-relaxed"
+                className="text-[13px] leading-relaxed"
                 style={{ fontFamily: "var(--font-satoshi)", color: "#6B7280" }}
               >
                 {line}
@@ -256,8 +260,8 @@ export function HomeCoachmarks() {
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between mt-5">
+          {/* Buttons */}
+          <div className="flex items-center justify-between mt-4">
             {isWelcome ? (
               <>
                 <button
@@ -269,7 +273,7 @@ export function HomeCoachmarks() {
                 </button>
                 <button
                   onClick={next}
-                  className="h-[38px] px-6 rounded-full font-semibold text-[13.5px] active:scale-95 transition-transform"
+                  className="h-[36px] px-5 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
                   style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E", color: "#fff" }}
                 >
                   Show Me
@@ -290,10 +294,10 @@ export function HomeCoachmarks() {
                 )}
                 <button
                   onClick={next}
-                  className="h-[38px] px-6 rounded-full font-semibold text-[13.5px] active:scale-95 transition-transform"
+                  className="h-[36px] px-5 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
                   style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E", color: "#fff" }}
                 >
-                  {isLast ? "Got it!" : "Next"}
+                  {isLast ? "Complete Guide" : "Next"}
                 </button>
               </>
             )}
@@ -302,10 +306,4 @@ export function HomeCoachmarks() {
       </motion.div>
     </AnimatePresence>
   );
-}
-
-function getMascotPosition(pos: Step["cardPosition"]): React.CSSProperties {
-  if (pos === "center") return { top: "calc(50% - 140px)" };
-  if ("top" in pos) return { top: `${pos.top - 68}px` };
-  return { bottom: `${pos.bottom + 220}px` };
 }
