@@ -55,24 +55,16 @@ export default function HomePage() {
     <>
       {/* Coachmarks — shown once to first-time users */}
       <HomeCoachmarks />
-      <div className="relative min-h-full" style={{ background: "#F8F7F4" }}>
-
-        {/* Home-only background — single radial gradient, OKLAB interpolation, no overlay banding */}
-        <div
-          className="absolute top-0 left-0 right-0 pointer-events-none"
-          style={{
-            height: "380px",
-            background:
-              "radial-gradient(140% 95% at 22% -8% in oklab, " +
-                "#22C55E 0%, " +
-                "#2A6DB8 38%, " +
-                "#2F63F5 58%, " +
-                "#F8F7F4 96%" +
-              ")",
-            // Tiny blur kills any residual hardware-level banding without visible softness
-            filter: "blur(0.4px)",
-          }}
-        />
+      <div
+        className="relative min-h-full"
+        style={{
+          backgroundImage: "url(/home_screen.webp)",
+          backgroundSize: "cover",
+          backgroundPosition: "top center",
+          backgroundRepeat: "no-repeat",
+          backgroundColor: "#F8F7F4",
+        }}
+      >
 
         {/* Foreground content */}
         <div className="relative px-5 pt-7 space-y-5 animate-fade-in">

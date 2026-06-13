@@ -141,25 +141,30 @@ export function HomeCoachmarks() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
         className="fixed inset-0 z-[100] pointer-events-none"
-        style={{ background: "rgba(10,14,26,0.78)" }}
-      >
-        {/* Spotlight cutout */}
-        {current.spotlight && (
-          <div
-            className="absolute"
-            style={{
-              top: `${current.spotlight.top}px`,
-              height: `${current.spotlight.height}px`,
-              left: current.spotlight.left ?? 20,
-              right: current.spotlight.left ? undefined : 20,
-              width: current.spotlight.left ? 80 : undefined,
-              borderRadius: 20,
-              boxShadow: "0 0 0 9999px rgba(10,14,26,0.78)",
-              background: "transparent",
-            }}
-          />
-        )}
-      </motion.div>
+        style={{ background: "rgba(10,14,26,0.82)" }}
+      />
+
+      {/* Spotlight cutout — separate element so border/glow sit above overlay */}
+      {current.spotlight && (
+        <motion.div
+          key={`spot-${step}`}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="fixed z-[101] pointer-events-none"
+          style={{
+            top: `${current.spotlight.top}px`,
+            height: `${current.spotlight.height}px`,
+            left: current.spotlight.left ?? 20,
+            right: current.spotlight.left ? undefined : 20,
+            width: current.spotlight.left ? 80 : undefined,
+            borderRadius: 20,
+            // Punch hole through overlay
+            boxShadow: "0 0 0 9999px rgba(10,14,26,0.82), 0 0 0 2px rgba(34,197,94,0.7), 0 0 20px 4px rgba(34,197,94,0.25)",
+            background: "transparent",
+          }}
+        />
+      )}
 
       {/* SPAL blob mascot — shown above the card except on welcome (shown inline) */}
       {!isWelcome && (
