@@ -282,7 +282,7 @@ export default function HomePage() {
               Recent activity
             </p>
             {records.length > 0 && (
-              <button onClick={() => router.push("/records")} className="text-[12px] font-semibold" style={{ color: TEAL }}>
+              <button onClick={() => router.push("/records")} className="text-[12px] font-semibold" style={{ color: "#204948" }}>
                 View all
               </button>
             )}
