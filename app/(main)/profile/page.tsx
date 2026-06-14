@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
+import { enablePushNotifications, disablePushNotifications } from "@/hooks/usePushNotifications";
 import {
   Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
   Store, Coins, Receipt, ChevronRight, Camera, Flame, Check, AlertCircle,
@@ -1068,60 +1069,42 @@ function TrackingMethodsSheet({ open, currentMethods, onClose, onSave }: {
 
 // ── Notifications sheet ────────────────────────────────────────────────────
 
-const NOTIF_PREF_KEY = "spal_notifications_enabled";
-
 function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [enabled,    setEnabled]    = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [requesting, setRequesting] = useState(false);
 
-  // Load saved preference + live browser permission on open
   useEffect(() => {
     if (!open) return;
-    const saved = localStorage.getItem(NOTIF_PREF_KEY) === "true";
     if (typeof Notification === "undefined") {
       setPermission("unsupported");
       setEnabled(false);
     } else {
-      setPermission(Notification.permission);
-      // Only enabled if both saved pref is true AND browser allows
-      setEnabled(saved && Notification.permission === "granted");
+      const perm = Notification.permission;
+      setPermission(perm);
+      setEnabled(perm === "granted");
     }
   }, [open]);
 
-  async function handleToggle() {
-    if (enabled) {
-      // Turn off — just update local preference (can't revoke browser permission)
-      setEnabled(false);
-      localStorage.setItem(NOTIF_PREF_KEY, "false");
-      return;
-    }
-
-    // Turn on — request browser permission if not yet granted
-    if (typeof Notification === "undefined") return;
-
-    if (Notification.permission === "granted") {
-      setEnabled(true);
-      localStorage.setItem(NOTIF_PREF_KEY, "true");
-      return;
-    }
-
-    if (Notification.permission === "denied") return; // can't request again
-
+  async function handleEnable() {
     setRequesting(true);
-    try {
-      const result = await Notification.requestPermission();
-      setPermission(result);
-      if (result === "granted") {
-        setEnabled(true);
-        localStorage.setItem(NOTIF_PREF_KEY, "true");
-      }
-    } finally {
-      setRequesting(false);
+    const result = await enablePushNotifications();
+    setRequesting(false);
+    if (result === "granted") {
+      setPermission("granted");
+      setEnabled(true);
+    } else if (result === "denied") {
+      setPermission("denied");
     }
   }
 
-  const isDenied = permission === "denied";
+  async function handleDisable() {
+    setEnabled(false);
+    await disablePushNotifications();
+  }
+
+  const isDenied    = permission === "denied";
+  const unsupported = permission === "unsupported";
 
   return (
     <Sheet open={open} onClose={onClose} title="Notifications">
@@ -1132,39 +1115,55 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
             <div>
               <p className="text-sm font-semibold text-red-600">Notifications blocked</p>
               <p className="text-sm text-neutral-500 mt-1 leading-relaxed">
-                You&apos;ve blocked notifications for SPAL. To enable them, open your
-                browser settings and allow notifications for this site.
+                You&apos;ve blocked SPAL notifications in your browser. To fix this,
+                open your browser settings, find this site, and set notifications to &quot;Allow&quot;.
+                Then come back and turn them on here.
               </p>
             </div>
           </div>
+        ) : unsupported ? (
+          <div className="bg-neutral-50 rounded-2xl p-4 flex items-start gap-3">
+            <BellOff size={20} strokeWidth={2} color="#A1A1AA" className="mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-neutral-500 leading-relaxed">
+              Push notifications aren&apos;t supported on this browser. Try installing
+              SPAL on your home screen for the best experience.
+            </p>
+          </div>
         ) : (
-          <div className="bg-spal-blue-50 rounded-2xl p-4">
+          <div className="bg-blue-50 rounded-2xl p-4">
             <p className="text-sm font-semibold text-spal-blue mb-1">Stay on track</p>
             <p className="text-sm text-neutral-500 leading-relaxed">
-              Get a quick nudge each evening to log your sales and keep your streak going.
+              SPAL will nudge you at 9 AM and 7 PM on days you haven&apos;t logged anything —
+              so you never miss a record.
             </p>
           </div>
         )}
 
-        <button
-          onClick={!isDenied ? handleToggle : undefined}
-          disabled={requesting || isDenied}
-          className="w-full flex items-center justify-between px-4 h-14 bg-neutral-50 rounded-2xl border-2 border-neutral-100 active:bg-neutral-100 transition-colors disabled:opacity-60 disabled:cursor-default"
-        >
-          <div className="text-left">
-            <p className="text-sm font-semibold text-spal-navy">Daily reminders</p>
-            <p className="text-xs text-neutral-400">
-              {requesting ? "Requesting permission…" : "Evening nudge at 8 PM"}
-            </p>
-          </div>
-          <div className={`w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0 ${enabled ? "bg-spal-green" : "bg-neutral-200"}`}>
-            <motion.div
-              animate={{ x: enabled ? 24 : 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm"
-            />
-          </div>
-        </button>
+        {!unsupported && (
+          <button
+            onClick={enabled ? handleDisable : handleEnable}
+            disabled={requesting || isDenied}
+            className="w-full flex items-center justify-between px-4 h-14 bg-neutral-50 rounded-2xl border-2 border-neutral-100 active:bg-neutral-100 transition-colors disabled:opacity-60 disabled:cursor-default"
+          >
+            <div className="text-left">
+              <p className="text-sm font-semibold text-spal-navy">Daily reminders</p>
+              <p className="text-xs text-neutral-400">
+                {requesting ? "Setting up…" : enabled ? "Tap to turn off" : "Tap to turn on"}
+              </p>
+            </div>
+            {requesting ? (
+              <div className="w-5 h-5 rounded-full border-2 border-spal-green border-t-transparent animate-spin flex-shrink-0" />
+            ) : (
+              <div className={`w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0 ${enabled ? "bg-spal-green" : "bg-neutral-200"}`}>
+                <motion.div
+                  animate={{ x: enabled ? 24 : 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm"
+                />
+              </div>
+            )}
+          </button>
+        )}
 
         <Button fullWidth variant="secondary" onClick={onClose}>
           {enabled ? "Done ✓" : "Close"}
