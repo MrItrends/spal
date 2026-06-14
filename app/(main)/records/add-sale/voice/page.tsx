@@ -16,6 +16,8 @@ type Status = "idle" | "recording" | "processing" | "done";
 interface ParsedItem {
   type: string;
   description: string;
+  qty: number;
+  unit_price: number;
   amount: number;
   category: string;
 }
@@ -303,6 +305,9 @@ export default function VoiceEntryPage() {
                     <span className="text-base">🧾</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>{item.description}</p>
+                      {item.qty > 1 && (
+                        <p className="text-[10px] text-neutral-400 mt-0.5" style={{ fontFamily }}>{item.qty} × {formatCurrency(item.unit_price)}</p>
+                      )}
                     </div>
                     <p className="text-[13px] font-bold flex-shrink-0" style={{ fontFamily, color: "#F97316" }}>
                       {formatCurrency(item.amount)}
@@ -358,12 +363,19 @@ export default function VoiceEntryPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>{item.description}</p>
-                      <span
-                        className="inline-block mt-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
-                        style={{ background: "#F0FDF4", color: "#16A34A" }}
-                      >
-                        {item.category ?? "Sales"}
-                      </span>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={{ background: "#F0FDF4", color: "#16A34A" }}
+                        >
+                          {item.category ?? "Sales"}
+                        </span>
+                        {item.qty > 1 && (
+                          <span className="text-[10px] text-neutral-400" style={{ fontFamily }}>
+                            {item.qty} × {formatCurrency(item.unit_price)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-[15px] font-bold flex-shrink-0" style={{ fontFamily, color: "#22C55E" }}>
                       {formatCurrency(item.amount)}

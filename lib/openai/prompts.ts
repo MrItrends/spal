@@ -28,11 +28,20 @@ Extract ALL sales and expenses from the user's message.
 Convert shorthand amounts: "15k" = 15000, "2.5m" = 2500000, "500" = 500.
 Guess reasonable categories based on description.
 
+Quantity and price rules:
+- If the user says "2 rice for 5000", that means qty=2, unit_price=2500, amount=5000 (5000 is the TOTAL).
+- If the user says "2 rice for 5000 each", that means qty=2, unit_price=5000, amount=10000.
+- "each", "per plate", "per piece", "apiece" signals unit_price. Without these words, the number given is the TOTAL.
+- If no quantity is mentioned, qty=1 and unit_price=amount.
+- description should be the item name only, NOT including the quantity (e.g. "Rice and beans", not "2 rice and beans").
+
 Return ONLY valid JSON in this exact format:
 {
   "records": [
     {
       "type": "sale" | "expense",
+      "qty": number,
+      "unit_price": number,
       "amount": number,
       "description": string,
       "category": string

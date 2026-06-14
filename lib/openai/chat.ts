@@ -13,7 +13,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ─── Parse records from natural language ──────────────────────────────────────
 export async function parseRecordsFromText(text: string): Promise<
-  Array<{ type: "sale" | "expense"; amount: number; description: string; category: string }>
+  Array<{ type: "sale" | "expense"; qty: number; unit_price: number; amount: number; description: string; category: string }>
 > {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
