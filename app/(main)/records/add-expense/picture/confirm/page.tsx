@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, RotateCcw, Plus } from "lucide-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
+import { DateTimePicker } from "@/components/shared/DateTimePicker";
 
 const BG = "#F7F9F5";
 const fontFamily = "var(--font-satoshi)";
@@ -22,6 +23,7 @@ export default function PictureExpenseConfirmPage() {
   const router = useRouter();
   const { bumpRecordSaved } = useSPALStore();
 
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ExtractedItem[]>([]);
@@ -83,7 +85,7 @@ export default function PictureExpenseConfirmPage() {
               description: it.name,
               category: it.category ?? "Expenses",
               input_method: "picture",
-              record_date: new Date().toISOString().slice(0, 10),
+              record_date: date,
             }),
           })
         )
@@ -148,6 +150,9 @@ export default function PictureExpenseConfirmPage() {
             </div>
           </div>
         )}
+
+        {/* Date picker */}
+        <DateTimePicker date={date} onDateChange={setDate} className="mt-4" />
 
         {/* Loading */}
         {loading && (

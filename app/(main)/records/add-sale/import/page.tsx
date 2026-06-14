@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, FileUp, ChevronRight } from "lucide-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
+import { DateTimePicker } from "@/components/shared/DateTimePicker";
 
 const BG = "#F7F9F5";
 const fontFamily = "var(--font-satoshi)";
@@ -50,6 +51,7 @@ export default function ImportEntryPage() {
   const router = useRouter();
   const { bumpRecordSaved, onboardingData } = useSPALStore();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [records, setRecords] = useState<ParsedRecord[]>([]);
   const [parsing, setParsing] = useState(false);
   const [csvHint, setCsvHint] = useState(false);
@@ -117,7 +119,7 @@ export default function ImportEntryPage() {
               description: r.description,
               category: r.category ?? "Sales",
               input_method: "import",
-              record_date: r.record_date ?? new Date().toISOString().slice(0, 10),
+              record_date: r.record_date ?? date,
             }),
           })
         )
@@ -155,6 +157,9 @@ export default function ImportEntryPage() {
         <p className="text-[13px] text-neutral-500 mt-1 leading-relaxed" style={{ fontFamily }}>
           SPAL reads your spreadsheet and extracts sales automatically
         </p>
+
+        {/* Date picker */}
+        <DateTimePicker date={date} onDateChange={setDate} className="mt-4" />
 
         {/* Upload zone */}
         <button
