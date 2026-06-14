@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 interface Step {
-  id: string;
-  title?: string;
-  body: string[];
-  target: string | null;
+  id:       string;
+  title?:   string;
+  body:     string[];
+  target:   string | null;
   cardSide: "below" | "above" | "center";
 }
 
@@ -72,7 +72,7 @@ const STEPS: Step[] = [
     id: "spark",
     body: [
       "Oh! I'm also a feature on the app.",
-      "I'm your Assistant — I can hold conversations about your activities. Just tap me anytime.",
+      "I'm your Assistant — tap me anytime to ask questions about your business.",
     ],
     target: "spark",
     cardSide: "above",
@@ -80,8 +80,9 @@ const STEPS: Step[] = [
 ];
 
 const STORAGE_KEY = "spal_coachmarks_v2_done";
-const CARD_W      = 300;
-const GAP         = 12; // px between spotlight edge and card
+const SP          = 6;   // spotlight outset
+const GAP         = 10;  // gap between spotlight and card
+const SAFE_H      = 24;  // minimum top/bottom margin from viewport edge
 
 interface Rect { top: number; left: number; width: number; height: number }
 
@@ -98,6 +99,7 @@ export function HomeCoachmarks() {
   const [step,    setStep]    = useState(0);
   const [visible, setVisible] = useState(false);
   const [rect,    setRect]    = useState<Rect | null>(null);
+  const cardRef               = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
@@ -129,59 +131,60 @@ export function HomeCoachmarks() {
 
   if (!visible) return null;
 
-  const current    = STEPS[step];
-  const isLast     = step === STEPS.length - 1;
-  const isWelcome  = step === 0;
-  const hasPrev    = step > 1;
+  const current   = STEPS[step];
+  const isLast    = step === STEPS.length - 1;
+  const isWelcome = step === 0;
+  const hasPrev   = step > 1;
   const showProgress = step >= 2;
 
+  // Viewport dimensions — always fresh
   const vw = typeof window !== "undefined" ? window.innerWidth  : 390;
   const vh = typeof window !== "undefined" ? window.innerHeight : 844;
 
-  // ── spotlight padding ───────────────────────────────────────────────────────
-  const SP = 6; // px outset from the target rect
+  // Card width: fills screen minus 32px breathing room, capped at 320px
+  const cardW = Math.min(320, vw - 32);
+  // Card is always horizontally centered in the viewport
+  const cardLeft = (vw - cardW) / 2;
 
-  // ── card position ───────────────────────────────────────────────────────────
-  let cardStyle: React.CSSProperties;
-  let mascotStyle: React.CSSProperties;
+  // ── Vertical position ─────────────────────────────────────────────────────
+  // We estimate card height for safe clamping. Actual rendering handles the rest.
+  const CARD_H_EST = 210;
+
+  let cardTop:    number | undefined;
+  let cardBottom: number | undefined;
   let tailUp   = false;
   let tailDown = false;
 
   if (!rect || current.cardSide === "center") {
-    // Centered vertically & horizontally
-    cardStyle = {
-      position: "fixed",
-      left: "50%",
-      top:  "50%",
-      transform: "translate(-50%, -50%)",
-      width: CARD_W,
-    };
-    mascotStyle = {
-      position: "fixed",
-      left: "50%",
-      top:  "50%",
-      transform: "translate(-50%, calc(-50% - 180px))",
-    };
-  } else {
-    // Horizontal: align card's left edge with target's left, but clamp to screen
-    const rawLeft = rect.left;
-    const clampedLeft = Math.max(GAP, Math.min(rawLeft, vw - CARD_W - GAP));
-
-    if (current.cardSide === "below") {
-      // Card below spotlight
-      const top = rect.top + rect.height + SP + GAP;
-      cardStyle   = { position: "fixed", top, left: clampedLeft, width: CARD_W };
-      mascotStyle = { position: "fixed", top: top - 68, left: clampedLeft };
-      tailUp = true;
+    // Dead center
+    cardTop = (vh - CARD_H_EST) / 2;
+  } else if (current.cardSide === "below") {
+    const ideal = rect.top + rect.height + SP + GAP;
+    if (ideal + CARD_H_EST > vh - SAFE_H) {
+      // Not enough room below — flip above instead
+      const flipped = rect.top - SP - GAP - CARD_H_EST;
+      cardTop  = Math.max(SAFE_H, flipped);
+      tailDown = true;
     } else {
-      // Card above spotlight — estimate card height ~160px
-      const CARD_H_EST = 180;
-      const bottom = vh - (rect.top - SP - GAP);
-      cardStyle   = { position: "fixed", bottom, left: clampedLeft, width: CARD_W };
-      mascotStyle = { position: "fixed", bottom: bottom + CARD_H_EST + 4, left: clampedLeft };
+      cardTop = Math.max(SAFE_H, ideal);
+      tailUp  = true;
+    }
+  } else {
+    // "above": card sits above the spotlight
+    const ideal = rect.top - SP - GAP - CARD_H_EST;
+    if (ideal < SAFE_H) {
+      // Not enough room above — flip below instead
+      const flipped = rect.top + rect.height + SP + GAP;
+      cardTop = Math.min(flipped, vh - CARD_H_EST - SAFE_H);
+      tailUp  = true;
+    } else {
+      cardTop  = ideal;
       tailDown = true;
     }
   }
+
+  // Resolve to a single number for rendering
+  const resolvedTop = cardTop ?? (cardBottom !== undefined ? undefined : (vh - CARD_H_EST) / 2);
 
   return (
     <AnimatePresence>
@@ -220,44 +223,32 @@ export function HomeCoachmarks() {
         />
       )}
 
-      {/* Mascot */}
-      {!isWelcome && (
-        <motion.div
-          key={`mascot-${step}`}
-          initial={{ opacity: 0, scale: 0.75, y: 8 }}
-          animate={{ opacity: 1, scale: 1,   y: 0 }}
-          transition={{ duration: 0.35, ease: [0.34, 1.2, 0.64, 1] }}
-          className="pointer-events-none z-[102]"
-          style={{ ...mascotStyle, position: "fixed" }}
-        >
-          <Image
-            src="/spal AI.png"
-            alt="SPAL"
-            width={60}
-            height={60}
-            style={{ width: 60, height: 60, objectFit: "contain" }}
-          />
-        </motion.div>
-      )}
-
       {/* Card */}
       <motion.div
+        ref={cardRef}
         key={`card-${step}`}
         initial={{ opacity: 0, y: 10, scale: 0.97 }}
         animate={{ opacity: 1, y: 0,  scale: 1 }}
-        exit={{ opacity: 0, y: -6, scale: 0.97 }}
+        exit={{ opacity: 0, y: -6,   scale: 0.97 }}
         transition={{ duration: 0.28, ease: [0.34, 1.1, 0.64, 1] }}
         className="z-[102] pointer-events-auto"
-        style={{ ...cardStyle, position: "fixed" }}
+        style={{
+          position: "fixed",
+          top:      resolvedTop,
+          bottom:   cardBottom,
+          left:     cardLeft,
+          width:    cardW,
+        }}
       >
-        {/* Upward tail — card is below the spotlight */}
-        {tailUp && !isWelcome && (
+        {/* Upward tail (card is below spotlight) */}
+        {tailUp && (
           <div style={{
             width: 0, height: 0,
-            borderLeft: "10px solid transparent",
-            borderRight: "10px solid transparent",
-            borderBottom: "12px solid #fff",
-            marginLeft: 20, marginBottom: -1,
+            borderLeft:   "9px solid transparent",
+            borderRight:  "9px solid transparent",
+            borderBottom: "11px solid #fff",
+            marginLeft:   cardW / 2 - 9,
+            marginBottom: -1,
           }} />
         )}
 
@@ -265,17 +256,26 @@ export function HomeCoachmarks() {
           className="rounded-3xl px-5 py-5"
           style={{ background: "#fff", boxShadow: "0 12px 40px rgba(0,0,0,0.18)" }}
         >
-          {/* Welcome blob */}
-          {isWelcome && (
+          {/* Mascot + welcome header */}
+          {isWelcome ? (
             <div className="flex justify-center mb-4">
               <Image src="/spal AI.png" alt="SPAL" width={72} height={72}
                 style={{ width: 72, height: 72, objectFit: "contain" }} />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2.5 mb-3">
+              <Image src="/spal AI.png" alt="SPAL" width={32} height={32}
+                style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }} />
+              <span className="text-[11px] font-semibold uppercase tracking-wide"
+                style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}>
+                SPAL Guide
+              </span>
             </div>
           )}
 
           {/* Progress bars */}
           {showProgress && (
-            <div className="flex gap-1.5 mb-4">
+            <div className="flex gap-1.5 mb-3">
               {STEPS.slice(2).map((_, i) => (
                 <div
                   key={i}
@@ -302,16 +302,16 @@ export function HomeCoachmarks() {
             ))}
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-5">
             {isWelcome ? (
               <>
                 <button onClick={dismiss}
-                  className="text-[13px] font-semibold active:opacity-60 transition-opacity"
+                  className="text-[13px] font-semibold py-2 active:opacity-60 transition-opacity"
                   style={{ fontFamily: "var(--font-satoshi)", color: "#22C55E" }}>
-                  I&apos;d figure it out myself
+                  I&apos;ll figure it out
                 </button>
                 <button onClick={next}
-                  className="h-[36px] px-5 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
+                  className="h-10 px-6 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
                   style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E", color: "#fff" }}>
                   Show Me
                 </button>
@@ -320,29 +320,35 @@ export function HomeCoachmarks() {
               <>
                 {hasPrev
                   ? <button onClick={prev}
-                      className="text-[13px] font-semibold active:opacity-60 transition-opacity"
+                      className="text-[13px] font-semibold py-2 active:opacity-60 transition-opacity"
                       style={{ fontFamily: "var(--font-satoshi)", color: "#22C55E" }}>
-                      Previous
+                      Back
                     </button>
-                  : <div />}
+                  : <button onClick={dismiss}
+                      className="text-[13px] font-semibold py-2 active:opacity-60 transition-opacity"
+                      style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}>
+                      Skip
+                    </button>
+                }
                 <button onClick={next}
-                  className="h-[36px] px-5 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
+                  className="h-10 px-6 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
                   style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E", color: "#fff" }}>
-                  {isLast ? "Complete Guide" : "Next"}
+                  {isLast ? "Done" : "Next"}
                 </button>
               </>
             )}
           </div>
         </div>
 
-        {/* Downward tail — card is above the spotlight */}
-        {tailDown && !isWelcome && (
+        {/* Downward tail (card is above spotlight) */}
+        {tailDown && (
           <div style={{
             width: 0, height: 0,
-            borderLeft: "10px solid transparent",
-            borderRight: "10px solid transparent",
-            borderTop: "12px solid #fff",
-            marginLeft: 20, marginTop: -1,
+            borderLeft:  "9px solid transparent",
+            borderRight: "9px solid transparent",
+            borderTop:   "11px solid #fff",
+            marginLeft:  cardW / 2 - 9,
+            marginTop:   -1,
           }} />
         )}
       </motion.div>
