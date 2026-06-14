@@ -18,12 +18,12 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-96.png",  sizes: "96x96",  type: "image/png" },
+      { url: "/icons/icon-72.png",   sizes: "72x72",  type: "image/png" },
     ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
-    shortcut: ["/favicon.png"],
+    shortcut: ["/icons/icon-192.png"],
   },
   appleWebApp: {
     capable: true,

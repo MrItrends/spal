@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useSPALStore } from "@/store";
 import { MessageCircle } from "lucide-react";
 
@@ -19,6 +20,24 @@ const SUGGESTED_PROMPTS = [
   "Explain my profit to me",
   "How can I spend less?",
 ];
+
+// SPAL AI avatar — reused across header, bubbles, empty state
+function SPALAvatar({ size = 28 }: { size?: number }) {
+  return (
+    <div
+      className="rounded-full overflow-hidden flex-shrink-0 bg-spal-green"
+      style={{ width: size, height: size }}
+    >
+      <Image
+        src="/spal AI.png"
+        alt="SPAL"
+        width={size}
+        height={size}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+}
 
 export default function AskSPALPage() {
   const { user } = useSPALStore();
@@ -142,13 +161,11 @@ export default function AskSPALPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-full">
       {/* Header */}
       <div className="px-4 pt-5 pb-3 bg-spal-bg border-b border-neutral-100 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-spal-green rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
-            S
-          </div>
+          <SPALAvatar size={36} />
           <div>
             <h1 className="text-base font-bold text-spal-navy font-[family-name:var(--font-satoshi)] leading-tight">
               Ask SPAL
@@ -158,8 +175,8 @@ export default function AskSPALPage() {
         </div>
       </div>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto scroll-container px-4 py-4">
+      {/* Messages area — grows to push input down */}
+      <div className="flex-1 px-4 py-4 pb-2">
         {messages.length === 0 ? (
           <EmptyChat name={name} onPrompt={sendMessage} />
         ) : (
@@ -172,11 +189,7 @@ export default function AskSPALPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-end gap-2`}
                 >
-                  {msg.role === "assistant" && (
-                    <div className="w-7 h-7 bg-spal-green rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white mb-0.5">
-                      S
-                    </div>
-                  )}
+                  {msg.role === "assistant" && <SPALAvatar size={28} />}
                   <div
                     className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                       msg.role === "user"
@@ -192,22 +205,13 @@ export default function AskSPALPage() {
 
             {/* Typing indicator */}
             {loading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-end gap-2"
-              >
-                <div className="w-7 h-7 bg-spal-green rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white">
-                  S
-                </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
+                <SPALAvatar size={28} />
                 <div className="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-neutral-100">
                   <div className="flex gap-1 items-center h-4">
                     {[0, 1, 2].map((i) => (
-                      <div
-                        key={i}
-                        className="w-2 h-2 bg-neutral-300 rounded-full animate-bounce"
-                        style={{ animationDelay: `${i * 0.15}s` }}
-                      />
+                      <div key={i} className="w-2 h-2 bg-neutral-300 rounded-full animate-bounce"
+                        style={{ animationDelay: `${i * 0.15}s` }} />
                     ))}
                   </div>
                 </div>
@@ -215,14 +219,8 @@ export default function AskSPALPage() {
             )}
 
             {error && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center"
-              >
-                <p className="text-xs text-red-400 bg-red-50 rounded-xl px-4 py-2 inline-block">
-                  {error}
-                </p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+                <p className="text-xs text-red-400 bg-red-50 rounded-xl px-4 py-2 inline-block">{error}</p>
               </motion.div>
             )}
 
@@ -231,74 +229,74 @@ export default function AskSPALPage() {
         )}
       </div>
 
-      {/* Input bar — swaps to recording UI when voice is active */}
-      <AnimatePresence mode="wait">
-        {voiceState === "recording" ? (
-          <motion.div key="rec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="bg-white border-t border-neutral-100 px-5 pt-4 pb-safe pb-5 flex-shrink-0">
-            <div className="flex flex-col items-center gap-3">
-              {/* Waveform bars */}
-              <div className="flex items-end gap-[3px] h-6">
-                {[0.5, 0.9, 0.6, 1, 0.7, 0.9, 0.5, 0.6, 0.8].map((h, i) => (
-                  <motion.div key={i} className="w-[3px] bg-spal-green rounded-full"
-                    animate={{ scaleY: [h, 0.2, h] }}
-                    transition={{ duration: 0.6 + (i % 3) * 0.1, repeat: Infinity, delay: i * 0.06 }}
-                    style={{ height: "100%", transformOrigin: "bottom" }} />
-                ))}
+      {/* Input bar — sticky at the bottom of the scroll container, sits right above BottomNav */}
+      <div className="sticky bottom-0 z-10 bg-spal-bg">
+        <AnimatePresence mode="wait">
+          {voiceState === "recording" ? (
+            <motion.div key="rec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="border-t border-neutral-100 px-5 pt-4 pb-5">
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-end gap-[3px] h-6">
+                  {[0.5, 0.9, 0.6, 1, 0.7, 0.9, 0.5, 0.6, 0.8].map((h, i) => (
+                    <motion.div key={i} className="w-[3px] bg-spal-green rounded-full"
+                      animate={{ scaleY: [h, 0.2, h] }}
+                      transition={{ duration: 0.6 + (i % 3) * 0.1, repeat: Infinity, delay: i * 0.06 }}
+                      style={{ height: "100%", transformOrigin: "bottom" }} />
+                  ))}
+                </div>
+                <p className="text-sm font-medium text-neutral-500">Listening… tap stop when done</p>
+                <div className="flex gap-3 w-full">
+                  <button onClick={cancelRecording}
+                    className="flex-1 h-11 rounded-2xl bg-neutral-100 text-neutral-500 text-sm font-semibold">
+                    Cancel
+                  </button>
+                  <button onClick={stopRecording}
+                    className="flex-1 h-11 rounded-2xl bg-red-500 text-white text-sm font-bold flex items-center justify-center gap-2">
+                    <div className="w-3 h-3 bg-white rounded-sm" /> Stop
+                  </button>
+                </div>
               </div>
-              <p className="text-sm font-medium text-neutral-500">Listening… tap stop when done</p>
-              <div className="flex gap-3 w-full">
-                <button onClick={cancelRecording}
-                  className="flex-1 h-11 rounded-2xl bg-neutral-100 text-neutral-500 text-sm font-semibold">
-                  Cancel
-                </button>
-                <button onClick={stopRecording}
-                  className="flex-1 h-11 rounded-2xl bg-red-500 text-white text-sm font-bold flex items-center justify-center gap-2">
-                  <div className="w-3 h-3 bg-white rounded-sm" /> Stop
-                </button>
+            </motion.div>
+          ) : voiceState === "transcribing" ? (
+            <motion.div key="trans" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="border-t border-neutral-100 px-5 pt-3 pb-5">
+              <div className="flex items-center justify-center gap-2 py-2">
+                <div className="w-4 h-4 border-2 border-spal-green border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-neutral-400">Transcribing…</p>
               </div>
-            </div>
-          </motion.div>
-        ) : voiceState === "transcribing" ? (
-          <motion.div key="trans" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="bg-white border-t border-neutral-100 px-5 pt-3 pb-safe pb-5 flex-shrink-0">
-            <div className="flex items-center justify-center gap-2 py-2">
-              <div className="w-4 h-4 border-2 border-spal-green border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-neutral-400">Transcribing…</p>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div key="idle" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="px-4 py-3 bg-white border-t border-neutral-100 pb-safe flex-shrink-0">
-            <div className="flex items-center gap-2 bg-neutral-50 rounded-2xl px-3 h-12 border border-neutral-200 focus-within:border-spal-blue transition-colors">
-              {/* Mic button */}
-              <motion.button onClick={handleVoiceTap} disabled={loading} whileTap={{ scale: 0.88 }}
-                className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0 disabled:opacity-30">
-                <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-              </motion.button>
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Ask about your sales, profit, expenses..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={loading}
-                className="flex-1 bg-transparent text-sm text-spal-navy placeholder:text-neutral-300 outline-none disabled:opacity-60"
-              />
-              <motion.button onClick={() => sendMessage(input)} disabled={!input.trim() || loading} whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 bg-spal-blue rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-30 transition-opacity active:scale-95"
-                aria-label="Send">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div key="idle" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="px-4 py-3 border-t border-neutral-100">
+              <div className="flex items-center gap-2 bg-neutral-50 rounded-2xl px-3 h-12 border border-neutral-200 focus-within:border-spal-blue transition-colors">
+                <motion.button onClick={handleVoiceTap} disabled={loading} whileTap={{ scale: 0.88 }}
+                  className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0 disabled:opacity-30">
+                  <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </motion.button>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Ask about your sales, profit, expenses..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={loading}
+                  className="flex-1 bg-transparent text-sm text-spal-navy placeholder:text-neutral-300 outline-none disabled:opacity-60"
+                />
+                <motion.button onClick={() => sendMessage(input)} disabled={!input.trim() || loading} whileTap={{ scale: 0.9 }}
+                  className="w-8 h-8 bg-spal-blue rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-30 transition-opacity active:scale-95"
+                  aria-label="Send">
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -307,16 +305,15 @@ export default function AskSPALPage() {
 
 function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => void }) {
   return (
-    <div className="flex flex-col h-full py-4">
-      {/* SPAL greeting */}
+    <div className="flex flex-col py-4">
       <div className="text-center mb-8">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring" }}
-          className="w-16 h-16 bg-spal-green rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-white shadow-md"
+          className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-4 shadow-md bg-spal-green"
         >
-          S
+          <Image src="/spal AI.png" alt="SPAL" width={64} height={64} className="w-full h-full object-cover" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <h2 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
@@ -330,12 +327,7 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
         </motion.div>
       </div>
 
-      {/* Suggested prompts */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
         <p className="text-xs text-neutral-400 font-semibold uppercase tracking-wide mb-3">
           Try asking...
         </p>
@@ -359,4 +351,3 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
     </div>
   );
 }
-

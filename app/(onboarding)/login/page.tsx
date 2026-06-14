@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
 
@@ -50,10 +51,7 @@ export default function LoginPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         {/* SPAL wordmark */}
         <div className="mb-8">
-          <span style={{ fontFamily: "var(--font-satoshi)", fontSize: 22, fontWeight: 900, letterSpacing: "0.12em", color: "#0F172A" }}>
-            SPAL
-          </span>
-          <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#22C55E", marginLeft: 3, verticalAlign: "super" }} />
+          <Image src="/spal-wordmark.webp" alt="SPAL" width={90} height={32} className="h-8 w-auto" />
         </div>
 
         <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
