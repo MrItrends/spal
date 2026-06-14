@@ -85,6 +85,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              data-coachmark={`tab-${item.label.toLowerCase()}`}
               className="flex flex-col items-center gap-[3px] min-w-[52px] min-h-[48px] justify-center relative"
               aria-label={item.label}
             >
