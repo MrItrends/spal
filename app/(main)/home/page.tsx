@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSPALStore } from "@/store";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
+import { SwipeableRow } from "@/components/records/SwipeableRow";
+import { UndoToast } from "@/components/ui/UndoToast";
 import { HomeCoachmarks } from "@/components/shared/HomeCoachmarks";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
@@ -27,6 +29,10 @@ export default function HomePage() {
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [editRecord, setEditRecord]     = useState<BusinessRecord | null>(null);
+
+  // Undo delete
+  const [undoState,  setUndoState]  = useState<{ id: string; record: BusinessRecord } | null>(null);
+  const pendingIdRef = useRef<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -49,6 +55,37 @@ export default function HomePage() {
 
   function handleRecordAdded() { setLoadingSummary(true); setLoadingRecords(true); fetchData(); }
   function handleEditClose()   { setEditRecord(null); }
+
+  function scheduleDelete(record: BusinessRecord) {
+    // Flush any previous pending delete immediately
+    if (pendingIdRef.current) {
+      const prev = pendingIdRef.current;
+      pendingIdRef.current = null;
+      fetch(`/api/records?id=${prev}`, { method: "DELETE" });
+    }
+    pendingIdRef.current = record.id;
+    setRecords(prev => prev.filter(r => r.id !== record.id));
+    setUndoState({ id: record.id, record });
+  }
+
+  function handleUndo() {
+    if (!undoState) return;
+    pendingIdRef.current = null;
+    setUndoState(null);
+    setRecords(prev => {
+      const combined = [...prev, undoState.record];
+      return combined.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ).slice(0, 6);
+    });
+  }
+
+  function handleExpire() {
+    const id = pendingIdRef.current;
+    pendingIdRef.current = null;
+    setUndoState(null);
+    if (id) fetch(`/api/records?id=${id}`, { method: "DELETE" });
+  }
 
   const profit   = summary?.profit ?? 0;
   const isProfit = profit >= 0;
@@ -284,51 +321,60 @@ export default function HomePage() {
           ) : records.length > 0 ? (
             <div className="space-y-2.5">
               {records.map((record, i) => (
-                <motion.button
+                <motion.div
                   key={record.id}
                   initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.035, ease: [0.4, 0, 0.2, 1] }}
-                  onClick={() => { setEditRecord(record); setAddSheet(null); }}
-                  className="w-full flex items-center gap-3 bg-white rounded-2xl px-3.5 py-3 active:scale-[0.99] transition-transform text-left"
+                  className="rounded-2xl overflow-hidden bg-white"
                   style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}
                 >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: record.type === "sale" ? "#EFFBF4" : "#FFF5EF" }}
+                  <SwipeableRow
+                    onEdit={() => { setEditRecord(record); setAddSheet(null); }}
+                    onDelete={() => scheduleDelete(record)}
                   >
-                    {record.type === "sale"
-                      ? <ArrowUp size={17} strokeWidth={2.2} color="#16A34A" />
-                      : <ArrowDown size={17} strokeWidth={2.2} color="#EA580C" />}
-                  </div>
+                    <div
+                      className="flex items-center gap-3 px-3.5 py-3"
+                      onClick={() => { setEditRecord(record); setAddSheet(null); }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: record.type === "sale" ? "#EFFBF4" : "#FFF5EF" }}
+                      >
+                        {record.type === "sale"
+                          ? <ArrowUp size={17} strokeWidth={2.2} color="#16A34A" />
+                          : <ArrowDown size={17} strokeWidth={2.2} color="#EA580C" />}
+                      </div>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13.5px] text-spal-navy font-semibold truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
-                      {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      {record.category && (
-                        <span
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                          style={{
-                            background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED",
-                            color: record.type === "sale" ? "#16A34A" : "#EA580C",
-                          }}
-                        >
-                          {record.category}
-                        </span>
-                      )}
-                      <span className="text-[11px] text-neutral-400">{formatRecordTime(record.created_at)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13.5px] text-spal-navy font-semibold truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                          {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {record.category && (
+                            <span
+                              className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                              style={{
+                                background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED",
+                                color: record.type === "sale" ? "#16A34A" : "#EA580C",
+                              }}
+                            >
+                              {record.category}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-neutral-400">{formatRecordTime(record.created_at)}</span>
+                        </div>
+                      </div>
+
+                      <p
+                        className="text-[13.5px] font-bold flex-shrink-0"
+                        style={{ fontFamily: "var(--font-satoshi)", color: record.type === "sale" ? "#16A34A" : "#EA580C" }}
+                      >
+                        {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
+                      </p>
                     </div>
-                  </div>
-
-                  <p
-                    className="text-[13.5px] font-bold flex-shrink-0"
-                    style={{ fontFamily: "var(--font-satoshi)", color: record.type === "sale" ? "#16A34A" : "#EA580C" }}
-                  >
-                    {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
-                  </p>
-                </motion.button>
+                  </SwipeableRow>
+                </motion.div>
               ))}
             </div>
           ) : (
@@ -364,6 +410,18 @@ export default function HomePage() {
         onClose={handleEditClose}
         onSuccess={() => { handleRecordAdded(); handleEditClose(); }}
       />
+
+      {/* Undo toast */}
+      <AnimatePresence>
+        {undoState && (
+          <UndoToast
+            key={undoState.id}
+            message="Record deleted"
+            onUndo={handleUndo}
+            onExpire={handleExpire}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

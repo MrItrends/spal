@@ -3,23 +3,35 @@
 /**
  * SwipeableRow — Gmail-style swipe actions for record rows.
  *
- * Swipe LEFT  → reveals Edit  button (navy, right side)
+ * Swipe LEFT  → reveals Edit   button (navy, right side)
  * Swipe RIGHT → reveals Delete button (red,  left side)
+ *
+ * In selectMode: swipe is disabled, a checkbox is shown, onSelect fires on tap.
  */
 
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from "framer-motion";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Check } from "lucide-react";
 
 interface SwipeableRowProps {
-  children: React.ReactNode;
-  onEdit:   () => void;
-  onDelete: () => void;
+  children:    React.ReactNode;
+  onEdit:      () => void;
+  onDelete:    () => void;
+  selectMode?: boolean;
+  selected?:   boolean;
+  onSelect?:   () => void;
 }
 
 const REVEAL  = 72;
 const TRIGGER = 120;
 
-export function SwipeableRow({ children, onEdit, onDelete }: SwipeableRowProps) {
+export function SwipeableRow({
+  children,
+  onEdit,
+  onDelete,
+  selectMode = false,
+  selected   = false,
+  onSelect,
+}: SwipeableRowProps) {
   const x = useMotionValue(0);
 
   const deleteWidth = useTransform(x, [0, REVEAL], [0, REVEAL]);
@@ -33,13 +45,39 @@ export function SwipeableRow({ children, onEdit, onDelete }: SwipeableRowProps) 
 
   function handleDragEnd(_: unknown, info: PanInfo) {
     const offset = info.offset.x;
-    if      (offset >  TRIGGER)        { snapTo(0); onDelete(); }
-    else if (offset < -TRIGGER)        { snapTo(0); onEdit(); }
-    else if (offset >  REVEAL * 0.6)   { snapTo(REVEAL); }
-    else if (offset < -REVEAL * 0.6)   { snapTo(-REVEAL); }
-    else                               { snapTo(0); }
+    if      (offset >  TRIGGER)      { snapTo(0); onDelete(); }
+    else if (offset < -TRIGGER)      { snapTo(0); onEdit();   }
+    else if (offset >  REVEAL * 0.6) { snapTo(REVEAL); }
+    else if (offset < -REVEAL * 0.6) { snapTo(-REVEAL); }
+    else                             { snapTo(0); }
   }
 
+  // ── Select mode: show checkbox, no swipe ──────────────────────────────────
+  if (selectMode) {
+    return (
+      <div
+        className="relative overflow-hidden bg-white flex items-center active:bg-neutral-50 transition-colors cursor-pointer"
+        onClick={onSelect}
+      >
+        <div className="pl-3.5 pr-1 flex-shrink-0 flex items-center self-stretch">
+          <div
+            className="w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-all duration-150"
+            style={{
+              background:   selected ? "#22C55E" : "#fff",
+              borderColor:  selected ? "#22C55E" : "#D1D5DB",
+            }}
+          >
+            {selected && <Check size={12} color="white" strokeWidth={3} />}
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal swipe mode ─────────────────────────────────────────────────────
   return (
     <div className="relative overflow-hidden">
 

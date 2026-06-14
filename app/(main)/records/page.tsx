@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatTime } from "@/lib/utils/dates";
@@ -8,7 +8,8 @@ import { useSPALStore } from "@/store";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { ExportSheet } from "@/components/records/ExportSheet";
-import { ArrowUp, ArrowDown, Pencil, Plus, Download } from "lucide-react";
+import { UndoToast } from "@/components/ui/UndoToast";
+import { ArrowUp, ArrowDown, Plus, Download, CheckSquare } from "lucide-react";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense";
@@ -26,14 +27,27 @@ function dateLabel(recordDate: string): string {
   });
 }
 
+interface UndoState {
+  ids:     string[];
+  records: BusinessRecord[];
+  label:   string;
+}
+
 export default function RecordsPage() {
   const { addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
-  const [filter,      setFilter]      = useState<Filter>("all");
-  const [records,     setRecords]     = useState<BusinessRecord[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [editRecord,  setEditRecord]  = useState<BusinessRecord | null>(null);
-  const [deletingId,  setDeletingId]  = useState<string | null>(null);
-  const [exportOpen,  setExportOpen]  = useState(false);
+  const [filter,     setFilter]     = useState<Filter>("all");
+  const [records,    setRecords]    = useState<BusinessRecord[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [editRecord, setEditRecord] = useState<BusinessRecord | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+
+  // Undo delete state
+  const [undoState,  setUndoState]  = useState<UndoState | null>(null);
+  const pendingIdsRef = useRef<string[]>([]);
+
+  // Multi-select state
+  const [selectMode,   setSelectMode]   = useState(false);
+  const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set());
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -50,6 +64,100 @@ export default function RecordsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (recordSavedAt) fetchRecords(); }, [recordSavedAt]);
 
+  // Flush pending API deletes (e.g. when a new delete comes in before undo timer expires)
+  const flushPending = useCallback(async () => {
+    const ids = pendingIdsRef.current;
+    if (!ids.length) return;
+    pendingIdsRef.current = [];
+    setUndoState(null);
+    await Promise.all(ids.map(id => fetch(`/api/records?id=${id}`, { method: "DELETE" })));
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => () => { flushPending(); }, [flushPending]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Delete with 10-second undo ─────────────────────────────────────────────
+  function scheduleDelete(toDelete: BusinessRecord[]) {
+    if (!toDelete.length) return;
+
+    // If there's already a pending delete, flush it first (execute immediately)
+    if (pendingIdsRef.current.length) {
+      const prev = pendingIdsRef.current;
+      pendingIdsRef.current = [];
+      Promise.all(prev.map(id => fetch(`/api/records?id=${id}`, { method: "DELETE" })));
+    }
+
+    const ids = toDelete.map(r => r.id);
+    pendingIdsRef.current = ids;
+    setRecords(prev => prev.filter(r => !ids.includes(r.id)));
+    setUndoState({
+      ids,
+      records: toDelete,
+      label: toDelete.length === 1
+        ? "Record deleted"
+        : `${toDelete.length} records deleted`,
+    });
+  }
+
+  function handleUndo() {
+    if (!undoState) return;
+    pendingIdsRef.current = [];
+    setUndoState(null);
+    // Restore records — insert back sorted by created_at (newest first)
+    setRecords(prev => {
+      const combined = [...prev, ...undoState.records];
+      return combined.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+  }
+
+  function handleExpire() {
+    const ids = pendingIdsRef.current;
+    pendingIdsRef.current = [];
+    setUndoState(null);
+    Promise.all(ids.map(id => fetch(`/api/records?id=${id}`, { method: "DELETE" })));
+  }
+
+  // ── Select mode helpers ───────────────────────────────────────────────────
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(filtered.map(r => r.id)));
+  }
+
+  function deleteSelected() {
+    const toDelete = records.filter(r => selectedIds.has(r.id));
+    exitSelectMode();
+    scheduleDelete(toDelete);
+  }
+
+  function deleteAll() {
+    const toDelete = [...filtered];
+    exitSelectMode();
+    scheduleDelete(toDelete);
+  }
+
+  // ── Record edit ──────────────────────────────────────────────────────────
+  function handleRecordTap(record: BusinessRecord) {
+    if (selectMode) return;
+    setEditRecord(record);
+    setAddSheet(null);
+  }
+
+  function handleEditClose() { setEditRecord(null); }
+
   const filtered = records.filter((r) => filter === "all" ? true : r.type === filter);
   const grouped  = filtered.reduce<Record<string, BusinessRecord[]>>((acc, r) => {
     const label = dateLabel(r.record_date);
@@ -57,58 +165,72 @@ export default function RecordsPage() {
     return acc;
   }, {});
 
-  function handleRecordTap(record: BusinessRecord) {
-    setEditRecord(record);
-    setAddSheet(null); // close add sheet if open
-  }
-
-  function handleEditClose() {
-    setEditRecord(null);
-  }
-
-  async function handleDelete(record: BusinessRecord) {
-    setDeletingId(record.id);
-    try {
-      const res = await fetch(`/api/records?id=${record.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        setRecords((prev) => prev.filter((r) => r.id !== record.id));
-      }
-    } catch { /* silent */ } finally {
-      setDeletingId(null);
-    }
-  }
+  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
 
   return (
     <>
       <div className="px-4 pt-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Records</h1>
-          <div className="flex items-center gap-3">
-            {records.length > 0 && (
-              <span className="text-xs text-neutral-400">
-                {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : "expenses"}
-              </span>
-            )}
-            {records.length > 0 && (
+          {selectMode ? (
+            <>
               <button
-                onClick={() => setExportOpen(true)}
-                className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
-                aria-label="Export records"
+                onClick={exitSelectMode}
+                className="text-[13px] font-semibold"
+                style={{ color: "#6B7280", fontFamily: "var(--font-satoshi)" }}
               >
-                <Download size={15} strokeWidth={2.2} className="text-neutral-500" />
+                Cancel
               </button>
-            )}
-          </div>
+              <p className="text-[14px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select records"}
+              </p>
+              <button
+                onClick={deleteSelected}
+                disabled={selectedIds.size === 0}
+                className="text-[13px] font-bold disabled:opacity-30 transition-opacity"
+                style={{ color: "#EF4444", fontFamily: "var(--font-satoshi)" }}
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Records</h1>
+              <div className="flex items-center gap-3">
+                {records.length > 0 && (
+                  <span className="text-xs text-neutral-400">
+                    {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : "expenses"}
+                  </span>
+                )}
+                {records.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setExportOpen(true)}
+                      className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
+                      aria-label="Export records"
+                    >
+                      <Download size={15} strokeWidth={2.2} className="text-neutral-500" />
+                    </button>
+                    <button
+                      onClick={() => setSelectMode(true)}
+                      className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
+                      aria-label="Select records"
+                    >
+                      <CheckSquare size={15} strokeWidth={2.2} className="text-neutral-500" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-5">
+        <div className="flex gap-2 mb-4">
           {(["all", "sale", "expense"] as Filter[]).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); exitSelectMode(); }}
               className={`flex-1 h-10 rounded-full text-sm font-semibold transition-all duration-200 ${
                 filter === f
                   ? f === "sale" ? "bg-spal-green text-white"
@@ -122,9 +244,28 @@ export default function RecordsPage() {
           ))}
         </div>
 
-        {/* Content */}
-        {/* Swipe hint — shown once until dismissed */}
-        {!loading && Object.keys(grouped).length > 0 && (
+        {/* Select mode actions row */}
+        {selectMode && filtered.length > 0 && (
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={allSelected ? () => setSelectedIds(new Set()) : selectAll}
+              className="text-[12px] font-semibold"
+              style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
+            >
+              {allSelected ? "Deselect all" : `Select all ${filtered.length}`}
+            </button>
+            <button
+              onClick={deleteAll}
+              className="text-[12px] font-semibold"
+              style={{ color: "#EF4444", fontFamily: "var(--font-satoshi)" }}
+            >
+              Delete all {filtered.length}
+            </button>
+          </div>
+        )}
+
+        {/* Swipe hint — shown only in normal mode with records */}
+        {!loading && !selectMode && Object.keys(grouped).length > 0 && (
           <p className="text-[11px] text-neutral-400 text-right mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
             Swipe a record to edit or delete
           </p>
@@ -145,20 +286,22 @@ export default function RecordsPage() {
                       `+${formatCurrency(dayRecords.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0))}`}
                   </p>
                 </div>
-                {/* Each row is individually rounded so swipe reveals work per-row */}
                 <div className="space-y-1.5">
                   {dayRecords.map((record, i) => (
                     <motion.div
                       key={record.id}
                       initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: deletingId === record.id ? 0 : 1, x: 0, height: deletingId === record.id ? 0 : "auto" }}
+                      animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.035 }}
                       className="rounded-[16px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]"
                       style={{ border: "1px solid rgba(228,228,231,0.6)" }}
                     >
                       <SwipeableRow
                         onEdit={() => handleRecordTap(record)}
-                        onDelete={() => handleDelete(record)}
+                        onDelete={() => scheduleDelete([record])}
+                        selectMode={selectMode}
+                        selected={selectedIds.has(record.id)}
+                        onSelect={() => toggleSelect(record.id)}
                       >
                         <div className="flex items-center gap-3 px-4 py-3.5">
                           <div
@@ -203,9 +346,9 @@ export default function RecordsPage() {
         )}
       </div>
 
-      {/* FAB */}
+      {/* FAB — hidden in select mode */}
       <AnimatePresence>
-        {!addSheetOpen && !editRecord && (
+        {!addSheetOpen && !editRecord && !selectMode && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -226,7 +369,7 @@ export default function RecordsPage() {
       <AddRecordSheet type="expense" open={addSheetOpen === "expense"} onClose={() => setAddSheet(null)} onSuccess={fetchRecords} />
       <ExportSheet open={exportOpen} onClose={() => setExportOpen(false)} />
 
-      {/* Edit sheet — opens when a record is tapped */}
+      {/* Edit sheet */}
       <AddRecordSheet
         type={editRecord?.type ?? "sale"}
         open={!!editRecord}
@@ -234,6 +377,18 @@ export default function RecordsPage() {
         onClose={handleEditClose}
         onSuccess={() => { fetchRecords(); handleEditClose(); }}
       />
+
+      {/* Undo toast */}
+      <AnimatePresence>
+        {undoState && (
+          <UndoToast
+            key={undoState.ids.join(",")}
+            message={undoState.label}
+            onUndo={handleUndo}
+            onExpire={handleExpire}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

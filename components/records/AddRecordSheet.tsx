@@ -8,9 +8,7 @@ import { useSPALStore } from "@/store";
 import type { BusinessRecord } from "@/lib/types";
 import type { Badge } from "@/lib/gamification/badges";
 import { Camera, X, CheckCircle2, Minus, Plus, Zap } from "lucide-react";
-
-const SALE_CATEGORIES    = ["Drinks", "Food", "Clothing", "Services", "Products", "Other"];
-const EXPENSE_CATEGORIES = ["Stock", "Fuel", "Transport", "Rent", "Salary", "Utilities", "Other"];
+import { SALE_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/categories";
 
 interface AddRecordSheetProps {
   type:       "sale" | "expense";
