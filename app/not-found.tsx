@@ -33,34 +33,82 @@ function makeShuffle(): number[] {
 }
 
 // ── Canvas confetti ──────────────────────────────────────────────────────────
+const CONFETTI_COLORS = ["#22C55E","#2563EB","#F97316","#8B5CF6","#FCD34D","#F472B6","#38BDF8","#FFFFFF"];
+type Shape = "rect" | "circle" | "ribbon";
+
 function Confetti({ active }: { active: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     if (!active) return;
-    const c   = ref.current; if (!c) return;
-    c.width   = window.innerWidth;
-    c.height  = window.innerHeight;
+    const c = ref.current; if (!c) return;
+    c.width  = window.innerWidth;
+    c.height = window.innerHeight;
     const ctx = c.getContext("2d")!;
-    const CLR = ["#22C55E","#2563EB","#F97316","#8B5CF6","#FCD34D","#F472B6","#38BDF8"];
-    const ps  = Array.from({ length: 220 }, () => ({
-      x:   Math.random() * c.width, y: -30 - Math.random() * 120,
-      vx:  (Math.random() - 0.5) * 6, vy: 2 + Math.random() * 3.5,
-      col: CLR[Math.floor(Math.random() * CLR.length)],
-      w:   5 + Math.random() * 9, h: 3 + Math.random() * 5,
-      rot: Math.random() * 360,   rv: (Math.random() - 0.5) * 12,
-    }));
+    const cx  = c.width / 2;
+    const cy  = c.height * 0.45;
+
+    // Two burst waves from center
+    const makeParticle = (delayed: boolean) => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 6 + Math.random() * 14;
+      const shapes: Shape[] = ["rect", "rect", "circle", "ribbon"];
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - (4 + Math.random() * 4),
+        col: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        w: 7 + Math.random() * 8,
+        h: 4 + Math.random() * 5,
+        rot: Math.random() * 360,
+        rv: (Math.random() - 0.5) * 14,
+        opacity: 1,
+        shape: shapes[Math.floor(Math.random() * shapes.length)] as Shape,
+        delay: delayed ? 18 + Math.floor(Math.random() * 12) : 0,
+      };
+    };
+
+    const ps = [
+      ...Array.from({ length: 160 }, () => makeParticle(false)),
+      ...Array.from({ length: 80  }, () => makeParticle(true)),
+    ];
+
     let raf: number; let f = 0;
+    const TOTAL_FRAMES = 260;
+
     const draw = () => {
       ctx.clearRect(0, 0, c.width, c.height);
+      const progress = f / TOTAL_FRAMES;
+
       for (const p of ps) {
-        p.x += p.vx; p.y += p.vy; p.vy += 0.065; p.rot += p.rv;
-        ctx.save(); ctx.translate(p.x, p.y);
+        if (f < p.delay) continue;
+        p.x  += p.vx; p.y += p.vy;
+        p.vx *= 0.985; p.vy += 0.38;
+        p.rot += p.rv; p.rv *= 0.98;
+        p.opacity = Math.max(0, 1 - Math.max(0, progress - 0.55) / 0.45);
+
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.translate(p.x, p.y);
         ctx.rotate((p.rot * Math.PI) / 180);
-        ctx.fillStyle = p.col; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.fillStyle = p.col;
+
+        if (p.shape === "circle") {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.shape === "ribbon") {
+          ctx.fillRect(-p.w * 0.5, -p.h * 0.25, p.w, p.h * 0.5);
+        } else {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
         ctx.restore();
       }
-      if (++f < 310) raf = requestAnimationFrame(draw);
-      else ctx.clearRect(0, 0, c.width, c.height);
+
+      if (++f < TOTAL_FRAMES) {
+        raf = requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, c.width, c.height);
+      }
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
@@ -254,6 +302,30 @@ export default function NotFound() {
                        letterSpacing: "0.18em", color: "rgba(255,255,255,0.18)" }}>
           SPAL
         </span>
+      </div>
+
+      {/* Persistent home button */}
+      <div className="absolute top-4 right-4 z-20">
+        <Link href="/home">
+          <motion.div
+            whileTap={{ scale: 0.93 }}
+            style={{
+              display:      "flex",
+              alignItems:   "center",
+              gap:          6,
+              padding:      "8px 14px",
+              borderRadius: 999,
+              background:   "rgba(255,255,255,0.07)",
+              border:       "1px solid rgba(255,255,255,0.12)",
+              cursor:       "pointer",
+            }}
+          >
+            <Home size={14} strokeWidth={2.2} color="rgba(255,255,255,0.7)" />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)", fontFamily: FF }}>
+              Home
+            </span>
+          </motion.div>
+        </Link>
       </div>
 
       {/* Hint pill */}
