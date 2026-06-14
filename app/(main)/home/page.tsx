@@ -172,7 +172,7 @@ export default function HomePage() {
                       color: "#ffffff",
                     }}
                   >
-                    {formatCurrency(Math.abs(profit))}
+                    {!isProfit && profit < 0 ? "-" : ""}{formatCurrency(Math.abs(profit))}
                   </p>
 
                   <div className="h-px my-4" style={{ background: "#384666" }} />
