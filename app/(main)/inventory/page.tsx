@@ -1029,7 +1029,7 @@ export default function InventoryPage() {
 
       {/* Fixed add button */}
       {setupDone && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-6 pt-3"
+        <div className="fixed cta-bottom left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-4 pt-3"
           style={{ background: "linear-gradient(to top, #F7F9F5 80%, transparent)" }}>
           <button
             onClick={() => { setEditItem(null); setShowAdd(true); }}

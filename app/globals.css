@@ -116,6 +116,11 @@ h1, h2, h3, h4, h5, h6 {
   padding-bottom: var(--sab);
 }
 
+/* Fixed CTA bars that live inside (main) layout — must clear the 64px BottomNav */
+.cta-bottom {
+  bottom: calc(64px + var(--sab));
+}
+
 .scroll-container {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
