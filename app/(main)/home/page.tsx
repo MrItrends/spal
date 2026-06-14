@@ -102,8 +102,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Coachmarks — shown once to first-time users */}
-      <HomeCoachmarks />
+      {/* Coachmarks disabled */}
       <div
         className="relative min-h-full"
         style={{
