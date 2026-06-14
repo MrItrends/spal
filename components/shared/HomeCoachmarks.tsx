@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -10,7 +10,7 @@ interface Step {
   id:     string;
   title:  string;
   body:   string;
-  target: string | null; // data-coachmark value
+  target: string | null;
 }
 
 const STEPS: Step[] = [
@@ -47,7 +47,7 @@ const STEPS: Step[] = [
   {
     id:     "tab-insights",
     title:  "Insights",
-    body:   "This tab shows trends and breakdowns — which categories you spend the most on, your best days, and how your profit is moving over time.",
+    body:   "This tab shows trends and breakdowns — which categories you spend the most on, your best days, and how your profit moves over time.",
     target: "tab-insights",
   },
   {
@@ -59,24 +59,34 @@ const STEPS: Step[] = [
   {
     id:     "spark",
     title:  "Ask SPAL anytime",
-    body:   `That’s me — the floating button. Tap me whenever you want to ask something like “how much did I make this week?” or “where am I spending the most?”`,
+    body:   `That's me — the floating button. Tap me whenever you want to ask something like "how much did I make this week?" or "where am I spending the most?"`,
     target: "spark",
   },
 ];
 
 const STORAGE_KEY = "spal_coachmarks_v3_done";
+const SP          = 8;   // spotlight outset px
+const GAP         = 14;  // gap between spotlight and card px
+const MARGIN      = 16;  // min distance from screen edge px
 
-// ── Geometry helpers ──────────────────────────────────────────────────────────
+// Per-step estimated card height (title + body chars ÷ ~52 chars/line × 20px + chrome ~140px)
+// Generous estimates so card never overlaps spotlight
+const CARD_H: Record<string, number> = {
+  welcome:       200,
+  snapshot:      195,
+  recent:        185,
+  "tab-home":    185,
+  "tab-records": 195,
+  "tab-insights":195,
+  "tab-profile": 195,
+  spark:         195,
+};
+
+// ── Geometry ──────────────────────────────────────────────────────────────────
 
 interface TargetRect {
-  top:    number;
-  left:   number;
-  right:  number;
-  bottom: number;
-  width:  number;
-  height: number;
-  centerX: number;
-  centerY: number;
+  top: number; left: number; right: number; bottom: number;
+  width: number; height: number; centerX: number;
 }
 
 function measureTarget(id: string): TargetRect | null {
@@ -85,31 +95,16 @@ function measureTarget(id: string): TargetRect | null {
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
-  return {
-    top:     r.top,
-    left:    r.left,
-    right:   r.right,
-    bottom:  r.bottom,
-    width:   r.width,
-    height:  r.height,
-    centerX: r.left + r.width  / 2,
-    centerY: r.top  + r.height / 2,
-  };
+  return { top: r.top, left: r.left, right: r.right, bottom: r.bottom,
+           width: r.width, height: r.height, centerX: r.left + r.width / 2 };
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
-const SP  = 8;   // spotlight outset
-const GAP = 12;  // gap between spotlight edge and card
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function HomeCoachmarks() {
-  const [stepIdx,  setStepIdx]  = useState(0);
-  const [visible,  setVisible]  = useState(false);
-  const [target,   setTarget]   = useState<TargetRect | null>(null);
-  // Two-phase: measure card height before animating in
-  const [cardH,    setCardH]    = useState(0);
-  const [ready,    setReady]    = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const [target,  setTarget]  = useState<TargetRect | null>(null);
 
   useEffect(() => {
     if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
@@ -117,7 +112,6 @@ export function HomeCoachmarks() {
 
   const step = STEPS[stepIdx];
 
-  // Measure target element, retry until found
   const measureStep = useCallback(() => {
     if (!step.target) { setTarget(null); return; }
     let tries = 0;
@@ -132,27 +126,13 @@ export function HomeCoachmarks() {
   useEffect(() => {
     if (!visible) return;
     setTarget(null);
-    setReady(false);
-    setCardH(0);
     measureStep();
     window.addEventListener("resize", measureStep);
     return () => window.removeEventListener("resize", measureStep);
   }, [stepIdx, visible, measureStep]);
 
-  // After card renders (invisible), measure its real height then flip to visible
-  useLayoutEffect(() => {
-    if (!visible || ready) return;
-    if (!cardRef.current) return;
-    // Wait one frame so content is laid out
-    const id = requestAnimationFrame(() => {
-      const h = cardRef.current?.offsetHeight ?? 0;
-      if (h > 0) { setCardH(h); setReady(true); }
-    });
-    return () => cancelAnimationFrame(id);
-  });
-
-  function next()    { setReady(false); setStepIdx(s => Math.min(s + 1, STEPS.length - 1)); }
-  function prev()    { setReady(false); setStepIdx(s => Math.max(s - 1, 1)); }
+  function advance() { setStepIdx(s => Math.min(s + 1, STEPS.length - 1)); }
+  function back()    { setStepIdx(s => Math.max(s - 1, 1)); }
   function dismiss() { localStorage.setItem(STORAGE_KEY, "1"); setVisible(false); }
 
   if (!visible) return null;
@@ -164,62 +144,62 @@ export function HomeCoachmarks() {
   const vw = typeof window !== "undefined" ? window.innerWidth  : 390;
   const vh = typeof window !== "undefined" ? window.innerHeight : 844;
 
-  // Card width: 16px margin each side, capped at 320
-  const cardW    = Math.min(320, vw - 32);
+  const cardW    = Math.min(308, vw - MARGIN * 2);
   const cardLeft = (vw - cardW) / 2;
+  const estH     = CARD_H[step.id] ?? 195;
 
-  // ── Compute card top & tail ────────────────────────────────────────────────
-  const MARGIN = 12; // min distance from screen edge
+  // Spotlight border-radius
+  const spotR = step.id.startsWith("tab-") ? 12 : 18;
 
-  let cardTop  = (vh - (cardH || 180)) / 2; // default: centred
+  // ── Card vertical position ─────────────────────────────────────────────────
+  let cardTop     = (vh - estH) / 2;
   let tailSide: "up" | "down" | null = null;
-  let tailOffsetX = cardW / 2 - 9; // default: card centre
+  let tailX       = cardW / 2 - 9; // default: centred
 
-  if (target && cardH > 0) {
-    const spotBottom = target.bottom + SP;
+  if (target) {
     const spotTop    = target.top    - SP;
+    const spotBottom = target.bottom + SP;
+    const spaceAbove = spotTop - GAP - MARGIN;
+    const spaceBelow = vh - spotBottom - GAP - MARGIN;
 
-    const spaceBelow = vh     - spotBottom - GAP - MARGIN;
-    const spaceAbove = spotTop             - GAP - MARGIN;
-
-    if (spaceBelow >= cardH || spaceBelow >= spaceAbove) {
+    if (spaceBelow >= estH || spaceBelow >= spaceAbove) {
       // Place card below spotlight
-      cardTop  = Math.min(spotBottom + GAP, vh - cardH - MARGIN);
+      cardTop  = Math.min(spotBottom + GAP, vh - estH - MARGIN);
       tailSide = "up";
     } else {
       // Place card above spotlight
-      cardTop  = Math.max(spotTop - GAP - cardH, MARGIN);
+      cardTop  = Math.max(spotTop - GAP - estH, MARGIN);
       tailSide = "down";
     }
+    cardTop = Math.max(MARGIN, Math.min(cardTop, vh - estH - MARGIN));
 
-    // Clamp card vertically
-    cardTop = Math.max(MARGIN, Math.min(cardTop, vh - cardH - MARGIN));
-
-    // Tail X: point at horizontal centre of target, relative to card
-    const rawTailX = target.centerX - cardLeft - 9;
-    tailOffsetX = Math.max(16, Math.min(rawTailX, cardW - 34));
+    // Tail X points at target centre
+    tailX = Math.max(16, Math.min(target.centerX - cardLeft - 9, cardW - 34));
   }
 
-  // ── Spotlight shape ────────────────────────────────────────────────────────
-  // Bottom nav tabs look better with a pill spotlight, summary card with rounded rect
-  const spotRadius = target
-    ? (step.id.startsWith("tab-") ? 14 : 18)
-    : 18;
+  const TAIL = (
+    <div style={{
+      width: 0, height: 0, flexShrink: 0,
+      borderLeft:  "9px solid transparent",
+      borderRight: "9px solid transparent",
+      ...(tailSide === "up"
+        ? { borderBottom: "10px solid #fff", marginLeft: tailX, marginBottom: -1 }
+        : { borderTop:    "10px solid #fff", marginLeft: tailX, marginTop:    -1 }),
+    }} />
+  );
 
   return (
     <AnimatePresence>
-      {/* Dark overlay — pointer-events off so underlying elements can still be measured */}
+      {/* Dark overlay */}
       <motion.div
         key="cm-overlay"
-        className="fixed inset-0 z-[100] pointer-events-none"
-        style={{ background: "rgba(10,14,26,0.80)" }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100]"
+        style={{ background: "rgba(10,14,26,0.80)", pointerEvents: "none" }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.22 }}
       />
 
-      {/* Spotlight cutout */}
+      {/* Spotlight */}
       {target && (
         <motion.div
           key={`cm-spot-${stepIdx}`}
@@ -229,156 +209,104 @@ export function HomeCoachmarks() {
             left:   target.left   - SP,
             width:  target.width  + SP * 2,
             height: target.height + SP * 2,
-            borderRadius: spotRadius,
-            // Outer shadow creates the dark overlay with a transparent hole
+            borderRadius: spotR,
             boxShadow:
-              `0 0 0 9999px rgba(10,14,26,0.80),` +
-              `0 0 0 2px rgba(34,197,94,0.9),` +
-              `0 0 20px 4px rgba(34,197,94,0.25)`,
+              "0 0 0 9999px rgba(10,14,26,0.80)," +
+              "0 0 0 2px rgba(34,197,94,0.9)," +
+              "0 0 20px 4px rgba(34,197,94,0.22)",
             background: "transparent",
           }}
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
         />
       )}
 
-      {/* Card — renders invisible first so we can measure height */}
+      {/* Card */}
       <motion.div
-        ref={cardRef}
         key={`cm-card-${stepIdx}`}
         className="fixed z-[102] pointer-events-auto"
-        style={{
-          top:     cardTop,
-          left:    cardLeft,
-          width:   cardW,
-          opacity: ready ? 1 : 0,
-        }}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: ready ? 1 : 0, y: ready ? 0 : 8 }}
-        exit={{ opacity: 0, y: -4 }}
+        style={{ top: cardTop, left: cardLeft, width: cardW }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1,  y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
         transition={{ duration: 0.26, ease: [0.34, 1.1, 0.64, 1] }}
       >
-        {/* Upward tail — card is below the spotlight */}
-        {tailSide === "up" && (
-          <div style={{
-            width: 0, height: 0,
-            borderLeft:   "9px solid transparent",
-            borderRight:  "9px solid transparent",
-            borderBottom: "10px solid #ffffff",
-            marginLeft:   tailOffsetX,
-            marginBottom: -1,
-            flexShrink:   0,
-          }} />
-        )}
+        {tailSide === "up" && TAIL}
 
-        {/* Card body */}
         <div
           className="rounded-3xl px-5 py-5"
-          style={{ background: "#ffffff", boxShadow: "0 16px 48px rgba(0,0,0,0.20)" }}
+          style={{ background: "#fff", boxShadow: "0 16px 48px rgba(0,0,0,0.22)" }}
         >
-          {/* Header row */}
+          {/* Avatar row */}
           <div className="flex items-center gap-2.5 mb-3">
             <Image
               src="/spal AI.png"
               alt="SPAL"
-              width={isWelcome ? 56 : 28}
-              height={isWelcome ? 56 : 28}
-              style={{
-                width:      isWelcome ? 56 : 28,
-                height:     isWelcome ? 56 : 28,
-                objectFit:  "contain",
-                flexShrink: 0,
-                filter:     "drop-shadow(0 2px 6px rgba(34,197,94,0.35))",
-              }}
+              width={isWelcome ? 52 : 26}
+              height={isWelcome ? 52 : 26}
+              style={{ width: isWelcome ? 52 : 26, height: isWelcome ? 52 : 26,
+                       objectFit: "contain", flexShrink: 0,
+                       filter: "drop-shadow(0 2px 6px rgba(34,197,94,0.35))" }}
             />
             {!isWelcome && (
-              <span
-                className="text-[10.5px] font-bold uppercase tracking-widest"
-                style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
-              >
+              <span className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}>
                 SPAL Guide
               </span>
             )}
           </div>
 
-          {/* Progress dots (steps 1+) */}
+          {/* Progress bar (steps 1+) */}
           {!isWelcome && (
             <div className="flex gap-1.5 mb-3">
               {STEPS.slice(1).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[3px] flex-1 rounded-full transition-all duration-300"
-                  style={{ background: i < stepIdx ? "#22C55E" : "#E5E7EB" }}
-                />
+                <div key={i} className="h-[3px] flex-1 rounded-full transition-all duration-300"
+                  style={{ background: i < stepIdx ? "#22C55E" : "#E5E7EB" }} />
               ))}
             </div>
           )}
 
-          {/* Title */}
-          <h3
-            className="font-bold leading-snug mb-1.5"
-            style={{
-              fontSize:   isWelcome ? "17px" : "15px",
-              fontFamily: "var(--font-satoshi)",
-              color:      "#0F172A",
-            }}
-          >
+          <h3 className="font-bold leading-snug mb-1.5"
+            style={{ fontSize: isWelcome ? "16px" : "14.5px",
+                     fontFamily: "var(--font-satoshi)", color: "#0F172A" }}>
             {step.title}
           </h3>
 
-          {/* Body */}
-          <p
-            className="leading-relaxed"
-            style={{ fontSize: "13px", fontFamily: "var(--font-satoshi)", color: "#6B7280" }}
-          >
+          <p className="leading-relaxed"
+            style={{ fontSize: "12.5px", fontFamily: "var(--font-satoshi)", color: "#6B7280" }}>
             {step.body}
           </p>
 
           {/* Actions */}
-          <div className="flex items-center justify-between mt-5">
+          <div className="flex items-center justify-between mt-4">
             {isWelcome ? (
               <>
-                <button
-                  onClick={dismiss}
-                  className="text-[13px] font-semibold py-2 active:opacity-60"
-                  style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}
-                >
+                <button onClick={dismiss}
+                  className="text-[12.5px] font-semibold py-2 active:opacity-60"
+                  style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}>
                   Skip tour
                 </button>
-                <button
-                  onClick={next}
-                  className="h-10 px-6 rounded-full font-bold text-[13px] text-white active:scale-95 transition-transform"
-                  style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E" }}
-                >
+                <button onClick={advance}
+                  className="h-10 px-5 rounded-full font-bold text-[12.5px] text-white active:scale-95 transition-transform"
+                  style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E" }}>
                   Show me around
                 </button>
               </>
             ) : (
               <>
-                {hasPrev ? (
-                  <button
-                    onClick={prev}
-                    className="text-[13px] font-semibold py-2 active:opacity-60"
-                    style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}
-                  >
-                    Back
-                  </button>
-                ) : (
-                  <button
-                    onClick={dismiss}
-                    className="text-[13px] font-semibold py-2 active:opacity-60"
-                    style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}
-                  >
-                    Skip
-                  </button>
-                )}
-                <button
-                  onClick={isLast ? dismiss : next}
-                  className="h-10 px-6 rounded-full font-bold text-[13px] text-white active:scale-95 transition-transform"
-                  style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E" }}
-                >
+                {hasPrev
+                  ? <button onClick={back}
+                      className="text-[12.5px] font-semibold py-2 active:opacity-60"
+                      style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}>Back</button>
+                  : <button onClick={dismiss}
+                      className="text-[12.5px] font-semibold py-2 active:opacity-60"
+                      style={{ fontFamily: "var(--font-satoshi)", color: "#9CA3AF" }}>Skip</button>
+                }
+                <button onClick={isLast ? dismiss : advance}
+                  className="h-10 px-5 rounded-full font-bold text-[12.5px] text-white active:scale-95 transition-transform"
+                  style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E" }}>
                   {isLast ? "Got it!" : "Next"}
                 </button>
               </>
@@ -386,18 +314,7 @@ export function HomeCoachmarks() {
           </div>
         </div>
 
-        {/* Downward tail — card is above the spotlight */}
-        {tailSide === "down" && (
-          <div style={{
-            width: 0, height: 0,
-            borderLeft:  "9px solid transparent",
-            borderRight: "9px solid transparent",
-            borderTop:   "10px solid #ffffff",
-            marginLeft:  tailOffsetX,
-            marginTop:   -1,
-            flexShrink:  0,
-          }} />
-        )}
+        {tailSide === "down" && TAIL}
       </motion.div>
     </AnimatePresence>
   );
