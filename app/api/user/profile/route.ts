@@ -30,15 +30,16 @@ export async function PATCH(req: NextRequest) {
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { full_name, business_name, business_type, whatsapp_number, currency, avatar_url } = body;
+    const { full_name, business_name, business_type, whatsapp_number, currency, avatar_url, tracking_methods } = body;
 
     const updates: Record<string, unknown> = {};
-    if (full_name       !== undefined) updates.full_name       = full_name?.trim()       || null;
-    if (business_name   !== undefined) updates.business_name   = business_name?.trim()   || null;
-    if (business_type   !== undefined) updates.business_type   = business_type           || null;
-    if (whatsapp_number !== undefined) updates.whatsapp_number = whatsapp_number?.trim() || null;
-    if (currency        !== undefined) updates.currency        = currency                || "NGN";
-    if (avatar_url      !== undefined) updates.avatar_url      = avatar_url              || null;
+    if (full_name        !== undefined) updates.full_name        = full_name?.trim()       || null;
+    if (business_name    !== undefined) updates.business_name    = business_name?.trim()   || null;
+    if (business_type    !== undefined) updates.business_type    = business_type           || null;
+    if (whatsapp_number  !== undefined) updates.whatsapp_number  = whatsapp_number?.trim() || null;
+    if (currency         !== undefined) updates.currency         = currency                || "NGN";
+    if (avatar_url       !== undefined) updates.avatar_url       = avatar_url              || null;
+    if (tracking_methods !== undefined) updates.tracking_methods = Array.isArray(tracking_methods) ? tracking_methods : [];
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ success: false, error: "No fields to update" }, { status: 400 });

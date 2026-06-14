@@ -46,6 +46,7 @@ export interface User {
   subscription_plan?: string; // 'free' | 'pro'
   inventory_setup_done?: boolean;
   inventory_track_sales?: boolean;
+  tracking_methods?: TrackingMethod[];
 }
 
 export interface DailySummary {

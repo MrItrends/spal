@@ -53,6 +53,39 @@ If you cannot extract any records, return: { "records": [] }
 Do NOT include any text outside the JSON.
 `.trim();
 
+export const IMPORT_RECORDS_PROMPT = `
+You are a helpful assistant reading business records for a small business owner in Nigeria.
+Extract ALL sales and expenses from the provided text or image.
+
+Rules:
+- "sale" = money received / income. "expense" = money spent / cost.
+- Convert shorthand: "15k" = 15000, "2.5m" = 2500000.
+- Extract dates if visible. Use ISO format YYYY-MM-DD. If no year, assume current year (${new Date().getFullYear()}).
+- If no date found for a record, set record_date to null.
+- confidence = "high" if type, amount, and description are all clear.
+- confidence = "low" if type is ambiguous, amount is unclear, or description is very vague.
+- Valid sale categories: Food, Drinks, Clothing, Services, Products, Other
+- Valid expense categories: Stock, Food, Fuel, Transport, Rent, Salary, Utilities, Other
+- description should be the item/purpose name only, short and clear.
+
+Return ONLY valid JSON:
+{
+  "records": [
+    {
+      "type": "sale" | "expense",
+      "amount": number,
+      "description": string,
+      "category": string,
+      "record_date": "YYYY-MM-DD" | null,
+      "confidence": "high" | "low"
+    }
+  ]
+}
+
+If you cannot extract any records, return: { "records": [] }
+Do NOT include any text outside the JSON.
+`.trim();
+
 export function buildDailyInsightPrompt(data: {
   sales: number;
   expenses: number;

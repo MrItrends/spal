@@ -4,6 +4,7 @@
 import OpenAI from "openai";
 import {
   PARSE_RECORD_PROMPT,
+  IMPORT_RECORDS_PROMPT,
   buildDailyInsightPrompt,
   buildChatSystemPrompt,
 } from "./prompts";
@@ -29,6 +30,58 @@ export async function parseRecordsFromText(text: string): Promise<
   const content = response.choices[0]?.message?.content ?? "{}";
   const parsed  = JSON.parse(content);
   return parsed.records ?? [];
+}
+
+// ─── Import records: parse from text (batch import flow) ─────────────────────
+export interface ImportedRecord {
+  type:        "sale" | "expense";
+  amount:      number;
+  description: string;
+  category:    string;
+  record_date: string | null;
+  confidence:  "high" | "low";
+}
+
+export async function parseImportFromText(text: string): Promise<ImportedRecord[]> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: IMPORT_RECORDS_PROMPT },
+      { role: "user",   content: text },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.1,
+    max_tokens: 2000,
+  });
+  const content = response.choices[0]?.message?.content ?? "{}";
+  return (JSON.parse(content).records ?? []) as ImportedRecord[];
+}
+
+export async function parseImportFromImage(base64: string, mimeType: string): Promise<ImportedRecord[]> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: IMPORT_RECORDS_PROMPT },
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" },
+          },
+          {
+            type: "text",
+            text: "Read all the records from this image and extract them as structured JSON.",
+          },
+        ],
+      },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.1,
+    max_tokens: 2000,
+  });
+  const content = response.choices[0]?.message?.content ?? "{}";
+  return (JSON.parse(content).records ?? []) as ImportedRecord[];
 }
 
 // ─── Generate daily insight ───────────────────────────────────────────────────
