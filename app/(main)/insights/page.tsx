@@ -1,150 +1,357 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
-import { ArrowUp, ArrowDown, BarChart3, Trophy, TriangleAlert, MessageCircle } from "lucide-react";
+import {
+  BarChart3, Trophy, TriangleAlert, TrendingUp, TrendingDown,
+  ShoppingBag, Tag, HeartPulse, ArrowRight, Flame,
+} from "lucide-react";
 
 import { formatCurrency } from "@/lib/utils/currency";
-import { InsightCard } from "@/components/ui/InsightCard";
 import type { BusinessRecord } from "@/lib/types";
 
-type Period = "today" | "week" | "month" | "year";
+type Period      = "today" | "week" | "month" | "year";
+type HealthState = "healthy" | "even" | "low" | "empty";
 
-interface Bucket {
-  label:     string;  // x-axis label
-  profit:    number;
-  expenses:  number;
-}
+interface Bucket { label: string; profit: number; expenses: number; }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Date helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── Date helpers ─────────────────────────────────────────────────────────────
 function todayISODate(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-
 function periodStart(period: Period): string {
   const now = new Date();
-  if (period === "today") {
-    return todayISODate();
-  }
+  if (period === "today") return todayISODate();
   if (period === "week") {
-    // Monday as week start
     const day = now.getDay();
     const offset = day === 0 ? -6 : 1 - day;
-    const start = new Date(now);
-    start.setDate(now.getDate() + offset);
-    return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+    const s = new Date(now); s.setDate(now.getDate() + offset);
+    return `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
   }
-  if (period === "month") {
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  }
-  // year
+  if (period === "month") return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   return `${now.getFullYear()}-01-01`;
 }
-
-// Build the labeled time buckets for a period
 function emptyBuckets(period: Period): Bucket[] {
-  if (period === "today") {
-    return [{ label: "Today", profit: 0, expenses: 0 }];
-  }
-  if (period === "week") {
-    return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(label => ({ label, profit: 0, expenses: 0 }));
-  }
-  if (period === "month") {
-    return [1, 2, 3, 4].map(n => ({ label: `W${n}`, profit: 0, expenses: 0 }));
-  }
-  // year
-  return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    .map(label => ({ label, profit: 0, expenses: 0 }));
+  if (period === "today") return [{ label: "Today", profit: 0, expenses: 0 }];
+  if (period === "week")  return ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(label => ({ label, profit: 0, expenses: 0 }));
+  if (period === "month") return [1,2,3,4].map(n => ({ label: `W${n}`, profit: 0, expenses: 0 }));
+  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(label => ({ label, profit: 0, expenses: 0 }));
 }
-
-// Aggregate records into buckets for a given period
 function aggregate(records: BusinessRecord[], period: Period): Bucket[] {
   const buckets = emptyBuckets(period);
-
   if (period === "today") {
     const today = todayISODate();
     for (const r of records) {
       if (r.record_date !== today) continue;
-      if (r.type === "sale") buckets[0].profit   += r.amount;
-      else                   buckets[0].expenses += r.amount;
+      if (r.type === "sale") buckets[0].profit += r.amount; else buckets[0].expenses += r.amount;
     }
-    buckets[0].profit -= buckets[0].expenses; // profit = sales - expenses
-    return buckets;
+    buckets[0].profit -= buckets[0].expenses; return buckets;
   }
-
   if (period === "week") {
     const start = periodStart("week");
-    const [y, m, d] = start.split("-").map(Number);
+    const [y,m,d] = start.split("-").map(Number);
     const startDate = new Date(y, m - 1, d);
     for (const r of records) {
-      const [ry, rm, rd] = r.record_date.split("-").map(Number);
-      const rec = new Date(ry, rm - 1, rd);
-      const diffDays = Math.floor((rec.getTime() - startDate.getTime()) / 86400000);
-      if (diffDays < 0 || diffDays > 6) continue;
-      if (r.type === "sale") buckets[diffDays].profit   += r.amount;
-      else                   buckets[diffDays].expenses += r.amount;
+      const [ry,rm,rd] = r.record_date.split("-").map(Number);
+      const diff = Math.floor((new Date(ry,rm-1,rd).getTime() - startDate.getTime()) / 86400000);
+      if (diff < 0 || diff > 6) continue;
+      if (r.type === "sale") buckets[diff].profit += r.amount; else buckets[diff].expenses += r.amount;
     }
-    for (const b of buckets) b.profit -= b.expenses;
-    return buckets;
+    for (const b of buckets) b.profit -= b.expenses; return buckets;
   }
-
   if (period === "month") {
-    const now = new Date();
-    const month = now.getMonth();
-    const year  = now.getFullYear();
-    // For each week of the current month
-    const weekCounts = [0, 0, 0, 0];
+    const now = new Date(); const month = now.getMonth(); const year = now.getFullYear();
     for (const r of records) {
-      const [ry, rm, rd] = r.record_date.split("-").map(Number);
+      const [ry,rm,rd] = r.record_date.split("-").map(Number);
       if (rm - 1 !== month || ry !== year) continue;
-      // Week index: 1-7 → W1, 8-14 → W2, 15-21 → W3, 22+ → W4
       const wi = Math.min(3, Math.floor((rd - 1) / 7));
-      if (r.type === "sale") buckets[wi].profit   += r.amount;
-      else                   buckets[wi].expenses += r.amount;
-      weekCounts[wi]++;
+      if (r.type === "sale") buckets[wi].profit += r.amount; else buckets[wi].expenses += r.amount;
     }
-    for (const b of buckets) b.profit -= b.expenses;
-    return buckets;
+    for (const b of buckets) b.profit -= b.expenses; return buckets;
   }
-
-  // year — group by month
   const year = new Date().getFullYear();
   for (const r of records) {
-    const [ry, rm] = r.record_date.split("-").map(Number);
+    const [ry,rm] = r.record_date.split("-").map(Number);
     if (ry !== year) continue;
     const idx = rm - 1;
-    if (r.type === "sale") buckets[idx].profit   += r.amount;
-    else                   buckets[idx].expenses += r.amount;
+    if (r.type === "sale") buckets[idx].profit += r.amount; else buckets[idx].expenses += r.amount;
   }
-  for (const b of buckets) b.profit -= b.expenses;
-  return buckets;
+  for (const b of buckets) b.profit -= b.expenses; return buckets;
 }
-
 function totals(records: BusinessRecord[]) {
-  const sales    = records.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0);
+  const sales = records.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0);
   const expenses = records.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0);
   return { sales, expenses, profit: sales - expenses };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Health math ──────────────────────────────────────────────────────────────
+// fill: 0% = deep loss, 50% = break-even, 100% = strong profit (margin ≥ 30%)
+function healthFromTotals(sales: number, expenses: number): { fill: number; state: HealthState } {
+  const profit = sales - expenses;
+  if (sales === 0) return { fill: 0, state: "empty" };
+  const margin = profit / sales;
+  const fill = Math.min(100, Math.max(0, ((margin + 0.5) / 0.8) * 100));
+  const state: HealthState = fill >= 62 ? "healthy" : fill >= 38 ? "even" : "low";
+  return { fill, state };
+}
 
+const HEALTH_COLOR = { healthy: "#2D7A3A", even: "#FF7A00", low: "#DF191C", empty: "#CBD5E1" } as const;
+const HEALTH_LABEL = { healthy: "Healthy", even: "Breaking even", low: "Needs attention", empty: "No data yet" } as const;
+const HEALTH_DESC  = {
+  healthy: "Your business is profitable. Keep it going.",
+  even:    "You're covering costs but profit is thin. Small tweaks can help.",
+  low:     "You spent more than you made. Let's fix that.",
+  empty:   "Add some sales and expenses to see your health score.",
+} as const;
+
+// ─── Liquid gauge ─────────────────────────────────────────────────────────────
+function LiquidGauge({ fill, state }: { fill: number; state: HealthState }) {
+  const color = HEALTH_COLOR[state];
+  const iconColor = state === "empty" ? "#CBD5E1" : color;
+
+  return (
+    <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
+      {/* Track circle */}
+      <div className="absolute inset-0 rounded-full" style={{ border: `3px solid ${color}`, background: "#F8F7F4", overflow: "hidden" }}>
+        {/* Liquid fill — animates from bottom */}
+        <motion.div
+          className="absolute bottom-0 left-0 right-0"
+          initial={{ height: "0%" }}
+          animate={{ height: `${fill}%` }}
+          transition={{ duration: 1.4, ease: [0.34, 1.0, 0.64, 1] }}
+          style={{ background: color, opacity: 0.18 }}
+        />
+        {/* Second wave layer for depth */}
+        <motion.div
+          className="absolute bottom-0 left-0 right-0"
+          initial={{ height: "0%" }}
+          animate={{ height: `${fill * 0.85}%` }}
+          transition={{ duration: 1.6, ease: [0.34, 1.0, 0.64, 1], delay: 0.1 }}
+          style={{ background: color, opacity: 0.12 }}
+        />
+      </div>
+      {/* Icon centered on top */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <HeartPulse size={28} strokeWidth={1.8} color={iconColor} />
+      </div>
+      {/* Pulse ring when healthy */}
+      {state === "healthy" && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0, 0.4] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          style={{ border: `2px solid ${color}` }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Diagnosis card ───────────────────────────────────────────────────────────
+type DiagnosisVariant = "positive" | "warning" | "neutral" | "alert";
+
+interface DiagnosisCardProps {
+  icon: React.ReactNode;
+  tag: string;
+  title: string;
+  body: string;
+  variant: DiagnosisVariant;
+  askPrompt?: string;
+}
+
+const VARIANT_STYLE: Record<DiagnosisVariant, { tagBg: string; tagText: string; iconBg: string }> = {
+  positive: { tagBg: "#DCFCE7", tagText: "#2D7A3A", iconBg: "#DCFCE7" },
+  warning:  { tagBg: "#FFF3E0", tagText: "#FF7A00", iconBg: "#FFF3E0" },
+  alert:    { tagBg: "#FEE2E2", tagText: "#DF191C", iconBg: "#FEE2E2" },
+  neutral:  { tagBg: "#EFF6FF", tagText: "#2563EB", iconBg: "#EFF6FF" },
+};
+
+function DiagnosisCard({ icon, tag, title, body, variant, askPrompt }: DiagnosisCardProps) {
+  const router = useRouter();
+  const s = VARIANT_STYLE[variant];
+
+  function handleAsk() {
+    if (askPrompt) sessionStorage.setItem("spal_ask_prefill", askPrompt);
+    router.push("/ask");
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl p-4"
+      style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+    >
+      <div className="flex items-start gap-3">
+        {/* Icon */}
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.iconBg }}>
+          {icon}
+        </div>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[13.5px] font-bold text-spal-navy leading-tight mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>
+            {title}
+          </p>
+          <p className="text-[12.5px] text-neutral-500 leading-relaxed">{body}</p>
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: s.tagBg, color: s.tagText }}>
+              {tag}
+            </span>
+            {askPrompt && (
+              <button
+                onClick={handleAsk}
+                className="flex items-center gap-1 text-[12px] font-semibold"
+                style={{ color: "#2563EB" }}
+              >
+                Ask SPAL <ArrowRight size={12} strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Top sellers breakdown ────────────────────────────────────────────────────
+function TopSellersCard({ records, periodLabel }: { records: BusinessRecord[]; periodLabel: string }) {
+  const router = useRouter();
+
+  const byItem = useMemo(() => {
+    const acc: Record<string, number> = {};
+    for (const r of records) {
+      if (r.type !== "sale" || !r.description) continue;
+      const key = r.description.trim().toLowerCase();
+      acc[key] = (acc[key] ?? 0) + r.amount;
+    }
+    return Object.entries(acc)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([name, amount]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), amount }));
+  }, [records]);
+
+  const byCategory = useMemo(() => {
+    const acc: Record<string, number> = {};
+    for (const r of records) {
+      if (r.type !== "sale") continue;
+      const key = r.category ?? "Uncategorised";
+      acc[key] = (acc[key] ?? 0) + r.amount;
+    }
+    return Object.entries(acc)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([name, amount]) => ({ name, amount }));
+  }, [records]);
+
+  const totalSales = records.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0);
+
+  if (byItem.length === 0 && byCategory.length === 0) return null;
+
+  const maxItem = byItem[0]?.amount ?? 1;
+  const maxCat  = byCategory[0]?.amount ?? 1;
+
+  function handleAsk(prompt: string) {
+    sessionStorage.setItem("spal_ask_prefill", prompt);
+    router.push("/ask");
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-4 space-y-5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#DCFCE7" }}>
+          <Flame size={14} strokeWidth={2} color="#2D7A3A" />
+        </div>
+        <p className="text-[13.5px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+          What sold {periodLabel.toLowerCase()}
+        </p>
+      </div>
+
+      {/* By item */}
+      {byItem.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-3">By item</p>
+          <div className="space-y-2.5">
+            {byItem.map((item, i) => (
+              <div key={item.name}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[12.5px] font-medium text-spal-navy truncate max-w-[55%]">
+                    {i === 0 && <span className="text-[10px] font-bold mr-1.5" style={{ color: "#2D7A3A" }}>BEST</span>}
+                    {item.name}
+                  </span>
+                  <span className="text-[12px] font-semibold text-spal-navy">{formatCurrency(item.amount)}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${(item.amount / maxItem) * 100}%` }}
+                    transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
+                    style={{ background: i === 0 ? "#22C55E" : "#86EFAC" }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          {byItem.length > 0 && (
+            <button
+              onClick={() => handleAsk(`My best-selling item ${periodLabel.toLowerCase()} is ${byItem[0].name} at ${formatCurrency(byItem[0].amount)}. How can I sell more of it?`)}
+              className="flex items-center gap-1 text-[12px] font-semibold mt-3"
+              style={{ color: "#2563EB" }}
+            >
+              Ask SPAL how to grow this <ArrowRight size={12} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Divider */}
+      {byItem.length > 0 && byCategory.length > 0 && (
+        <div className="h-px bg-neutral-100" />
+      )}
+
+      {/* By category */}
+      {byCategory.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-3">By category</p>
+          <div className="space-y-2.5">
+            {byCategory.map((cat, i) => (
+              <div key={cat.name}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[12.5px] font-medium text-spal-navy flex items-center gap-1.5">
+                    <Tag size={11} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+                    {cat.name}
+                  </span>
+                  <span className="text-[12px] font-medium text-neutral-500">
+                    {totalSales > 0 ? `${Math.round((cat.amount / totalSales) * 100)}%` : "—"}
+                    <span className="ml-1.5 text-spal-navy font-semibold">{formatCurrency(cat.amount)}</span>
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${(cat.amount / maxCat) * 100}%` }}
+                    transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
+                    style={{ background: i === 0 ? "#2563EB" : "#93C5FD" }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function InsightsPage() {
-  const [period, setPeriod]   = useState<Period>("week");
+  const [period,  setPeriod]  = useState<Period>("week");
   const [records, setRecords] = useState<BusinessRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -162,15 +369,15 @@ export default function InsightsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const chartData = useMemo(() => aggregate(records, period), [records, period]);
-  const t = useMemo(() => totals(records), [records]);
+  const chartData  = useMemo(() => aggregate(records, period), [records, period]);
+  const t          = useMemo(() => totals(records), [records]);
+  const health     = useMemo(() => healthFromTotals(t.sales, t.expenses), [t.sales, t.expenses]);
 
-  // Best bucket (for the insight cards)
-  const bestBucket = useMemo(() => {
-    return chartData.reduce((best, b) =>
+  const bestBucket = useMemo(() =>
+    chartData.reduce((best, b) =>
       (b.profit + b.expenses) > (best.profit + best.expenses) ? b : best,
-      chartData[0] ?? { label: "", profit: 0, expenses: 0 });
-  }, [chartData]);
+      chartData[0] ?? { label: "", profit: 0, expenses: 0 }),
+  [chartData]);
 
   const topExpenseCat = useMemo(() => {
     const acc: Record<string, number> = {};
@@ -181,20 +388,91 @@ export default function InsightsPage() {
     return Object.entries(acc).sort((a, b) => b[1] - a[1])[0];
   }, [records]);
 
+  const expenseRatio = t.sales > 0 ? Math.round((t.expenses / t.sales) * 100) : null;
+
   const periodLabel = period === "today" ? "Today"
-                    : period === "week"  ? "This week"
-                    : period === "month" ? "This month"
-                    : "This year";
+    : period === "week"  ? "This week"
+    : period === "month" ? "This month"
+    : "This year";
+
+  const bucketWord = period === "year" ? "month" : period === "month" ? "week" : "day";
+
+  // Build diagnosis cards from available data
+  const diagnosisCards: DiagnosisCardProps[] = useMemo(() => {
+    const cards: DiagnosisCardProps[] = [];
+
+    if (records.length === 0) return cards;
+
+    // Profit health
+    if (t.profit > 0) {
+      cards.push({
+        icon: <TrendingUp size={16} strokeWidth={2} color="#2D7A3A" />,
+        tag: "Profit",
+        title: `You made ${formatCurrency(t.profit)} profit`,
+        body: `${periodLabel}, your sales covered your costs and left you with ${formatCurrency(t.profit)}. That's a win.`,
+        variant: "positive",
+        askPrompt: `I made ${formatCurrency(t.profit)} profit ${periodLabel.toLowerCase()}. What can I do to increase this further?`,
+      });
+    } else if (t.profit < 0) {
+      cards.push({
+        icon: <TrendingDown size={16} strokeWidth={2} color="#DF191C" />,
+        tag: "Profit",
+        title: `You spent ${formatCurrency(Math.abs(t.profit))} more than you made`,
+        body: `${periodLabel} expenses were higher than your sales. Let's find where the money is going.`,
+        variant: "alert",
+        askPrompt: `I spent more than I made ${periodLabel.toLowerCase()}. My sales were ${formatCurrency(t.sales)} and expenses ${formatCurrency(t.expenses)}. What should I do?`,
+      });
+    }
+
+    // Best bucket
+    if (bestBucket && (bestBucket.profit + bestBucket.expenses) > 0) {
+      cards.push({
+        icon: <Trophy size={16} strokeWidth={2} color="#2D7A3A" />,
+        tag: "Sales",
+        title: `${bestBucket.label} was your best ${bucketWord}`,
+        body: `You made the most on ${bestBucket.label}${bestBucket.profit > 0 ? ` with ${formatCurrency(bestBucket.profit)} in profit` : ""}.`,
+        variant: "positive",
+        askPrompt: `${bestBucket.label} was my best ${bucketWord} ${periodLabel.toLowerCase()}. Why might that be and how can I make every ${bucketWord} like that?`,
+      });
+    }
+
+    // Expense ratio
+    if (expenseRatio !== null && t.expenses > 0) {
+      const isHigh = expenseRatio > 70;
+      cards.push({
+        icon: <TriangleAlert size={16} strokeWidth={2} color={isHigh ? "#DF191C" : "#FF7A00"} />,
+        tag: "Spending",
+        title: `${expenseRatio}% of sales went to expenses`,
+        body: isHigh
+          ? `For every ₦100 you made, ₦${expenseRatio} went to costs. That's a tight margin — worth reviewing.`
+          : `Your expenses are ${expenseRatio}% of sales. ${expenseRatio < 50 ? "You're managing costs well." : "There's room to tighten."}`,
+        variant: isHigh ? "alert" : "warning",
+        askPrompt: `${expenseRatio}% of my sales went to expenses ${periodLabel.toLowerCase()}. Is this normal for my type of business and how can I reduce it?`,
+      });
+    }
+
+    // Top expense category
+    if (topExpenseCat) {
+      cards.push({
+        icon: <ShoppingBag size={16} strokeWidth={2} color="#FF7A00" />,
+        tag: "Spending",
+        title: `${topExpenseCat[0]} is your biggest cost`,
+        body: `You spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]} ${periodLabel.toLowerCase()}. This is your single largest expense.`,
+        variant: "warning",
+        askPrompt: `I spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]} ${periodLabel.toLowerCase()}. Is there a way to reduce this cost without hurting my business?`,
+      });
+    }
+
+    return cards;
+  }, [records, t, bestBucket, expenseRatio, topExpenseCat, periodLabel, bucketWord]);
 
   return (
-    <div className="px-5 pt-6 pb-6 space-y-5" style={{ background: "#F8F7F4", minHeight: "100%" }}>
+    <div className="px-5 pt-6 pb-6 space-y-4" style={{ background: "#F8F7F4", minHeight: "100%" }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-[22px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-          Insights
-        </h1>
-      </div>
+      <h1 className="text-[22px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+        Insights
+      </h1>
 
       {/* Period tabs */}
       <div className="flex bg-neutral-100 rounded-full p-1 gap-1">
@@ -216,63 +494,51 @@ export default function InsightsPage() {
       </div>
 
       {/* Dark summary card */}
-      <motion.div key={period} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <div className="rounded-[18px] p-5" style={{ background: "#0F172A" }}>
-          <p className="text-[11.5px] font-medium uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
-            {periodLabel} · Profit
-          </p>
-
-          {loading ? (
-            <div className="h-9 w-40 bg-white/10 rounded-lg animate-pulse" />
-          ) : (
-            <p
-              className="font-bold leading-none"
-              style={{
+      <AnimatePresence mode="wait">
+        <motion.div key={period} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div className="rounded-[18px] p-5" style={{ background: "#0F172A" }}>
+            <p className="text-[11.5px] font-medium uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
+              {periodLabel} · Profit
+            </p>
+            {loading ? (
+              <div className="h-9 w-40 bg-white/10 rounded-lg animate-pulse" />
+            ) : (
+              <p className="font-bold leading-none" style={{
                 fontFamily: "var(--font-satoshi)",
                 fontSize: "clamp(28px, 8.5vw, 36px)",
                 letterSpacing: "-0.02em",
                 color: t.profit >= 0 ? "#fff" : "#FCB35B",
-              }}
-            >
-              {t.profit < 0 ? "–" : ""}{formatCurrency(Math.abs(t.profit))}
-            </p>
-          )}
-
-          <div className="mt-5 flex items-stretch">
-            <div className="flex-1">
-              <p className="text-[11px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Sales</p>
-              <p className="text-[15px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#22C55E" }}>
-                {formatCurrency(t.sales)}
+              }}>
+                {t.profit < 0 ? "–" : ""}{formatCurrency(Math.abs(t.profit))}
               </p>
-            </div>
-            <div className="w-px mx-4" style={{ background: "#384666" }} />
-            <div className="flex-1">
-              <p className="text-[11px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Expenses</p>
-              <p className="text-[15px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#ED712E" }}>
-                {formatCurrency(t.expenses)}
-              </p>
+            )}
+            <div className="mt-5 flex items-stretch">
+              <div className="flex-1">
+                <p className="text-[11px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Sales</p>
+                <p className="text-[15px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#22C55E" }}>{formatCurrency(t.sales)}</p>
+              </div>
+              <div className="w-px mx-4" style={{ background: "#384666" }} />
+              <div className="flex-1">
+                <p className="text-[11px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Expenses</p>
+                <p className="text-[15px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#ED712E" }}>{formatCurrency(t.expenses)}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Bar chart card */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
         <div className="bg-white rounded-[18px] p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-          {/* Title + legend */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-[13px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-              {period === "today"  ? "Today's breakdown" :
-               period === "week"   ? "Daily breakdown"   :
-               period === "month"  ? "Weekly breakdown"  :
-                                     "Monthly breakdown"}
+              {period === "today" ? "Today's breakdown" : period === "week" ? "Daily breakdown" : period === "month" ? "Weekly breakdown" : "Monthly breakdown"}
             </p>
             <div className="flex items-center gap-3">
               <Legend color="#22C55E" label="Profit" />
               <Legend color="#ED712E" label="Expense" />
             </div>
           </div>
-
           {loading ? (
             <div className="h-[200px] bg-neutral-50 rounded-xl animate-pulse" />
           ) : chartData.every(b => b.profit === 0 && b.expenses === 0) ? (
@@ -281,30 +547,12 @@ export default function InsightsPage() {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: -24 }} barGap={4} barCategoryGap="22%">
                 <CartesianGrid stroke="#F3F4F6" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 11, fill: "#A1A3AE", fontFamily: "var(--font-satoshi)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={0}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#A1A3AE", fontFamily: "var(--font-satoshi)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => v === 0 ? "0" : `${Math.round(v / 1000)}k`}
-                  width={48}
-                />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#A1A3AE", fontFamily: "var(--font-satoshi)" }} axisLine={false} tickLine={false} interval={0} />
+                <YAxis tick={{ fontSize: 10, fill: "#A1A3AE", fontFamily: "var(--font-satoshi)" }} axisLine={false} tickLine={false} tickFormatter={(v) => v === 0 ? "0" : `${Math.round(v / 1000)}k`} width={48} />
                 <Tooltip
                   cursor={{ fill: "rgba(15,23,42,0.04)" }}
                   formatter={(v, name) => [formatCurrency(Math.abs(Number(v ?? 0))), name === "profit" ? "Profit" : "Expenses"]}
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: "none",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                    fontSize: 12,
-                    fontFamily: "var(--font-satoshi)",
-                  }}
+                  contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", fontSize: 12, fontFamily: "var(--font-satoshi)" }}
                   labelStyle={{ fontWeight: 700, color: "#0F172A" }}
                 />
                 <Bar dataKey="profit"   fill="#22C55E" radius={[6, 6, 0, 0]} maxBarSize={28} />
@@ -315,44 +563,84 @@ export default function InsightsPage() {
         </div>
       </motion.div>
 
-      {/* Insight cards */}
+      {/* ── NEW: Business health ──────────────────────────────────────────────── */}
       {!loading && records.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+          <div className="bg-white rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+            <div className="flex items-center gap-4">
+              <LiquidGauge fill={health.fill} state={health.state} />
+              <div className="flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wide mb-1"
+                  style={{ color: HEALTH_COLOR[health.state], fontFamily: "var(--font-satoshi)" }}>
+                  Business health · {periodLabel}
+                </p>
+                <p className="text-[15px] font-bold text-spal-navy leading-tight" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {HEALTH_LABEL[health.state]}
+                </p>
+                <p className="text-[12px] text-neutral-400 mt-1 leading-relaxed">
+                  {HEALTH_DESC[health.state]}
+                </p>
+              </div>
+            </div>
+
+            {/* Ask SPAL CTA */}
+            {health.state !== "empty" && (
+              <button
+                onClick={() => {
+                  const prompt = health.state === "healthy"
+                    ? `My business is profitable ${periodLabel.toLowerCase()} with ${formatCurrency(t.profit)} profit. What should I focus on to keep growing?`
+                    : health.state === "even"
+                    ? `I'm just breaking even ${periodLabel.toLowerCase()} — sales ${formatCurrency(t.sales)}, expenses ${formatCurrency(t.expenses)}. What's the fastest way to improve my profit margin?`
+                    : `I spent more than I made ${periodLabel.toLowerCase()} — sales ${formatCurrency(t.sales)}, expenses ${formatCurrency(t.expenses)}. What should I do?`;
+                  sessionStorage.setItem("spal_ask_prefill", prompt);
+                  window.location.href = "/ask";
+                }}
+                className="mt-4 w-full h-11 rounded-xl flex items-center justify-center gap-2 text-[13px] font-semibold transition-opacity active:opacity-70"
+                style={{
+                  background: health.state === "healthy" ? "#DCFCE7" : health.state === "even" ? "#FFF3E0" : "#FEE2E2",
+                  color: HEALTH_COLOR[health.state],
+                }}
+              >
+                <HeartPulse size={15} strokeWidth={2} />
+                Get a deeper diagnosis from SPAL
+                <ArrowRight size={13} strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── NEW: Top sellers ─────────────────────────────────────────────────── */}
+      {!loading && records.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+          <TopSellersCard records={records} periodLabel={periodLabel} />
+        </motion.div>
+      )}
+
+      {/* ── NEW: Diagnosis cards ─────────────────────────────────────────────── */}
+      {!loading && diagnosisCards.length > 0 && (
         <div className="space-y-3">
-          {bestBucket && bestBucket.profit > 0 && (
-            <InsightCard
-              title={`Best ${period === "year" ? "month" : period === "month" ? "week" : "day"}: ${bestBucket.label}`}
-              message={`${bestBucket.label} was your strongest with ${formatCurrency(bestBucket.profit)} in profit.`}
-              icon={<Trophy size={20} strokeWidth={2} color="#fff" />}
-              variant="celebration"
-            />
-          )}
-          {topExpenseCat && (
-            <InsightCard
-              title="Biggest expense"
-              message={`${topExpenseCat[0]} is your top cost at ${formatCurrency(topExpenseCat[1])}. Worth keeping an eye on.`}
-              icon={<TriangleAlert size={20} strokeWidth={2} className="text-spal-orange-600" />}
-              variant="warning"
-            />
-          )}
-          {t.profit > 0 && (
-            <InsightCard
-              title="Looking healthy"
-              message={`You made ${formatCurrency(t.profit)} profit this ${period}.`}
-              icon={<MessageCircle size={20} strokeWidth={2} className="text-spal-blue" />}
-              variant="tip"
-            />
-          )}
+          {diagnosisCards.map((card, i) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18 + i * 0.06 }}
+            >
+              <DiagnosisCard {...card} />
+            </motion.div>
+          ))}
         </div>
       )}
 
-      {/* Empty state — no records at all */}
+      {/* Empty state */}
       {!loading && records.length === 0 && (
-        <div className="text-center py-10">
+        <div className="text-center py-12">
           <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
             <BarChart3 size={26} strokeWidth={2} className="text-neutral-300" />
           </div>
           <p className="text-spal-navy font-semibold mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>No data yet</p>
-          <p className="text-neutral-400 text-sm mt-1">Add some sales and expenses to see your insights here.</p>
+          <p className="text-neutral-400 text-sm mt-1">Add some sales and expenses to see your insights.</p>
         </div>
       )}
 
@@ -361,10 +649,7 @@ export default function InsightsPage() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── Tiny sub-components ──────────────────────────────────────────────────────
 function Legend({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -373,18 +658,14 @@ function Legend({ color, label }: { color: string; label: string }) {
     </div>
   );
 }
-
 function EmptyChart({ period }: { period: Period }) {
   return (
     <div className="h-[200px] flex flex-col items-center justify-center text-center">
       <BarChart3 size={32} strokeWidth={1.8} className="text-neutral-300 mb-2" />
       <p className="text-[13px] text-neutral-500" style={{ fontFamily: "var(--font-satoshi)" }}>
-        No activity for {period === "today" ? "today" : period === "week" ? "this week" : period === "month" ? "this month" : "this year"} yet.
+        No activity {period === "today" ? "today" : period === "week" ? "this week" : period === "month" ? "this month" : "this year"} yet.
       </p>
       <p className="text-[11.5px] text-neutral-400 mt-1">Add a sale or expense to see your chart.</p>
     </div>
   );
 }
-
-// kept for backward compat if referenced; unused now
-void ArrowUp; void ArrowDown;

@@ -58,6 +58,16 @@ export default function AskSPALPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  // Pre-fill from insights "Ask SPAL" CTAs
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("spal_ask_prefill");
+    if (prefill) {
+      sessionStorage.removeItem("spal_ask_prefill");
+      setInput(prefill);
+      setTimeout(() => inputRef.current?.focus(), 200);
+    }
+  }, []);
+
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
