@@ -10,13 +10,13 @@ import {
   ArrowLeft, BookOpen, MessageCircle, Table2, LayoutGrid,
   FileText, Receipt, FileUp, ImageIcon, AlignLeft,
   ArrowUpRight, ArrowDownLeft, Calendar, CheckCircle2,
-  AlertCircle, ChevronRight, Settings,
+  AlertCircle, ChevronRight, Pencil,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ReviewRecord {
-  _id:         string; // client-only key for stable list rendering
+  _id:         string;
   type:        "sale" | "expense";
   amount:      number;
   description: string;
@@ -27,21 +27,29 @@ interface ReviewRecord {
 
 // ── Method metadata ───────────────────────────────────────────────────────────
 
-const METHOD_META: Record<TrackingMethod, { label: string; icon: React.ReactNode; inputType: "file" | "visual" }> = {
-  notebook:     { label: "Notebook",      icon: <BookOpen   size={18} strokeWidth={2} />, inputType: "visual" },
-  whatsapp:     { label: "WhatsApp",      icon: <MessageCircle size={18} strokeWidth={2} />, inputType: "visual" },
-  excel:        { label: "Excel",         icon: <Table2     size={18} strokeWidth={2} />, inputType: "file"   },
-  google_sheets:{ label: "Google Sheets", icon: <LayoutGrid size={18} strokeWidth={2} />, inputType: "file"   },
-  notes_app:    { label: "Notes App",     icon: <FileText   size={18} strokeWidth={2} />, inputType: "visual" },
-  receipts:     { label: "Receipts",      icon: <Receipt    size={18} strokeWidth={2} />, inputType: "visual" },
-  nothing:      { label: "Other",         icon: <FileUp     size={18} strokeWidth={2} />, inputType: "file"   },
+export const METHOD_META: Record<TrackingMethod, {
+  label:     string;
+  sub:       string;
+  icon:      React.ReactNode;
+  inputType: "file" | "visual";
+  accent:    string;
+}> = {
+  notebook:      { label: "Notebook",      sub: "You write in a physical notebook",          icon: <BookOpen      size={20} strokeWidth={2} />, inputType: "visual", accent: "#22C55E" },
+  whatsapp:      { label: "WhatsApp",      sub: "You message yourself or save notes there",  icon: <MessageCircle size={20} strokeWidth={2} />, inputType: "visual", accent: "#25D366" },
+  excel:         { label: "Excel",         sub: "You track in a spreadsheet",                icon: <Table2        size={20} strokeWidth={2} />, inputType: "file",   accent: "#217346" },
+  google_sheets: { label: "Google Sheets", sub: "You use Google Sheets",                     icon: <LayoutGrid    size={20} strokeWidth={2} />, inputType: "file",   accent: "#2563EB" },
+  notes_app:     { label: "Notes App",     sub: "You use a phone notes app",                 icon: <FileText      size={20} strokeWidth={2} />, inputType: "visual", accent: "#F59E0B" },
+  receipts:      { label: "Receipts",      sub: "You keep paper receipts or photos",         icon: <Receipt       size={20} strokeWidth={2} />, inputType: "visual", accent: "#F97316" },
+  nothing:       { label: "Other",         sub: "No set system yet",                          icon: <FileUp        size={20} strokeWidth={2} />, inputType: "file",   accent: "#A1A1AA" },
 };
+
+const ALL_METHODS: TrackingMethod[] = [
+  "notebook", "whatsapp", "excel", "google_sheets", "notes_app", "receipts",
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+function today() { return new Date().toISOString().slice(0, 10); }
 
 function friendlyDate(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);
@@ -59,52 +67,69 @@ export default function ImportRecordPage() {
   const router = useRouter();
   const { user, bumpRecordSaved } = useSPALStore();
 
-  // Tracking methods — load from DB profile; fall back to store onboarding data
   const [methods, setMethods]       = useState<TrackingMethod[]>([]);
   const [activeMethod, setActive]   = useState<TrackingMethod | null>(null);
   const [loadingProfile, setLP]     = useState(true);
+  const [showPicker, setShowPicker] = useState(false); // inline method picker
 
-  // Upload state
-  const fileRef    = useRef<HTMLInputElement>(null);
-  const imageRef   = useRef<HTMLInputElement>(null);
-  const [pasteText, setPasteText] = useState("");
-  const [processing, setProcessing] = useState(false);
-  const [parseError, setParseError] = useState("");
-
-  // Review state
-  const [records,   setRecords]   = useState<ReviewRecord[]>([]);
-
-  // Fallback date for records where record_date is null
+  const fileRef  = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
+  const [pasteText,   setPasteText]   = useState("");
+  const [processing,  setProcessing]  = useState(false);
+  const [parseError,  setParseError]  = useState("");
+  const [records,     setRecords]     = useState<ReviewRecord[]>([]);
   const [fallbackDate, setFallbackDate] = useState(today());
+  const [saving,      setSaving]      = useState(false);
+  const [savedCount,  setSavedCount]  = useState(0);
 
-  // Save state
-  const [saving, setSaving] = useState(false);
-  const [savedCount, setSavedCount] = useState(0);
-
-  // ── Load tracking methods from user profile ────────────────────────────────
+  // ── Load tracking methods ─────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
       try {
         const res  = await fetch("/api/user/profile");
         const data = await res.json();
         if (data.success && data.data?.tracking_methods?.length > 0) {
-          const dbMethods = data.data.tracking_methods.filter((m: string) => m !== "nothing") as TrackingMethod[];
-          setMethods(dbMethods);
-          setActive(dbMethods[0]);
-          return;
+          const dbMethods = (data.data.tracking_methods as string[])
+            .filter(m => m !== "nothing") as TrackingMethod[];
+          if (dbMethods.length > 0) {
+            setMethods(dbMethods);
+            setActive(dbMethods[0]);
+            setLP(false);
+            return;
+          }
         }
       } catch { /* fall through */ }
 
-      // Fall back to onboarding store data
-      const stored = user as unknown as { tracking_methods?: TrackingMethod[] };
-      const fallback = (stored?.tracking_methods ?? []).filter(m => m !== "nothing");
+      // Fall back to user store
+      const fallback = ((user as unknown as { tracking_methods?: TrackingMethod[] })
+        ?.tracking_methods ?? []).filter(m => m !== "nothing");
       setMethods(fallback);
       setActive(fallback[0] ?? null);
+      setLP(false);
     }
-    load().finally(() => setLP(false));
+    load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Parse: file upload ─────────────────────────────────────────────────────
+  // Show inline picker when no methods found after load
+  useEffect(() => {
+    if (!loadingProfile && methods.length === 0) setShowPicker(true);
+  }, [loadingProfile, methods]);
+
+  // ── Save tracking methods to DB ────────────────────────────────────────────
+  async function saveMethodsToDB(selected: TrackingMethod[]) {
+    try {
+      await fetch("/api/user/profile", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tracking_methods: selected }),
+      });
+    } catch { /* silent — methods still set in local state */ }
+    setMethods(selected);
+    setActive(selected[0] ?? null);
+    setShowPicker(false);
+  }
+
+  // ── Parse: file ───────────────────────────────────────────────────────────
   async function handleFile(file: File | null | undefined) {
     if (!file) return;
     if (!file.name.match(/\.(csv|xlsx|xls|pdf|txt)$/i)) {
@@ -116,9 +141,9 @@ export default function ImportRecordPage() {
     try {
       const text = await file.text();
       const res  = await fetch("/api/ai/import-records", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body:    JSON.stringify({ text }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -130,7 +155,7 @@ export default function ImportRecordPage() {
     }
   }
 
-  // ── Parse: image upload ────────────────────────────────────────────────────
+  // ── Parse: image ──────────────────────────────────────────────────────────
   async function handleImage(file: File | null | undefined) {
     if (!file) return;
     setParseError("");
@@ -149,34 +174,32 @@ export default function ImportRecordPage() {
     }
   }
 
-  // ── Parse: pasted text ─────────────────────────────────────────────────────
+  // ── Parse: pasted text ────────────────────────────────────────────────────
   async function handlePasteSubmit() {
     if (!pasteText.trim()) return;
     setParseError("");
     setProcessing(true);
     try {
       const res  = await fetch("/api/ai/import-records", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: pasteText }),
+        body:    JSON.stringify({ text: pasteText }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       appendRecords(data.data ?? []);
       setPasteText("");
     } catch {
-      setParseError("Couldn't extract records. Please check your text and try again.");
+      setParseError("Couldn't extract records. Check your text and try again.");
     } finally {
       setProcessing(false);
     }
   }
 
   function appendRecords(raw: Omit<ReviewRecord, "_id">[]) {
-    const stamped = raw.map(r => ({ ...r, _id: uid() }));
-    setRecords(prev => [...prev, ...stamped]);
+    setRecords(prev => [...prev, ...raw.map(r => ({ ...r, _id: uid() }))]);
   }
 
-  // ── Review helpers ─────────────────────────────────────────────────────────
   function updateRecord(id: string, patch: Partial<ReviewRecord>) {
     setRecords(prev => prev.map(r => r._id === id ? { ...r, ...patch } : r));
   }
@@ -187,7 +210,7 @@ export default function ImportRecordPage() {
 
   const missingDateCount = records.filter(r => !r.record_date).length;
 
-  // ── Save ───────────────────────────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = useCallback(async () => {
     if (!records.length || saving) return;
     setSaving(true);
@@ -216,7 +239,7 @@ export default function ImportRecordPage() {
     }
   }, [records, saving, fallbackDate, bumpRecordSaved]);
 
-  // ── Success screen ─────────────────────────────────────────────────────────
+  // ── Success screen ────────────────────────────────────────────────────────
   if (savedCount > 0) {
     return (
       <div className="min-h-full flex flex-col items-center justify-center px-6 text-center">
@@ -234,7 +257,7 @@ export default function ImportRecordPage() {
           </p>
           <div className="flex gap-3 mt-8">
             <button
-              onClick={() => { setSavedCount(0); }}
+              onClick={() => setSavedCount(0)}
               className="flex-1 h-12 rounded-2xl border border-neutral-200 text-spal-navy font-semibold text-sm"
               style={{ fontFamily: "var(--font-satoshi)" }}
             >
@@ -253,34 +276,6 @@ export default function ImportRecordPage() {
     );
   }
 
-  // ── Empty state: no tracking methods set ──────────────────────────────────
-  if (!loadingProfile && methods.length === 0) {
-    return (
-      <div className="min-h-full flex flex-col">
-        <PageHeader onBack={() => router.back()} />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
-            <FileUp size={26} strokeWidth={1.8} className="text-neutral-400" />
-          </div>
-          <h2 className="text-lg font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-            No import method set
-          </h2>
-          <p className="text-neutral-400 text-sm mt-2 leading-relaxed max-w-xs">
-            Tell SPAL how you currently track your records so it can show the right import options.
-          </p>
-          <button
-            onClick={() => router.push("/profile")}
-            className="mt-6 h-12 px-8 rounded-2xl bg-spal-navy text-white font-semibold text-sm flex items-center gap-2"
-            style={{ fontFamily: "var(--font-satoshi)" }}
-          >
-            <Settings size={16} strokeWidth={2} />
-            Go to Settings
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const meta = activeMethod ? METHOD_META[activeMethod] : null;
 
   return (
@@ -288,213 +283,224 @@ export default function ImportRecordPage() {
       <PageHeader onBack={() => router.back()} />
 
       <div className="px-5">
-        {/* Title */}
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <h1 className="text-[22px] font-bold text-spal-navy leading-tight" style={{ fontFamily: "var(--font-satoshi)" }}>
-              Import Records
-            </h1>
-            <p className="text-[13px] text-neutral-400 mt-1" style={{ fontFamily: "var(--font-satoshi)" }}>
-              SPAL reads your existing records and extracts them automatically.
-            </p>
-          </div>
-          <button
-            onClick={() => router.push("/profile")}
-            className="flex items-center gap-1 text-[11px] font-semibold mt-1 flex-shrink-0"
-            style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
-          >
-            <Settings size={12} strokeWidth={2.5} />
-            Change methods
-          </button>
-        </div>
 
-        {/* Method tabs */}
-        {loadingProfile ? (
-          <div className="flex gap-2 mb-5">
-            {[1, 2].map(i => <div key={i} className="h-10 w-24 rounded-full skeleton" />)}
+        {/* Loading skeleton */}
+        {loadingProfile && (
+          <div className="space-y-3 mt-2">
+            <div className="h-7 w-48 skeleton rounded-xl" />
+            <div className="h-4 w-64 skeleton rounded-lg" />
+            <div className="h-10 w-full skeleton rounded-full mt-4" />
           </div>
-        ) : methods.length > 1 ? (
-          <div className="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-5 px-5 scroll-container">
-            {methods.map(m => {
-              const info    = METHOD_META[m];
-              const isActive = activeMethod === m;
-              return (
-                <motion.button
-                  key={m}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setActive(m)}
-                  className="flex items-center gap-2 px-4 h-10 rounded-full flex-shrink-0 text-[13px] font-semibold transition-all duration-150"
-                  style={{
-                    background:  isActive ? "#0F172A" : "#fff",
-                    color:       isActive ? "#fff" : "#6B7280",
-                    border:      isActive ? "none" : "1.5px solid #E5E7EB",
-                    fontFamily:  "var(--font-satoshi)",
-                  }}
-                >
-                  {info.icon}
-                  {info.label}
-                </motion.button>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {/* Upload UI — adapts per method */}
-        {meta && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeMethod}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2 }}
-            >
-              {meta.inputType === "file" ? (
-                <FileUploadZone
-                  method={activeMethod!}
-                  onFile={handleFile}
-                  fileRef={fileRef}
-                />
-              ) : (
-                <VisualUploadZone
-                  method={activeMethod!}
-                  onImage={handleImage}
-                  imageRef={imageRef}
-                  pasteText={pasteText}
-                  onPasteChange={setPasteText}
-                  onPasteSubmit={handlePasteSubmit}
-                  processing={processing}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
         )}
 
-        {/* Hidden file inputs */}
-        <input ref={fileRef}  type="file" accept=".csv,.xlsx,.xls,.pdf,.txt" className="hidden"
-          onChange={e => handleFile(e.target.files?.[0])} />
-        <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden"
-          onChange={e => handleImage(e.target.files?.[0])} />
+        {/* ── Inline method picker ───────────────────────────────────────── */}
+        {!loadingProfile && showPicker && (
+          <MethodPicker
+            current={methods}
+            onSave={saveMethodsToDB}
+          />
+        )}
 
-        {/* Processing */}
-        <AnimatePresence>
-          {processing && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="mt-4 flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5"
-              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
-            >
-              <div className="w-5 h-5 rounded-full border-2 border-spal-green border-t-transparent animate-spin flex-shrink-0" />
-              <p className="text-[13px] font-medium text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                SPAL is reading your records…
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Error */}
-        <AnimatePresence>
-          {parseError && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="mt-4 flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-2xl px-4 py-3.5"
-            >
-              <AlertCircle size={16} strokeWidth={2} className="text-red-400 mt-0.5 flex-shrink-0" />
-              <p className="text-[12.5px] text-red-600 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
-                {parseError}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Review section */}
-        <AnimatePresence>
-          {records.length > 0 && !processing && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
-
-              {/* Review header */}
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                    Review records
-                  </p>
-                  <p className="text-[12px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
-                    {records.length} found · check and fix before saving
-                  </p>
-                </div>
-                {records.some(r => r.confidence === "low") && (
-                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
-                    style={{ background: "#FEF3C7", color: "#92400E", fontFamily: "var(--font-satoshi)" }}>
-                    <AlertCircle size={11} strokeWidth={2.5} />
-                    {records.filter(r => r.confidence === "low").length} needs review
-                  </span>
-                )}
-              </div>
-
-              {/* Fallback date — shown only when some records have no date */}
-              {missingDateCount > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="mb-4 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3.5"
-                >
-                  <p className="text-[12px] font-semibold text-amber-800 mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>
-                    {missingDateCount} {missingDateCount === 1 ? "record has" : "records have"} no date — set a fallback date:
-                  </p>
-                  <input
-                    type="date"
-                    value={fallbackDate}
-                    max={today()}
-                    onChange={e => setFallbackDate(e.target.value)}
-                    className="h-10 px-3 rounded-xl border-2 border-amber-200 bg-white text-[13px] text-spal-navy font-medium outline-none focus:border-spal-blue transition-colors"
-                    style={{ fontFamily: "var(--font-satoshi)" }}
-                  />
-                </motion.div>
-              )}
-
-              {/* Record cards */}
-              <div className="space-y-3">
-                <AnimatePresence initial={false}>
-                  {records.map((record) => (
-                    <ReviewCard
-                      key={record._id}
-                      record={record}
-                      fallbackDate={fallbackDate}
-                      onChange={patch => updateRecord(record._id, patch)}
-                      onRemove={() => removeRecord(record._id)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Tips */}
-        {records.length === 0 && !processing && (
-          <div className="mt-6 rounded-2xl px-4 py-4 space-y-2.5"
-            style={{ background: "#fff", border: "1.5px solid #E5E7EB" }}>
-            <p className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase" style={{ fontFamily: "var(--font-satoshi)" }}>
-              Tips
-            </p>
-            {[
-              "For spreadsheets, export as CSV for best results.",
-              "For WhatsApp or notes, paste the text or take a clear screenshot.",
-              "SPAL will tell you which records need a second look.",
-            ].map((tip, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <ChevronRight size={13} strokeWidth={2.5} className="text-spal-green mt-0.5 flex-shrink-0" />
-                <p className="text-[12.5px] text-neutral-500 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
-                  {tip}
+        {/* ── Upload UI ─────────────────────────────────────────────────── */}
+        {!loadingProfile && !showPicker && (
+          <>
+            {/* Title + change methods link */}
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h1 className="text-[22px] font-bold text-spal-navy leading-tight" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Import Records
+                </h1>
+                <p className="text-[13px] text-neutral-400 mt-1" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  SPAL reads your records and extracts them automatically.
                 </p>
               </div>
-            ))}
-          </div>
+              <button
+                onClick={() => setShowPicker(true)}
+                className="flex items-center gap-1 text-[11px] font-semibold mt-1 flex-shrink-0"
+                style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
+              >
+                <Pencil size={11} strokeWidth={2.5} />
+                Change
+              </button>
+            </div>
+
+            {/* Method tabs */}
+            {methods.length > 1 && (
+              <div className="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-5 px-5 scroll-container">
+                {methods.map(m => {
+                  const info     = METHOD_META[m];
+                  const isActive = activeMethod === m;
+                  return (
+                    <motion.button
+                      key={m}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setActive(m)}
+                      className="flex items-center gap-2 px-4 h-10 rounded-full flex-shrink-0 text-[13px] font-semibold transition-all duration-150"
+                      style={{
+                        background: isActive ? "#0F172A" : "#fff",
+                        color:      isActive ? "#fff"    : "#6B7280",
+                        border:     isActive ? "none"    : "1.5px solid #E5E7EB",
+                        fontFamily: "var(--font-satoshi)",
+                      }}
+                    >
+                      {info.icon}
+                      {info.label}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Upload area */}
+            {meta && (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeMethod}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {meta.inputType === "file" ? (
+                    <FileUploadZone method={activeMethod!} onFile={handleFile} fileRef={fileRef} />
+                  ) : (
+                    <VisualUploadZone
+                      method={activeMethod!}
+                      onImage={handleImage}
+                      imageRef={imageRef}
+                      pasteText={pasteText}
+                      onPasteChange={setPasteText}
+                      onPasteSubmit={handlePasteSubmit}
+                      processing={processing}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            )}
+
+            {/* Hidden file inputs */}
+            <input ref={fileRef}  type="file" accept=".csv,.xlsx,.xls,.pdf,.txt" className="hidden"
+              onChange={e => handleFile(e.target.files?.[0])} />
+            <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={e => handleImage(e.target.files?.[0])} />
+
+            {/* Processing indicator */}
+            <AnimatePresence>
+              {processing && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="mt-4 flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5"
+                  style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+                >
+                  <div className="w-5 h-5 rounded-full border-2 border-spal-green border-t-transparent animate-spin flex-shrink-0" />
+                  <p className="text-[13px] font-medium text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                    SPAL is reading your records…
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error */}
+            <AnimatePresence>
+              {parseError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mt-4 flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-2xl px-4 py-3.5"
+                >
+                  <AlertCircle size={16} strokeWidth={2} className="text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-[12.5px] text-red-600 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+                    {parseError}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Review section */}
+            <AnimatePresence>
+              {records.length > 0 && !processing && (
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                        Review records
+                      </p>
+                      <p className="text-[12px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+                        {records.length} found · check and fix before saving
+                      </p>
+                    </div>
+                    {records.some(r => r.confidence === "low") && (
+                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
+                        style={{ background: "#FEF3C7", color: "#92400E", fontFamily: "var(--font-satoshi)" }}>
+                        <AlertCircle size={11} strokeWidth={2.5} />
+                        {records.filter(r => r.confidence === "low").length} needs review
+                      </span>
+                    )}
+                  </div>
+
+                  {missingDateCount > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      className="mb-4 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3.5"
+                    >
+                      <p className="text-[12px] font-semibold text-amber-800 mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>
+                        {missingDateCount} {missingDateCount === 1 ? "record has" : "records have"} no date — set a fallback:
+                      </p>
+                      <input
+                        type="date"
+                        value={fallbackDate}
+                        max={today()}
+                        onChange={e => setFallbackDate(e.target.value)}
+                        className="h-10 px-3 rounded-xl border-2 border-amber-200 bg-white text-[13px] text-spal-navy font-medium outline-none focus:border-spal-blue transition-colors"
+                        style={{ fontFamily: "var(--font-satoshi)" }}
+                      />
+                    </motion.div>
+                  )}
+
+                  <div className="space-y-3">
+                    <AnimatePresence initial={false}>
+                      {records.map(record => (
+                        <ReviewCard
+                          key={record._id}
+                          record={record}
+                          fallbackDate={fallbackDate}
+                          onChange={patch => updateRecord(record._id, patch)}
+                          onRemove={() => removeRecord(record._id)}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Tips (only when nothing loaded yet) */}
+            {records.length === 0 && !processing && (
+              <div className="mt-6 rounded-2xl px-4 py-4 space-y-2.5"
+                style={{ background: "#fff", border: "1.5px solid #E5E7EB" }}>
+                <p className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Tips
+                </p>
+                {[
+                  "For spreadsheets, export as CSV for best results.",
+                  "For WhatsApp or notes, paste the text or take a clear screenshot.",
+                  "SPAL will flag any records it isn't sure about.",
+                ].map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <ChevronRight size={13} strokeWidth={2.5} className="text-spal-green mt-0.5 flex-shrink-0" />
+                    <p className="text-[12.5px] text-neutral-500 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      {tip}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Fixed import CTA */}
+      {/* Import CTA */}
       <AnimatePresence>
-        {records.length > 0 && !processing && (
+        {records.length > 0 && !processing && !showPicker && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
             className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pt-3 pb-4 z-20"
@@ -504,13 +510,11 @@ export default function ImportRecordPage() {
               onClick={handleSave}
               disabled={saving}
               className="w-full h-14 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
-              style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E",
-                boxShadow: "0 4px 16px rgba(34,197,94,0.35)" }}
+              style={{ fontFamily: "var(--font-satoshi)", background: "#22C55E", boxShadow: "0 4px 16px rgba(34,197,94,0.35)" }}
             >
               {saving
                 ? <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Importing…</>
-                : `Import ${records.length} ${records.length === 1 ? "record" : "records"}`
-              }
+                : `Import ${records.length} ${records.length === 1 ? "record" : "records"}`}
             </button>
           </motion.div>
         )}
@@ -519,7 +523,109 @@ export default function ImportRecordPage() {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── MethodPicker — inline method selector ─────────────────────────────────────
+
+function MethodPicker({
+  current,
+  onSave,
+}: {
+  current: TrackingMethod[];
+  onSave: (methods: TrackingMethod[]) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<Set<TrackingMethod>>(new Set(current));
+  const [saving,   setSaving]   = useState(false);
+
+  function toggle(m: TrackingMethod) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(m)) next.delete(m); else next.add(m);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    if (!selected.size) return;
+    setSaving(true);
+    await onSave(Array.from(selected));
+    setSaving(false);
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <h1 className="text-[22px] font-bold text-spal-navy leading-tight mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>
+        How do you track your records?
+      </h1>
+      <p className="text-[13px] text-neutral-400 mb-5" style={{ fontFamily: "var(--font-satoshi)" }}>
+        Select how you currently manage your business records. You can pick multiple.
+      </p>
+
+      <div className="space-y-2.5">
+        {ALL_METHODS.map((m, i) => {
+          const info       = METHOD_META[m];
+          const isSelected = selected.has(m);
+          return (
+            <motion.button
+              key={m}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => toggle(m)}
+              className="w-full flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5 text-left transition-all duration-150"
+              style={{
+                border:     isSelected ? `1.5px solid ${info.accent}` : "1.5px solid transparent",
+                boxShadow:  isSelected
+                  ? `0 0 0 3px ${info.accent}18, 0 2px 8px rgba(0,0,0,0.06)`
+                  : "0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            >
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${info.accent}14`, color: info.accent }}
+              >
+                {info.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {info.label}
+                </p>
+                <p className="text-[12px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {info.sub}
+                </p>
+              </div>
+              <div
+                className="w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150"
+                style={{
+                  border:     isSelected ? `2px solid ${info.accent}` : "2px solid #D4D4D8",
+                  background: isSelected ? info.accent : "transparent",
+                }}
+              >
+                {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={selected.size === 0 || saving}
+        className="w-full h-14 rounded-2xl font-bold text-[15px] mt-6 flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+        style={{
+          fontFamily: "var(--font-satoshi)",
+          background: selected.size > 0 ? "#22C55E" : "#E4E4E7",
+          color:      selected.size > 0 ? "#fff"    : "#A1A1AA",
+        }}
+      >
+        {saving
+          ? <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Saving…</>
+          : `Continue${selected.size > 0 ? ` (${selected.size} selected)` : ""}`}
+      </button>
+    </motion.div>
+  );
+}
+
+// ── PageHeader ────────────────────────────────────────────────────────────────
 
 function PageHeader({ onBack }: { onBack: () => void }) {
   return (
@@ -539,17 +645,19 @@ function PageHeader({ onBack }: { onBack: () => void }) {
   );
 }
 
+// ── FileUploadZone ────────────────────────────────────────────────────────────
+
 function FileUploadZone({
   method, onFile, fileRef,
 }: {
-  method: TrackingMethod;
-  onFile: (f: File | null) => void;
+  method:  TrackingMethod;
+  onFile:  (f: File | null) => void;
   fileRef: React.RefObject<HTMLInputElement | null>;
 }) {
   const hint = method === "excel"
-    ? "Export your Excel file as CSV, then upload it here."
+    ? "From Excel, go to File → Save As → CSV, then upload here."
     : method === "google_sheets"
-    ? "From Google Sheets, go to File → Download → CSV (.csv), then upload here."
+    ? "From Google Sheets: File → Download → CSV (.csv), then upload here."
     : "Upload a CSV or spreadsheet file.";
 
   return (
@@ -578,33 +686,34 @@ function FileUploadZone({
   );
 }
 
+// ── VisualUploadZone ──────────────────────────────────────────────────────────
+
 function VisualUploadZone({
   method, onImage, imageRef, pasteText, onPasteChange, onPasteSubmit, processing,
 }: {
-  method: TrackingMethod;
-  onImage: (f: File | null) => void;
-  imageRef: React.RefObject<HTMLInputElement | null>;
-  pasteText: string;
+  method:        TrackingMethod;
+  onImage:       (f: File | null) => void;
+  imageRef:      React.RefObject<HTMLInputElement | null>;
+  pasteText:     string;
   onPasteChange: (v: string) => void;
   onPasteSubmit: () => void;
-  processing: boolean;
+  processing:    boolean;
 }) {
-  const imageHint: Record<string, string> = {
-    whatsapp:  "Take a screenshot of your WhatsApp notes or chat",
+  const imageHint: Partial<Record<TrackingMethod, string>> = {
+    whatsapp:  "Screenshot your WhatsApp notes or messages",
     notebook:  "Take a clear photo of your notebook page",
-    notes_app: "Screenshot your notes app",
-    receipts:  "Photograph all your receipts clearly",
+    notes_app: "Screenshot your notes",
+    receipts:  "Photograph your receipts clearly",
   };
-  const textHint: Record<string, string> = {
-    whatsapp:  "Copy and paste your WhatsApp messages here",
-    notebook:  "Type out what's written in your notebook",
-    notes_app: "Paste your notes directly here",
-    receipts:  "List your receipt amounts and descriptions",
+  const textHint: Partial<Record<TrackingMethod, string>> = {
+    whatsapp:  "Or paste your WhatsApp messages here",
+    notebook:  "Or type out what's in your notebook",
+    notes_app: "Or paste your notes directly here",
+    receipts:  "Or list your receipt amounts and descriptions",
   };
 
   return (
     <div className="space-y-3">
-      {/* Image upload card */}
       <button
         onClick={() => imageRef.current?.click()}
         className="w-full rounded-2xl bg-white flex items-center gap-4 px-5 py-4 active:scale-[0.99] transition-transform text-left"
@@ -624,14 +733,12 @@ function VisualUploadZone({
         <ChevronRight size={16} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
       </button>
 
-      {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-neutral-200" />
         <span className="text-[11px] text-neutral-400 font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>or</span>
         <div className="flex-1 h-px bg-neutral-200" />
       </div>
 
-      {/* Text paste card */}
       <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#EFF6FF" }}>
@@ -663,8 +770,7 @@ function VisualUploadZone({
               >
                 {processing
                   ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> Reading…</>
-                  : "Extract records"
-                }
+                  : "Extract records"}
               </button>
             </motion.div>
           )}
@@ -679,18 +785,16 @@ function VisualUploadZone({
 function ReviewCard({
   record, fallbackDate, onChange, onRemove,
 }: {
-  record:      ReviewRecord;
+  record:       ReviewRecord;
   fallbackDate: string;
-  onChange:    (patch: Partial<ReviewRecord>) => void;
-  onRemove:    () => void;
+  onChange:     (patch: Partial<ReviewRecord>) => void;
+  onRemove:     () => void;
 }) {
-  const [editingDesc, setEditingDesc]   = useState(false);
-  const [editingDate, setEditingDate]   = useState(false);
-  const [desc, setDesc]                 = useState(record.description);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [editingDate, setEditingDate] = useState(false);
+  const [desc,        setDesc]        = useState(record.description);
   const descRef = useRef<HTMLInputElement>(null);
   const isLow   = record.confidence === "low";
-
-  const displayDate = record.record_date ?? fallbackDate;
 
   function commitDesc() {
     const trimmed = desc.trim() || record.description;
@@ -708,11 +812,10 @@ function ReviewCard({
       transition={{ duration: 0.22 }}
       className="bg-white rounded-2xl overflow-hidden"
       style={{
-        border:     isLow ? "1.5px solid #FCD34D" : "1.5px solid #E5E7EB",
-        boxShadow:  "0 1px 4px rgba(0,0,0,0.05)",
+        border:    isLow ? "1.5px solid #FCD34D" : "1.5px solid #E5E7EB",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
       }}
     >
-      {/* Low confidence banner */}
       {isLow && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-amber-100" style={{ background: "#FFFBEB" }}>
           <AlertCircle size={13} strokeWidth={2.5} color="#D97706" />
@@ -723,49 +826,39 @@ function ReviewCard({
       )}
 
       <div className="px-4 py-3.5">
-        {/* Row 1: Type toggle + Amount */}
+        {/* Type toggle + Amount */}
         <div className="flex items-center justify-between gap-3 mb-3">
-          {/* Sale / Expense toggle */}
           <div className="flex rounded-xl overflow-hidden border border-neutral-200 flex-shrink-0">
             <button
               onClick={() => onChange({ type: "sale", confidence: "high" })}
               className="flex items-center gap-1 px-2.5 py-1.5 text-[11.5px] font-bold transition-all duration-150"
               style={{
                 background: record.type === "sale" ? "#22C55E" : "transparent",
-                color:      record.type === "sale" ? "#fff" : "#9CA3AF",
+                color:      record.type === "sale" ? "#fff"    : "#9CA3AF",
                 fontFamily: "var(--font-satoshi)",
               }}
             >
-              <ArrowUpRight size={12} strokeWidth={2.5} />
-              Sale
+              <ArrowUpRight size={12} strokeWidth={2.5} />Sale
             </button>
             <button
               onClick={() => onChange({ type: "expense", confidence: "high" })}
               className="flex items-center gap-1 px-2.5 py-1.5 text-[11.5px] font-bold transition-all duration-150"
               style={{
                 background: record.type === "expense" ? "#F97316" : "transparent",
-                color:      record.type === "expense" ? "#fff" : "#9CA3AF",
+                color:      record.type === "expense" ? "#fff"    : "#9CA3AF",
                 fontFamily: "var(--font-satoshi)",
               }}
             >
-              <ArrowDownLeft size={12} strokeWidth={2.5} />
-              Expense
+              <ArrowDownLeft size={12} strokeWidth={2.5} />Expense
             </button>
           </div>
-
-          {/* Amount — always shown, styled by type */}
-          <p
-            className="text-[15px] font-bold flex-shrink-0"
-            style={{
-              color:      record.type === "sale" ? "#22C55E" : "#F97316",
-              fontFamily: "var(--font-satoshi)",
-            }}
-          >
+          <p className="text-[15px] font-bold flex-shrink-0"
+            style={{ color: record.type === "sale" ? "#22C55E" : "#F97316", fontFamily: "var(--font-satoshi)" }}>
             {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
           </p>
         </div>
 
-        {/* Row 2: Description (editable) */}
+        {/* Description */}
         <div className="mb-2.5">
           {editingDesc ? (
             <input
@@ -779,21 +872,16 @@ function ReviewCard({
               style={{ fontFamily: "var(--font-satoshi)" }}
             />
           ) : (
-            <button
-              onClick={() => { setEditingDesc(true); setTimeout(() => descRef.current?.focus(), 50); }}
-              className="text-left w-full"
-            >
+            <button onClick={() => { setEditingDesc(true); setTimeout(() => descRef.current?.focus(), 50); }} className="text-left w-full">
               <p className="text-[13px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
                 {record.description || <span className="text-neutral-300">Tap to add description</span>}
               </p>
               {record.category && (
-                <span
-                  className="inline-block mt-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                <span className="inline-block mt-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
                   style={{
                     background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED",
                     color:      record.type === "sale" ? "#16A34A" : "#EA580C",
-                  }}
-                >
+                  }}>
                   {record.category}
                 </span>
               )}
@@ -801,7 +889,7 @@ function ReviewCard({
           )}
         </div>
 
-        {/* Row 3: Date + remove */}
+        {/* Date + Remove */}
         <div className="flex items-center justify-between">
           {editingDate ? (
             <input
@@ -828,10 +916,9 @@ function ReviewCard({
               {record.record_date ? friendlyDate(record.record_date) : `Using fallback · ${friendlyDate(fallbackDate)}`}
             </button>
           )}
-
           <button
             onClick={onRemove}
-            className="text-[11.5px] font-semibold text-neutral-400 hover:text-red-400 transition-colors"
+            className="text-[11.5px] font-semibold text-neutral-400 active:text-red-400 transition-colors"
             style={{ fontFamily: "var(--font-satoshi)" }}
           >
             Remove

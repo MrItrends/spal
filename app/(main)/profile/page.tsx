@@ -11,7 +11,9 @@ import { AchievementsSection } from "@/components/gamification/AchievementsSecti
 import {
   Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
   Store, Coins, Receipt, ChevronRight, Camera, Flame, Check,
+  BookOpen, MessageCircle, Table2, LayoutGrid, FileText, FolderInput,
 } from "lucide-react";
+import type { TrackingMethod } from "@/store";
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
   food_seller:    "Food Seller",
@@ -32,7 +34,17 @@ const CURRENCIES = [
   { code: "GBP", label: "British Pound",  symbol: "£" },
 ];
 
-type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | null;
+type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | "tracking-methods" | null;
+
+const TRACKING_METHOD_LABELS: Partial<Record<TrackingMethod, string>> = {
+  notebook:      "Notebook",
+  whatsapp:      "WhatsApp",
+  excel:         "Excel",
+  google_sheets: "Google Sheets",
+  notes_app:     "Notes App",
+  receipts:      "Receipts",
+  nothing:       "Other",
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -87,7 +99,7 @@ export default function ProfilePage() {
   }
 
   // Returns null on success, error string on failure
-  async function saveProfile(updates: Record<string, string | null>): Promise<string | null> {
+  async function saveProfile(updates: Record<string, unknown>): Promise<string | null> {
     try {
       const res  = await fetch("/api/user/profile", {
         method:  "PATCH",
@@ -248,6 +260,18 @@ export default function ProfilePage() {
               hint:    user?.currency ?? "NGN",
               sheet:   "currency" as SheetType,
             },
+            {
+              icon:    <FolderInput size={18} strokeWidth={2} color="#2563EB" />,
+              label:   "Record tracking methods",
+              hint:    (() => {
+                const methods = ((user as unknown as { tracking_methods?: TrackingMethod[] })?.tracking_methods ?? [])
+                  .filter(m => m !== "nothing");
+                return methods.length > 0
+                  ? methods.map(m => TRACKING_METHOD_LABELS[m] ?? m).join(", ")
+                  : "How do you currently track records?";
+              })(),
+              sheet:   "tracking-methods" as SheetType,
+            },
           ] as { icon: React.ReactNode; label: string; hint: string; sheet: SheetType }[]).map((item, i, arr) => (
             <button
               key={item.label}
@@ -384,6 +408,18 @@ export default function ProfilePage() {
         onClose={() => setActiveSheet(null)}
         onSaved={(updatedUser) => { setUser(updatedUser as User); setActiveSheet(null); }}
       />
+
+      <TrackingMethodsSheet
+        open={activeSheet === "tracking-methods"}
+        currentMethods={((user as unknown as { tracking_methods?: TrackingMethod[] })?.tracking_methods ?? [])
+          .filter(m => m !== "nothing")}
+        onClose={() => setActiveSheet(null)}
+        onSave={async (methods) => {
+          const err = await saveProfile({ tracking_methods: methods });
+          if (!err) setActiveSheet(null);
+          return err;
+        }}
+      />
     </div>
   );
 }
@@ -463,7 +499,7 @@ function NameSheet({ open, user, onClose, onSave }: {
   open: boolean;
   user: User | null;
   onClose: () => void;
-  onSave: (updates: Record<string, string | null>) => Promise<string | null>;
+  onSave: (updates: Record<string, unknown>) => Promise<string | null>;
 }) {
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [saving, setSaving]     = useState(false);
@@ -515,7 +551,7 @@ function BusinessDetailsSheet({ open, user, onClose, onSave }: {
   open: boolean;
   user: User | null;
   onClose: () => void;
-  onSave: (updates: Record<string, string | null>) => Promise<string | null>;
+  onSave: (updates: Record<string, unknown>) => Promise<string | null>;
 }) {
   const [fullName,     setFullName]     = useState(user?.full_name     ?? "");
   const [businessName, setBusinessName] = useState(user?.business_name ?? "");
@@ -836,6 +872,103 @@ function AddContactSheet({ open, type, onClose, onSaved }: {
           </button>
         </div>
       )}
+    </Sheet>
+  );
+}
+
+// ── Tracking Methods sheet ────────────────────────────────────────────────
+
+const TRACKING_METHODS_LIST: Array<{
+  key:    TrackingMethod;
+  label:  string;
+  sub:    string;
+  icon:   React.ReactNode;
+  accent: string;
+}> = [
+  { key: "notebook",      label: "Notebook",      sub: "You write in a physical notebook",         icon: <BookOpen       size={20} strokeWidth={2} />, accent: "#22C55E" },
+  { key: "whatsapp",      label: "WhatsApp",      sub: "You message yourself or save notes there", icon: <MessageCircle  size={20} strokeWidth={2} />, accent: "#25D366" },
+  { key: "excel",         label: "Excel",         sub: "You track in a spreadsheet",               icon: <Table2         size={20} strokeWidth={2} />, accent: "#217346" },
+  { key: "google_sheets", label: "Google Sheets", sub: "You use Google Sheets",                    icon: <LayoutGrid     size={20} strokeWidth={2} />, accent: "#2563EB" },
+  { key: "notes_app",     label: "Notes App",     sub: "You use a phone notes app",                icon: <FileText       size={20} strokeWidth={2} />, accent: "#F59E0B" },
+  { key: "receipts",      label: "Receipts",      sub: "You keep paper receipts or photos",        icon: <Receipt        size={20} strokeWidth={2} />, accent: "#F97316" },
+];
+
+function TrackingMethodsSheet({ open, currentMethods, onClose, onSave }: {
+  open:           boolean;
+  currentMethods: TrackingMethod[];
+  onClose:        () => void;
+  onSave:         (methods: TrackingMethod[]) => Promise<string | null>;
+}) {
+  const [selected, setSelected] = useState<Set<TrackingMethod>>(new Set(currentMethods));
+  const [saving,   setSaving]   = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) { setSelected(new Set(currentMethods)); setError(null); }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggle(m: TrackingMethod) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(m)) next.delete(m); else next.add(m);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    if (!selected.size) { setError("Pick at least one method."); return; }
+    setSaving(true);
+    setError(null);
+    const err = await onSave(Array.from(selected));
+    if (err) setError(err);
+    setSaving(false);
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title="How I track records">
+      <div className="space-y-3">
+        <p className="text-sm text-neutral-500 leading-relaxed">
+          Tell SPAL how you currently manage your records. This helps us show you the right import options.
+        </p>
+        {TRACKING_METHODS_LIST.map(m => {
+          const isOn = selected.has(m.key);
+          return (
+            <button
+              key={m.key}
+              onClick={() => toggle(m.key)}
+              className="w-full flex items-center gap-4 bg-neutral-50 rounded-2xl px-4 py-3.5 text-left transition-all duration-150"
+              style={{
+                border:    isOn ? `1.5px solid ${m.accent}` : "1.5px solid transparent",
+                boxShadow: isOn ? `0 0 0 3px ${m.accent}18` : "none",
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${m.accent}14`, color: m.accent }}
+              >
+                {m.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13.5px] font-semibold text-spal-navy">{m.label}</p>
+                <p className="text-[11.5px] text-neutral-400 mt-0.5">{m.sub}</p>
+              </div>
+              <div
+                className="w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150"
+                style={{
+                  border:     isOn ? `2px solid ${m.accent}` : "2px solid #D4D4D8",
+                  background: isOn ? m.accent : "transparent",
+                }}
+              >
+                {isOn && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+            </button>
+          );
+        })}
+        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+        <Button fullWidth loading={saving} onClick={handleSave} disabled={!selected.size}>
+          Save {selected.size > 0 ? `(${selected.size} selected)` : ""} ✓
+        </Button>
+      </div>
     </Sheet>
   );
 }
