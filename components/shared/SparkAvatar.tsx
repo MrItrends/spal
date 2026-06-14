@@ -20,13 +20,12 @@ export function SparkAvatar() {
       style={{
         bottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 12px)",
         right: "16px",
-        width: "64px",
-        height: "64px",
+        width: "72px",
+        height: "72px",
         borderRadius: "50%",
-        overflow: "hidden",
         background: "transparent",
         boxShadow:
-          "0 0 0 2px rgba(34,197,94,0.25), 0 8px 28px rgba(34,197,94,0.30), 0 4px 12px rgba(0,0,0,0.25)",
+          "0 8px 28px rgba(34,197,94,0.30), 0 4px 12px rgba(0,0,0,0.20)",
         padding: 0,
         border: "none",
         cursor: "pointer",
@@ -55,8 +54,8 @@ export function SparkAvatar() {
         src="/spal AI.png"
         alt="Ask SPAL"
         fill
-        sizes="64px"
-        style={{ objectFit: "cover", objectPosition: "center" }}
+        sizes="72px"
+        style={{ objectFit: "contain", objectPosition: "center" }}
         priority
       />
     </motion.button>

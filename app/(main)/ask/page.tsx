@@ -25,7 +25,7 @@ const SUGGESTED_PROMPTS = [
 function SPALAvatar({ size = 28 }: { size?: number }) {
   return (
     <div
-      className="rounded-full overflow-hidden flex-shrink-0 bg-spal-green"
+      className="flex-shrink-0 relative"
       style={{ width: size, height: size }}
     >
       <Image
@@ -33,7 +33,7 @@ function SPALAvatar({ size = 28 }: { size?: number }) {
         alt="SPAL"
         width={size}
         height={size}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
       />
     </div>
   );
@@ -321,9 +321,9 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring" }}
-          className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-4 shadow-md bg-spal-green"
+          className="w-20 h-20 mx-auto mb-4 relative"
         >
-          <Image src="/spal AI.png" alt="SPAL" width={64} height={64} className="w-full h-full object-cover" />
+          <Image src="/spal AI.png" alt="SPAL" width={80} height={80} className="w-full h-full object-contain" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <h2 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
