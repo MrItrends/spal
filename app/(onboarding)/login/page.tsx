@@ -47,7 +47,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        {/* SPAL wordmark */}
+        <div className="mb-8">
+          <span style={{ fontFamily: "var(--font-satoshi)", fontSize: 22, fontWeight: 900, letterSpacing: "0.12em", color: "#0F172A" }}>
+            SPAL
+          </span>
+          <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#22C55E", marginLeft: 3, verticalAlign: "super" }} />
+        </div>
+
         <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
           Welcome back
         </h1>
