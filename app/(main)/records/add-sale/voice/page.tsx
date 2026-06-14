@@ -82,22 +82,30 @@ export default function VoiceEntryPage() {
         fd.append("audio", blob, "recording.webm");
         const tRes = await fetch("/api/ai/transcribe", { method: "POST", body: fd });
         const tData = await tRes.json();
-        const text = tData.text ?? tData.transcript ?? "";
+        const text: string = tData.data?.text ?? tData.text ?? tData.transcript ?? "";
+
+        if (!text) {
+          setTranscript("");
+          setItems([]);
+          setStatus("done");
+          return;
+        }
+
         setTranscript(text);
 
-        if (text) {
-          const pRes = await fetch("/api/ai/parse-record", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
-          });
-          const pData = await pRes.json();
-          const parsed: ParsedItem[] = pData.data ?? pData.records ?? [];
-          setItems(parsed.filter((it) => it.type === "sale"));
-        }
+        const pRes = await fetch("/api/ai/parse-record", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const pData = await pRes.json();
+        const parsed: ParsedItem[] = Array.isArray(pData.data) ? pData.data : (pData.records ?? []);
+        // Keep all items — don't pre-filter by type so nothing is silently dropped
+        setItems(parsed);
         setStatus("done");
       } catch {
-        setStatus("idle");
+        setStatus("done");
+        setItems([]);
       }
     };
     mediaRecorderRef.current.stop();
@@ -148,7 +156,8 @@ export default function VoiceEntryPage() {
     : status === "processing" ? "SPAL is processing..."
     : "Done! Review below";
 
-  const saleItems = items.filter((it) => it.type === "sale");
+  // Show all parsed items; save only sale-typed ones
+  const saleItems = items.filter((it) => it.type === "sale" || it.type === "sales");
 
   return (
     <div className="min-h-full pb-36" style={{ background: BG, fontFamily }}>
@@ -233,6 +242,32 @@ export default function VoiceEntryPage() {
           )}
         </AnimatePresence>
 
+        {/* Empty state — transcribed but nothing found */}
+        <AnimatePresence>
+          {status === "done" && !transcript && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 bg-white rounded-2xl px-4 py-5 text-center"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+            >
+              <p className="text-[14px] font-semibold text-spal-navy mb-1" style={{ fontFamily }}>Couldn&apos;t hear that</p>
+              <p className="text-[13px] text-neutral-400" style={{ fontFamily }}>Tap the mic and try again — speak clearly and mention the amount.</p>
+            </motion.div>
+          )}
+          {status === "done" && transcript && saleItems.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 bg-white rounded-2xl px-4 py-5 text-center"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+            >
+              <p className="text-[14px] font-semibold text-spal-navy mb-1" style={{ fontFamily }}>No sales found</p>
+              <p className="text-[13px] text-neutral-400" style={{ fontFamily }}>Try saying: &quot;I sold 5 plates of rice for ₦500 each&quot;</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Extracted items */}
         <AnimatePresence>
           {saleItems.length > 0 && (
@@ -242,7 +277,7 @@ export default function VoiceEntryPage() {
               className="mt-4"
             >
               <p className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase mb-3" style={{ fontFamily }}>
-                SPAL is extracting
+                What SPAL heard
               </p>
               <div className="space-y-2.5">
                 {saleItems.map((item, i) => (

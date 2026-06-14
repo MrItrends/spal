@@ -82,22 +82,29 @@ export default function VoiceExpensePage() {
         fd.append("audio", blob, "recording.webm");
         const tRes = await fetch("/api/ai/transcribe", { method: "POST", body: fd });
         const tData = await tRes.json();
-        const text = tData.text ?? tData.transcript ?? "";
+        const text: string = tData.data?.text ?? tData.text ?? tData.transcript ?? "";
+
+        if (!text) {
+          setTranscript("");
+          setItems([]);
+          setStatus("done");
+          return;
+        }
+
         setTranscript(text);
 
-        if (text) {
-          const pRes = await fetch("/api/ai/parse-record", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
-          });
-          const pData = await pRes.json();
-          const parsed: ParsedItem[] = pData.data ?? pData.records ?? [];
-          setItems(parsed.filter((it) => it.type === "expense"));
-        }
+        const pRes = await fetch("/api/ai/parse-record", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const pData = await pRes.json();
+        const parsed: ParsedItem[] = Array.isArray(pData.data) ? pData.data : (pData.records ?? []);
+        setItems(parsed);
         setStatus("done");
       } catch {
-        setStatus("idle");
+        setStatus("done");
+        setItems([]);
       }
     };
     mediaRecorderRef.current.stop();
@@ -148,7 +155,7 @@ export default function VoiceExpensePage() {
     : status === "processing" ? "SPAL is processing..."
     : "Done! Review below";
 
-  const expenseItems = items.filter((it) => it.type === "expense");
+  const expenseItems = items.filter((it) => it.type === "expense" || it.type === "expenses");
 
   return (
     <div className="min-h-full pb-36" style={{ background: BG, fontFamily }}>
@@ -233,6 +240,32 @@ export default function VoiceExpensePage() {
           )}
         </AnimatePresence>
 
+        {/* Empty state */}
+        <AnimatePresence>
+          {status === "done" && !transcript && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 bg-white rounded-2xl px-4 py-5 text-center"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+            >
+              <p className="text-[14px] font-semibold text-spal-navy mb-1" style={{ fontFamily }}>Couldn&apos;t hear that</p>
+              <p className="text-[13px] text-neutral-400" style={{ fontFamily }}>Tap the mic and try again — speak clearly and mention the amount.</p>
+            </motion.div>
+          )}
+          {status === "done" && transcript && expenseItems.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 bg-white rounded-2xl px-4 py-5 text-center"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+            >
+              <p className="text-[14px] font-semibold text-spal-navy mb-1" style={{ fontFamily }}>No expenses found</p>
+              <p className="text-[13px] text-neutral-400" style={{ fontFamily }}>Try saying: &quot;I spent ₦2,000 on tomatoes and ₦500 on fuel&quot;</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Extracted items */}
         <AnimatePresence>
           {expenseItems.length > 0 && (
@@ -242,7 +275,7 @@ export default function VoiceExpensePage() {
               className="mt-4"
             >
               <p className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase mb-3" style={{ fontFamily }}>
-                SPAL is extracting
+                What SPAL heard
               </p>
               <div className="space-y-2.5">
                 {expenseItems.map((item, i) => (
