@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSPALStore } from "@/store";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
@@ -17,6 +18,7 @@ import {
 export default function HomePage() {
   const router = useRouter();
   const { user, addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
+  usePushNotifications(user?.id);
   const greeting = getGreeting();
   const name = user?.full_name ?? user?.business_name ?? "there";
 
