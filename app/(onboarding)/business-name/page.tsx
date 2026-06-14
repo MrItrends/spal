@@ -59,7 +59,7 @@ export default function BusinessNamePage() {
       }
 
       if (user) setUser({ ...user, business_name: trimmed });
-      window.location.href = "/home";
+      window.location.href = "/walkthrough";
     } catch {
       setError("Something went wrong. Please check your connection.");
     } finally {
