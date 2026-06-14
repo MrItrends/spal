@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type User } from "@/store";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
 import {
   Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
-  Store, Coins, Receipt, ChevronRight, Camera, Flame, Check,
+  Store, Coins, Receipt, ChevronRight, Camera, Flame, Check, AlertCircle,
   BookOpen, MessageCircle, Table2, LayoutGrid, FileText, FolderInput,
 } from "lucide-react";
 import type { TrackingMethod } from "@/store";
@@ -52,6 +52,39 @@ export default function ProfilePage() {
   const [signingOut,    setSigningOut]    = useState(false);
   const [activeSheet,   setActiveSheet]   = useState<SheetType>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+
+  // Business health (last 7 days)
+  const [health, setHealth] = useState<"loading" | "profitable" | "breaking-even" | "spending-more" | "no-data">("loading");
+
+  const fetchHealth = useCallback(async () => {
+    try {
+      const end   = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 6);
+      const fmt = (d: Date) => d.toISOString().slice(0, 10);
+      const res  = await fetch(`/api/records?start_date=${fmt(start)}&end_date=${fmt(end)}&limit=200`);
+      const data = await res.json();
+      if (!data.success || !data.data?.length) { setHealth("no-data"); return; }
+      const records: Array<{ type: string; amount: number }> = data.data;
+      const sales    = records.filter(r => r.type === "sale").reduce((s, r) => s + Number(r.amount), 0);
+      const expenses = records.filter(r => r.type === "expense").reduce((s, r) => s + Number(r.amount), 0);
+      const profit   = sales - expenses;
+      if (profit >  sales * 0.05) setHealth("profitable");
+      else if (profit < -sales * 0.05) setHealth("spending-more");
+      else setHealth("breaking-even");
+    } catch {
+      setHealth("no-data");
+    }
+  }, []);
+
+  useEffect(() => { fetchHealth(); }, [fetchHealth]);
+
+  // Verified = name + business details + at least one contact (phone or whatsapp)
+  const isVerified = !!(
+    user?.full_name &&
+    user?.business_name &&
+    (user?.phone_number || user?.whatsapp_number)
+  );
 
   const businessLabel = user?.business_type
     ? BUSINESS_TYPE_LABELS[user.business_type] ?? "Business"
@@ -200,11 +233,8 @@ export default function ProfilePage() {
               }
               label="Day streak"
             />
-            <StatItem value={user?.streak_days != null && user.streak_days > 7 ? "Active" : "Growing"} label="Status" />
-            <StatItem
-              value={<Check size={20} strokeWidth={2.5} color="#22C55E" className="inline" />}
-              label="Verified"
-            />
+            <HealthStatItem health={health} />
+            <VerifiedStatItem verified={isVerified} onFix={() => setActiveSheet("business")} />
           </div>
         </Card>
       </motion.div>
@@ -435,6 +465,69 @@ function StatItem({ value, label }: { value: React.ReactNode; label: string }) {
     <div>
       <p className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">{value}</p>
       <p className="text-xs text-neutral-400 mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+const HEALTH_CONFIG = {
+  "profitable":    { label: "Profitable",   color: "#22C55E", dot: "#22C55E" },
+  "breaking-even": { label: "Even",         color: "#F59E0B", dot: "#F59E0B" },
+  "spending-more": { label: "Overspending", color: "#EF4444", dot: "#EF4444" },
+  "no-data":       { label: "No data yet",  color: "#A1A1AA", dot: "#A1A1AA" },
+  "loading":       { label: "…",            color: "#D4D4D8", dot: "#D4D4D8" },
+} as const;
+
+function HealthStatItem({ health }: { health: keyof typeof HEALTH_CONFIG }) {
+  const cfg = HEALTH_CONFIG[health];
+  return (
+    <div>
+      <div className="flex items-center justify-center gap-1 mb-0.5">
+        <motion.div
+          animate={health !== "loading" ? { scale: [1, 1.3, 1] } : {}}
+          transition={{ duration: 0.4 }}
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ background: cfg.dot }}
+        />
+        <p
+          className="text-[15px] font-bold leading-tight font-[family-name:var(--font-satoshi)]"
+          style={{ color: cfg.color }}
+        >
+          {cfg.label}
+        </p>
+      </div>
+      <p className="text-xs text-neutral-400">Business health</p>
+      <p className="text-[10px] text-neutral-300 mt-0.5">Last 7 days</p>
+    </div>
+  );
+}
+
+function VerifiedStatItem({ verified, onFix }: { verified: boolean; onFix: () => void }) {
+  return (
+    <div>
+      {verified ? (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1,   opacity: 1 }}
+          className="flex justify-center mb-0.5"
+        >
+          <Check size={22} strokeWidth={2.5} color="#22C55E" />
+        </motion.div>
+      ) : (
+        <button onClick={onFix} className="flex justify-center w-full mb-0.5" aria-label="Complete profile">
+          <motion.div
+            animate={{ rotate: [0, -8, 8, 0] }}
+            transition={{ delay: 1, duration: 0.5, repeat: Infinity, repeatDelay: 4 }}
+          >
+            <AlertCircle size={20} strokeWidth={2} color="#F59E0B" />
+          </motion.div>
+        </button>
+      )}
+      <p className="text-xs text-neutral-400">Verified</p>
+      {!verified && (
+        <button onClick={onFix} className="text-[10px] font-semibold mt-0.5" style={{ color: "#F59E0B" }}>
+          Complete profile
+        </button>
+      )}
     </div>
   );
 }
