@@ -24,16 +24,19 @@ const SUGGESTED_PROMPTS = [
 // SPAL AI avatar — reused across header, bubbles, empty state
 function SPALAvatar({ size = 28 }: { size?: number }) {
   return (
-    <div
-      className="flex-shrink-0 relative"
-      style={{ width: size, height: size }}
-    >
+    <div className="flex-shrink-0" style={{ width: size, height: size }}>
       <Image
         src="/spal AI.png"
         alt="SPAL"
         width={size}
         height={size}
-        className="w-full h-full object-contain"
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          filter: "drop-shadow(0 2px 6px rgba(34,197,94,0.30))",
+        }}
       />
     </div>
   );
@@ -321,7 +324,8 @@ function EmptyChat({ name, onPrompt }: { name: string; onPrompt: (s: string) => 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring" }}
-          className="w-20 h-20 mx-auto mb-4 relative"
+          className="w-20 h-20 mx-auto mb-4"
+          style={{ filter: "drop-shadow(0 4px 14px rgba(34,197,94,0.40))" }}
         >
           <Image src="/spal AI.png" alt="SPAL" width={80} height={80} className="w-full h-full object-contain" />
         </motion.div>
