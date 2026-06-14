@@ -252,7 +252,7 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
-          <p className="text-[15px] font-bold text-spal-navy mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+          <p className="text-[15px] font-bold text-white mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
             Quick Actions
           </p>
 
