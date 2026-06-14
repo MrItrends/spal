@@ -51,7 +51,7 @@ export default function LoginPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         {/* SPAL wordmark */}
         <div className="mb-8">
-          <Image src="/spal-wordmark.webp" alt="SPAL" width={90} height={32} className="h-8 w-auto" />
+          <Image src="/spal-wordmark.webp" alt="SPAL" width={140} height={48} className="h-12 w-auto" />
         </div>
 
         <h1 className="text-2xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
