@@ -292,7 +292,7 @@ export default function ImportExpensePage() {
         {/* Bottom tip */}
         <div className="mt-5 rounded-2xl px-4 py-3.5" style={{ background: "#FFF3E0" }}>
           <p className="text-[12.5px] leading-relaxed" style={{ fontFamily, color: "#B45309" }}>
-            💡 SPAL will match columns automatically. You can review and confirm before saving.
+            💡 SPAL matches columns automatically. Review the records before you save.
           </p>
         </div>
       </div>

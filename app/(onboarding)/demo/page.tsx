@@ -26,7 +26,7 @@ const STEPS = [
     step: 3,
     label: "Grow",
     headline: "See your business\nclearly.",
-    body: "Daily summaries, patterns, and simple advice — all in plain language you understand.",
+    body: "Daily summaries, patterns, and simple advice. All in plain language you understand.",
     visual: <GrowVisual />,
     accent: "#8B5CF6",
   },

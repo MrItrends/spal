@@ -391,7 +391,7 @@ export default function NotFound() {
             <div style={{ background: "#0A0F1C", padding: "0 20px 40px" }}>
               <div className="max-w-[480px] mx-auto text-center">
                 <p style={{ fontSize: 13, color: "rgba(255,255,255,0.38)", fontFamily: FF, marginBottom: 14 }}>
-                  You solved it — now let&apos;s get you back.
+                  You solved it. Let&apos;s get you home.
                 </p>
                 <Link href="/home">
                   <motion.button

@@ -186,12 +186,12 @@ export default function PictureExpenseConfirmPage() {
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               <div className="mt-4 rounded-2xl px-4 py-3.5" style={{ background: "#FFF3E0" }}>
                 <p className="text-[12.5px] font-medium" style={{ fontFamily, color: "#B45309" }}>
-                  💡 SPAL found {items.length} {items.length === 1 ? "expense" : "expenses"} for you to review
+                  💡 SPAL found {items.length} {items.length === 1 ? "expense" : "expenses"}. Check the details below.
                 </p>
               </div>
 
               <p className="mt-3 text-right text-[11px] text-neutral-400" style={{ fontFamily }}>
-                swipe left or right to edit/delete →
+                Tap any item to edit or remove it
               </p>
 
               <div className="mt-2 space-y-2.5">

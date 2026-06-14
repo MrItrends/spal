@@ -20,7 +20,7 @@ const GOALS: {
     sub: "Know exactly how much I make each day",
     icon: <BarChart3 size={20} strokeWidth={1.7} />,
     accent: "#22C55E",
-    nudge: "SPAL will help you record every sale in seconds — no forms, just a quick tap or voice note.",
+    nudge: "SPAL records every sale in seconds. Just tap or speak. No forms.",
   },
   {
     goal: "know_profit",
@@ -28,7 +28,7 @@ const GOALS: {
     sub: "See what I actually keep after expenses",
     icon: <DollarSign size={20} strokeWidth={1.7} />,
     accent: "#2563EB",
-    nudge: "SPAL will show you exactly what you keep after every sale — not just what you make.",
+    nudge: "SPAL shows you exactly what you keep after every sale. Not just what you make.",
   },
   {
     goal: "reduce_expenses",
@@ -36,15 +36,15 @@ const GOALS: {
     sub: "Find where money is leaking out",
     icon: <Scissors size={20} strokeWidth={1.7} />,
     accent: "#F97316",
-    nudge: "SPAL will spot your biggest spending patterns and tell you where money is quietly leaving.",
+    nudge: "SPAL spots your biggest spending patterns and shows you where money is quietly leaving.",
   },
   {
     goal: "grow_business",
     label: "Grow my business",
-    sub: "Make better decisions to scale up",
+    sub: "Make better decisions to grow",
     icon: <TrendingUp size={20} strokeWidth={1.7} />,
     accent: "#8B5CF6",
-    nudge: "SPAL will track your best-selling days, products, and patterns so you can do more of what works.",
+    nudge: "SPAL tracks your best days, best products, and patterns so you know what to do more of.",
   },
   {
     goal: "understand_spending",
@@ -52,7 +52,7 @@ const GOALS: {
     sub: "See patterns in how I spend money",
     icon: <Search size={20} strokeWidth={1.7} />,
     accent: "#2563EB",
-    nudge: "SPAL will show you a simple breakdown of where your money goes every week — no guessing.",
+    nudge: "SPAL gives you a simple breakdown of where your money goes every week. No guesswork.",
   },
 ];
 

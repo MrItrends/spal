@@ -293,7 +293,7 @@ export default function ImportEntryPage() {
         {/* Bottom tip */}
         <div className="mt-5 rounded-2xl px-4 py-3.5" style={{ background: "#E8F5E9" }}>
           <p className="text-[12.5px] leading-relaxed" style={{ fontFamily, color: "#2E7D32" }}>
-            💡 SPAL will match columns automatically. You can review and confirm before saving.
+            💡 SPAL matches columns automatically. Review the records before you save.
           </p>
         </div>
       </div>

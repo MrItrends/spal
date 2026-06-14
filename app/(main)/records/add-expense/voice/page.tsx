@@ -258,7 +258,7 @@ export default function VoiceExpensePage() {
               style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
             >
               <p className="text-[14px] font-semibold text-spal-navy mb-1" style={{ fontFamily }}>Couldn&apos;t hear that</p>
-              <p className="text-[13px] text-neutral-400" style={{ fontFamily }}>Tap the mic and try again — speak clearly and mention the amount.</p>
+              <p className="text-[13px] text-neutral-400" style={{ fontFamily }}>Tap the mic and try again. Speak clearly and mention the amount.</p>
             </motion.div>
           )}
 
