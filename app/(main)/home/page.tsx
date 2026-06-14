@@ -24,6 +24,16 @@ export default function HomePage() {
   const greeting = getGreeting();
   const name = user?.full_name ?? user?.business_name ?? "there";
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) setUnreadCount((d.data as Array<{ read_at: string | null }>).filter(n => !n.read_at).length);
+      })
+      .catch(() => {});
+  }, []);
+
   const [summary, setSummary]           = useState<DailySummary | null>(null);
   const [records, setRecords]           = useState<BusinessRecord[]>([]);
   const [loadingSummary, setLoadingSummary] = useState(true);
@@ -126,8 +136,15 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <CircleButton onClick={() => router.push("/notifications")} aria="Notifications">
-              <Bell size={18} strokeWidth={2} color="#fff" />
+            <CircleButton onClick={() => { setUnreadCount(0); router.push("/notifications"); }} aria="Notifications">
+              <div className="relative">
+                <Bell size={18} strokeWidth={2} color="#fff" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
             </CircleButton>
             <button
               onClick={() => router.push("/profile")}
