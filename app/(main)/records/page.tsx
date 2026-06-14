@@ -7,7 +7,8 @@ import { formatTime } from "@/lib/utils/dates";
 import { useSPALStore } from "@/store";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
-import { ArrowUp, ArrowDown, Pencil, Plus } from "lucide-react";
+import { ExportSheet } from "@/components/records/ExportSheet";
+import { ArrowUp, ArrowDown, Pencil, Plus, Download } from "lucide-react";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense";
@@ -32,6 +33,7 @@ export default function RecordsPage() {
   const [loading,     setLoading]     = useState(true);
   const [editRecord,  setEditRecord]  = useState<BusinessRecord | null>(null);
   const [deletingId,  setDeletingId]  = useState<string | null>(null);
+  const [exportOpen,  setExportOpen]  = useState(false);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -83,11 +85,22 @@ export default function RecordsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Records</h1>
-          {records.length > 0 && (
-            <span className="text-xs text-neutral-400">
-              {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : "expenses"}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {records.length > 0 && (
+              <span className="text-xs text-neutral-400">
+                {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : "expenses"}
+              </span>
+            )}
+            {records.length > 0 && (
+              <button
+                onClick={() => setExportOpen(true)}
+                className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
+                aria-label="Export records"
+              >
+                <Download size={15} strokeWidth={2.2} className="text-neutral-500" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filter tabs */}
@@ -211,6 +224,7 @@ export default function RecordsPage() {
       {/* Add sheets */}
       <AddRecordSheet type="sale"    open={addSheetOpen === "sale"}    onClose={() => setAddSheet(null)} onSuccess={fetchRecords} />
       <AddRecordSheet type="expense" open={addSheetOpen === "expense"} onClose={() => setAddSheet(null)} onSuccess={fetchRecords} />
+      <ExportSheet open={exportOpen} onClose={() => setExportOpen(false)} />
 
       {/* Edit sheet — opens when a record is tapped */}
       <AddRecordSheet
