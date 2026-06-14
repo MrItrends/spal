@@ -1,11 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 
 export function SparkAvatar() {
-  const router = useRouter();
+  const router   = useRouter();
+  const pathname = usePathname();
+
+  // Hide on camera/picture pages — controls are in the same bottom area
+  if (pathname.includes("/picture")) return null;
 
   return (
     <motion.button
