@@ -57,6 +57,7 @@ function HomePageInner() {
   // Undo delete
   const [undoState,  setUndoState]  = useState<{ id: string; record: BusinessRecord } | null>(null);
   const pendingIdRef = useRef<string | null>(null);
+  const quickActionsRef = useRef<HTMLDivElement>(null);
 
   // Bootstrap businesses once on mount
   useEffect(() => {
@@ -305,6 +306,7 @@ function HomePageInner() {
 
         {/* ── Quick Actions ── */}
         <motion.div
+          ref={quickActionsRef}
           data-coachmark="quick_actions"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -444,7 +446,7 @@ function HomePageInner() {
                 No activity yet today.
               </p>
               <button
-                onClick={() => setAddSheet("sale")}
+                onClick={() => quickActionsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
                 className="mt-2 text-[13px] font-semibold"
                 style={{ fontFamily: "var(--font-satoshi)", color: "#16A34A" }}
               >
