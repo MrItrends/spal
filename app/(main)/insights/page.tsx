@@ -20,45 +20,70 @@ type HealthState = "healthy" | "even" | "low" | "empty";
 interface Bucket { label: string; profit: number; expenses: number; }
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
-function todayISODate(): string {
-  const d = new Date();
+const DAY_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] as const;
+const MON_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] as const;
+
+function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+function todayISODate(): string { return isoDate(new Date()); }
+
+function offsetDate(daysBack: number): Date {
+  const d = new Date(); d.setDate(d.getDate() - daysBack); return d;
+}
+
 function periodStart(period: Period): string {
-  const now = new Date();
   if (period === "today") return todayISODate();
-  if (period === "week") {
-    const day = now.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
-    const s = new Date(now); s.setDate(now.getDate() + offset);
-    return `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
-  }
+  if (period === "week")  return isoDate(offsetDate(6));   // rolling last 7 days
+  const now = new Date();
   if (period === "month") return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   return `${now.getFullYear()}-01-01`;
 }
+
+// Human-readable date range shown under the period tabs
+function periodRange(period: Period): string {
+  const fmt = (d: Date) => `${MON_SHORT[d.getMonth()]} ${d.getDate()}`;
+  const today = new Date();
+  if (period === "today") return fmt(today);
+  if (period === "week")  return `${fmt(offsetDate(6))} – ${fmt(today)}`;
+  if (period === "month") {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    return `${fmt(start)} – ${fmt(today)}`;
+  }
+  return `Jan 1 – ${fmt(today)}`;
+}
+
 function emptyBuckets(period: Period): Bucket[] {
   if (period === "today") return [{ label: "Today", profit: 0, expenses: 0 }];
-  if (period === "week")  return ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(label => ({ label, profit: 0, expenses: 0 }));
+  if (period === "week") {
+    // Dynamic labels: actual day names for the last 7 days oldest → newest
+    return Array.from({ length: 7 }, (_, i) => ({
+      label: DAY_SHORT[offsetDate(6 - i).getDay()],
+      profit: 0,
+      expenses: 0,
+    }));
+  }
   if (period === "month") return [1,2,3,4].map(n => ({ label: `W${n}`, profit: 0, expenses: 0 }));
-  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(label => ({ label, profit: 0, expenses: 0 }));
+  return MON_SHORT.map(label => ({ label, profit: 0, expenses: 0 }));
 }
+
 function aggregate(records: BusinessRecord[], period: Period): Bucket[] {
   const buckets = emptyBuckets(period);
   if (period === "today") {
     const today = todayISODate();
     for (const r of records) {
-      if (r.record_date !== today) continue;
+      if (!r.record_date || r.record_date !== today) continue;
       if (r.type === "sale") buckets[0].profit += r.amount; else buckets[0].expenses += r.amount;
     }
     buckets[0].profit -= buckets[0].expenses; return buckets;
   }
   if (period === "week") {
-    const start = periodStart("week");
-    const [y,m,d] = start.split("-").map(Number);
-    const startDate = new Date(y, m - 1, d);
+    // rolling 7-day window: bucket[0]=6 days ago, bucket[6]=today
+    const startMs = offsetDate(6).setHours(0, 0, 0, 0);
     for (const r of records) {
+      if (!r.record_date) continue;
       const [ry,rm,rd] = r.record_date.split("-").map(Number);
-      const diff = Math.floor((new Date(ry,rm-1,rd).getTime() - startDate.getTime()) / 86400000);
+      const diff = Math.floor((new Date(ry, rm - 1, rd).getTime() - startMs) / 86400000);
       if (diff < 0 || diff > 6) continue;
       if (r.type === "sale") buckets[diff].profit += r.amount; else buckets[diff].expenses += r.amount;
     }
@@ -67,6 +92,7 @@ function aggregate(records: BusinessRecord[], period: Period): Bucket[] {
   if (period === "month") {
     const now = new Date(); const month = now.getMonth(); const year = now.getFullYear();
     for (const r of records) {
+      if (!r.record_date) continue;
       const [ry,rm,rd] = r.record_date.split("-").map(Number);
       if (rm - 1 !== month || ry !== year) continue;
       const wi = Math.min(3, Math.floor((rd - 1) / 7));
@@ -74,12 +100,13 @@ function aggregate(records: BusinessRecord[], period: Period): Bucket[] {
     }
     for (const b of buckets) b.profit -= b.expenses; return buckets;
   }
+  // year
   const year = new Date().getFullYear();
   for (const r of records) {
+    if (!r.record_date) continue;
     const [ry,rm] = r.record_date.split("-").map(Number);
     if (ry !== year) continue;
-    const idx = rm - 1;
-    if (r.type === "sale") buckets[idx].profit += r.amount; else buckets[idx].expenses += r.amount;
+    if (r.type === "sale") buckets[rm - 1].profit += r.amount; else buckets[rm - 1].expenses += r.amount;
   }
   for (const b of buckets) b.profit -= b.expenses; return buckets;
 }
@@ -391,9 +418,11 @@ export default function InsightsPage() {
   const expenseRatio = t.sales > 0 ? Math.round((t.expenses / t.sales) * 100) : null;
 
   const periodLabel = period === "today" ? "Today"
-    : period === "week"  ? "This week"
+    : period === "week"  ? "Last 7 days"
     : period === "month" ? "This month"
     : "This year";
+
+  const dateRange = useMemo(() => periodRange(period), [period]);
 
   const bucketWord = period === "year" ? "month" : period === "month" ? "week" : "day";
 
@@ -475,22 +504,28 @@ export default function InsightsPage() {
       </h1>
 
       {/* Period tabs */}
-      <div className="flex bg-neutral-100 rounded-full p-1 gap-1">
-        {(["today", "week", "month", "year"] as Period[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className="flex-1 h-9 rounded-full text-[12.5px] font-semibold transition-all duration-200"
-            style={{
-              fontFamily: "var(--font-satoshi)",
-              background: period === p ? "#fff" : "transparent",
-              color:      period === p ? "#0F172A" : "#67738F",
-              boxShadow:  period === p ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
-            }}
-          >
-            {p === "today" ? "Today" : p === "week" ? "Week" : p === "month" ? "Month" : "Year"}
-          </button>
-        ))}
+      <div>
+        <div className="flex bg-neutral-100 rounded-full p-1 gap-1">
+          {(["today", "week", "month", "year"] as Period[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className="flex-1 h-9 rounded-full text-[12.5px] font-semibold transition-all duration-200"
+              style={{
+                fontFamily: "var(--font-satoshi)",
+                background: period === p ? "#fff" : "transparent",
+                color:      period === p ? "#0F172A" : "#67738F",
+                boxShadow:  period === p ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+              }}
+            >
+              {p === "today" ? "Today" : p === "week" ? "7 Days" : p === "month" ? "Month" : "Year"}
+            </button>
+          ))}
+        </div>
+        {/* Date range label */}
+        <p className="text-center text-[11px] text-neutral-400 mt-1.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+          {dateRange}
+        </p>
       </div>
 
       {/* Dark summary card */}
@@ -635,12 +670,27 @@ export default function InsightsPage() {
 
       {/* Empty state */}
       {!loading && records.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-10">
           <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
             <BarChart3 size={26} strokeWidth={2} className="text-neutral-300" />
           </div>
-          <p className="text-spal-navy font-semibold mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>No data yet</p>
-          <p className="text-neutral-400 text-sm mt-1">Add some sales and expenses to see your insights.</p>
+          <p className="text-spal-navy font-semibold mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+            No records for {dateRange}
+          </p>
+          <p className="text-neutral-400 text-[13px] mt-1 leading-relaxed px-6">
+            {period === "week"
+              ? "Records you imported with older dates won't appear here. Try switching to Month or Year to see them."
+              : "Add some sales and expenses to see your insights."}
+          </p>
+          {period === "week" && (
+            <button
+              onClick={() => setPeriod("month")}
+              className="mt-4 h-9 px-5 rounded-full text-[12.5px] font-semibold"
+              style={{ fontFamily: "var(--font-satoshi)", background: "#EFF6FF", color: "#2563EB" }}
+            >
+              View this month instead
+            </button>
+          )}
         </div>
       )}
 
@@ -659,11 +709,12 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 function EmptyChart({ period }: { period: Period }) {
+  const label = period === "today" ? "today" : period === "week" ? "in the last 7 days" : period === "month" ? "this month" : "this year";
   return (
     <div className="h-[200px] flex flex-col items-center justify-center text-center">
       <BarChart3 size={32} strokeWidth={1.8} className="text-neutral-300 mb-2" />
       <p className="text-[13px] text-neutral-500" style={{ fontFamily: "var(--font-satoshi)" }}>
-        No activity {period === "today" ? "today" : period === "week" ? "this week" : period === "month" ? "this month" : "this year"} yet.
+        No activity {label} yet.
       </p>
       <p className="text-[11.5px] text-neutral-400 mt-1">Add a sale or expense to see your chart.</p>
     </div>
