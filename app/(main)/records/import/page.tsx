@@ -558,8 +558,12 @@ export default function ImportRecordPage() {
         {records.length > 0 && !processing && !showPicker && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pt-3 pb-4 z-20"
-            style={{ background: "linear-gradient(to top, #F8F7F4 75%, transparent)" }}
+            className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pt-3 z-20"
+            style={{
+              bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
+              paddingBottom: "12px",
+              background: "linear-gradient(to top, #F8F7F4 75%, transparent)",
+            }}
           >
             <button
               onClick={handleSave}
