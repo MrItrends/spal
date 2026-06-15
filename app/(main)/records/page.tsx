@@ -9,7 +9,8 @@ import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { ExportSheet } from "@/components/records/ExportSheet";
 import { UndoToast } from "@/components/ui/UndoToast";
-import { ArrowUp, ArrowDown, Download, CheckSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowUp, ArrowDown, Download, CheckSquare, ScanLine, FolderInput, Package } from "lucide-react";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense";
@@ -34,6 +35,7 @@ interface UndoState {
 }
 
 export default function RecordsPage() {
+  const router = useRouter();
   const { addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
   const [filter,     setFilter]     = useState<Filter>("all");
   const [records,    setRecords]    = useState<BusinessRecord[]>([]);
@@ -274,7 +276,7 @@ export default function RecordsPage() {
         {loading ? (
           <RecordsSkeleton />
         ) : Object.keys(grouped).length === 0 ? (
-          <EmptyState filter={filter} onAdd={() => setAddSheet(filter === "expense" ? "expense" : "sale")} />
+          <EmptyState filter={filter} router={router} setAddSheet={setAddSheet} />
         ) : (
           <div className="space-y-5">
             {Object.entries(grouped).map(([date, dayRecords]) => (
@@ -376,25 +378,109 @@ export default function RecordsPage() {
   );
 }
 
-function EmptyState({ filter, onAdd }: { filter: Filter; onAdd: () => void }) {
+function EmptyState({
+  filter,
+  router,
+  setAddSheet,
+}: {
+  filter: Filter;
+  router: ReturnType<typeof useRouter>;
+  setAddSheet: (v: "sale" | "expense" | null) => void;
+}) {
+  const label =
+    filter === "expense" ? "expenses" : filter === "sale" ? "sales" : "records";
+
+  const actions = [
+    {
+      label: "Add Sale",
+      bg: "#F0FDF4",
+      icon: <ArrowUp size={20} strokeWidth={2} color="#22C55E" />,
+      labelColor: "#15803D",
+      onClick: () => router.push("/records/add-sale"),
+      cols: 3,
+    },
+    {
+      label: "Add Expense",
+      bg: "#FFF7ED",
+      icon: <ArrowDown size={20} strokeWidth={2} color="#F97316" />,
+      labelColor: "#C2410C",
+      onClick: () => router.push("/records/add-expense"),
+      cols: 3,
+    },
+    {
+      label: "Scan to Upload",
+      bg: "#F8FAFC",
+      icon: <ScanLine size={20} strokeWidth={2} color="#0F172A" />,
+      labelColor: "#0F172A",
+      onClick: () => router.push("/scan"),
+      cols: 3,
+    },
+    {
+      label: "Import Record",
+      bg: "#F8FAFC",
+      icon: <FolderInput size={20} strokeWidth={2} color="#0F172A" />,
+      labelColor: "#0F172A",
+      onClick: () => router.push("/records/import"),
+      cols: 2,
+    },
+    {
+      label: "Manage Inventory",
+      bg: "#F8FAFC",
+      icon: <Package size={20} strokeWidth={2} color="#0F172A" />,
+      labelColor: "#0F172A",
+      onClick: () => router.push("/inventory"),
+      cols: 2,
+    },
+  ] as const;
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center py-16 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
-        {filter === "expense" ? <RecordExpenseIcon large /> : <RecordSaleIcon large />}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-8 pb-4">
+      <p className="text-spal-navy font-bold text-[17px] mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>
+        No {label} yet
+      </p>
+      <p className="text-neutral-400 text-sm mb-6 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+        How would you like to add your first {filter === "expense" ? "expense" : "record"}?
+      </p>
+
+      {/* Row 1: Add Sale, Add Expense, Scan — 3 cols */}
+      <div className="grid grid-cols-3 gap-2.5 mb-2.5">
+        {actions.slice(0, 3).map((a) => (
+          <button
+            key={a.label}
+            onClick={a.onClick}
+            className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
+            style={{ background: a.bg, minHeight: "76px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+          >
+            {a.icon}
+            <span
+              className="text-[11px] font-semibold text-center leading-tight px-1"
+              style={{ fontFamily: "var(--font-satoshi)", color: a.labelColor }}
+            >
+              {a.label}
+            </span>
+          </button>
+        ))}
       </div>
-      <p className="text-spal-navy font-semibold text-base" style={{ fontFamily: "var(--font-satoshi)" }}>
-        No {filter === "all" ? "records" : filter === "sale" ? "sales" : "expenses"} yet
-      </p>
-      <p className="text-neutral-400 text-sm mt-1 max-w-xs leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
-        Start tracking your business today.
-      </p>
-      <button
-        onClick={onAdd}
-        className="mt-5 bg-spal-navy text-white font-semibold text-sm rounded-full px-6 h-11"
-        style={{ fontFamily: "var(--font-satoshi)" }}
-      >
-        Add your first {filter === "expense" ? "expense" : "sale"}
-      </button>
+
+      {/* Row 2: Import Record, Manage Inventory — 2 cols */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {actions.slice(3).map((a) => (
+          <button
+            key={a.label}
+            onClick={a.onClick}
+            className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
+            style={{ background: a.bg, minHeight: "76px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+          >
+            {a.icon}
+            <span
+              className="text-[11px] font-semibold text-spal-navy text-center leading-tight px-1"
+              style={{ fontFamily: "var(--font-satoshi)", color: a.labelColor }}
+            >
+              {a.label}
+            </span>
+          </button>
+        ))}
+      </div>
     </motion.div>
   );
 }
