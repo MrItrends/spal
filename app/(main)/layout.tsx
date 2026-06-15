@@ -12,11 +12,14 @@ export default function MainLayout({
 }) {
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Silently repopulates Zustand user after page refresh */}
       <UserHydration />
-      {/* Main content scrolls, bottom nav is fixed */}
-      <main className="flex-1 overflow-y-auto scroll-container pb-safe">
-        <div className="max-w-[480px] mx-auto min-h-full relative">
+      {/*
+        flex-1 + overflow-y-auto = scrollable content area.
+        pb-safe clears the fixed BottomNav (4rem) + device safe area.
+        max-w matches --shell-max-w so inner content never exceeds the shell.
+      */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-container pb-safe">
+        <div className="w-full min-h-full relative">
           {children}
         </div>
       </main>

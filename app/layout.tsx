@@ -76,16 +76,26 @@ export default function RootLayout({
         position:fixed child is contained by this element, not the viewport —
         keeping all overlays, sheets, and nav inside the mobile frame on desktop.
       */}
-      <body className="h-full overflow-hidden antialiased" style={{ background: "#06090F" }}>
-        {/* Registers /sw.js in production for PWA / offline support */}
+      {/*
+        body = full-viewport dark canvas (colour set in globals.css).
+        #app-root = centred mobile shell, max 480 px, min 320 px.
+        translateZ(0) creates a stacking context so every position:fixed
+        child stays inside the shell on desktop (nav, sheets, FAB, etc.).
+      */}
+      <body className="antialiased">
         <RegisterSW />
         <div
           id="app-root"
-          className="h-full flex flex-col overflow-hidden bg-spal-bg mx-auto relative"
+          className="flex flex-col overflow-hidden bg-spal-bg mx-auto relative"
           style={{
-            maxWidth: 480,
-            transform: "translateZ(0)",   // new stacking context — contains fixed children
-            boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 0 80px rgba(0,0,0,0.8)",
+            maxWidth: "var(--shell-max-w)",
+            minWidth:  "min(320px, 100vw)",
+            /* Use dynamic viewport height so mobile browser chrome is handled */
+            height: "100dvh",
+            /* Fallback for browsers without dvh */
+            minHeight: "100svh",
+            transform: "translateZ(0)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 0 80px rgba(0,0,0,0.6)",
           }}
         >
           {children}
