@@ -64,7 +64,9 @@ const STEPS: Step[] = [
   },
 ];
 
-const STORAGE_KEY = "spal_coachmarks_v3_done";
+const STORAGE_KEY  = "spal_coachmarks_v3_done";
+// Any previous version counts as done — don't re-show the tour for existing users
+const LEGACY_KEYS  = ["spal_coachmarks_v1_done", "spal_coachmarks_v2_done"];
 const SP          = 8;   // spotlight outset px
 const GAP         = 14;  // gap between spotlight and card px
 const MARGIN      = 16;  // min distance from screen edge px
@@ -107,7 +109,8 @@ export function HomeCoachmarks() {
   const [target,  setTarget]  = useState<TargetRect | null>(null);
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
+    const alreadyDone = [STORAGE_KEY, ...LEGACY_KEYS].some(k => localStorage.getItem(k));
+    if (!alreadyDone) setVisible(true);
   }, []);
 
   const step = STEPS[stepIdx];
@@ -193,10 +196,11 @@ export function HomeCoachmarks() {
       {/* Dark overlay */}
       <motion.div
         key="cm-overlay"
-        className="fixed inset-0 z-[100]"
-        style={{ background: "rgba(10,14,26,0.80)", pointerEvents: "none" }}
+        className="fixed inset-0 z-[100] cursor-pointer"
+        style={{ background: "rgba(10,14,26,0.80)" }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.22 }}
+        onClick={dismiss}
       />
 
       {/* Spotlight */}

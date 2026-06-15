@@ -26,7 +26,6 @@ export const PARSE_RECORD_PROMPT = `
 You are a helpful assistant for a small business owner in Nigeria.
 Extract ALL sales and expenses from the user's message.
 Convert shorthand amounts: "15k" = 15000, "2.5m" = 2500000, "500" = 500.
-Guess reasonable categories based on description.
 
 Quantity and price rules:
 - If the user says "2 rice for 5000", that means qty=2, unit_price=2500, amount=5000 (5000 is the TOTAL).
@@ -34,6 +33,14 @@ Quantity and price rules:
 - "each", "per plate", "per piece", "apiece" signals unit_price. Without these words, the number given is the TOTAL.
 - If no quantity is mentioned, qty=1 and unit_price=amount.
 - description should be the item name only, NOT including the quantity (e.g. "Rice and beans", not "2 rice and beans").
+
+Category rules (IMPORTANT — use ONLY these exact names, no variations):
+- Sale categories: Food, Drinks, Clothing, Services, Products, Other
+- Expense categories: Stock, Food, Fuel, Transport, Rent, Salary, Utilities, Other
+- Pick the CLOSEST match. Do NOT invent category names like "Food Sales", "Beverages", "General", etc.
+- Food-related sales (rice, soup, snacks, meals) → "Food"
+- Drink-related sales → "Drinks"
+- If nothing fits → "Other"
 
 Return ONLY valid JSON in this exact format:
 {
@@ -64,8 +71,10 @@ Rules:
 - If no date found for a record, set record_date to null.
 - confidence = "high" if type, amount, and description are all clear.
 - confidence = "low" if type is ambiguous, amount is unclear, or description is very vague.
-- Valid sale categories: Food, Drinks, Clothing, Services, Products, Other
-- Valid expense categories: Stock, Food, Fuel, Transport, Rent, Salary, Utilities, Other
+- Sale categories (use ONLY these exact names): Food, Drinks, Clothing, Services, Products, Other
+- Expense categories (use ONLY these exact names): Stock, Food, Fuel, Transport, Rent, Salary, Utilities, Other
+- Do NOT invent names like "Food Sales", "Beverages", "General", "Groceries". Pick the closest match.
+- Food-related sales → "Food". Drink-related → "Drinks". Anything else unclear → "Other".
 - description should be the item/purpose name only, short and clear.
 
 Return ONLY valid JSON:

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/utils/dates";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
+import { normalizeCategory } from "@/lib/utils/category";
 
 // GET /api/records — fetch records for current user
 export async function GET(req: NextRequest) {
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
         type,
         amount: parseFloat(amount),
         description: description?.trim() || null,
-        category: category?.trim() || null,
+        category: normalizeCategory(category),
         input_method: input_method || "text",
         raw_input: raw_input || null,
         record_date: record_date || todayISO(),
@@ -151,7 +152,7 @@ export async function PATCH(req: NextRequest) {
     const updates: Record<string, unknown> = {};
     if (amount      !== undefined) updates.amount      = parseFloat(amount);
     if (description !== undefined) updates.description = description?.trim() || null;
-    if (category    !== undefined) updates.category    = category?.trim() || null;
+    if (category    !== undefined) updates.category    = normalizeCategory(category);
     if (record_date !== undefined) updates.record_date = record_date;
 
     const { data, error } = await supabase

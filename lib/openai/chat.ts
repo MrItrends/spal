@@ -9,6 +9,7 @@ import {
   buildChatSystemPrompt,
 } from "./prompts";
 import type { ChatMessage } from "@/lib/types";
+import { normalizeCategory } from "@/lib/utils/category";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -167,7 +168,8 @@ Rules:
 - "type" is "sale" if the business RECEIVED money (sold goods/services)
 - "amount" is the TOTAL amount as a plain number (no ₦ symbol). Convert shorthand: 15k=15000.
 - "description" should be specific, e.g. "Fuel 20 litres", "Garri stock", "Customer payment"
-- "category" must be one of: Drinks, Food, Clothing, Services, Products, Stock, Fuel, Transport, Rent, Salary, Utilities, Other
+- "category" must be EXACTLY one of these names (no variations): Food, Drinks, Clothing, Services, Products, Stock, Fuel, Transport, Rent, Salary, Utilities, Other
+- Do NOT use names like "Food Sales", "Beverages", "General", "Groceries" — pick the closest exact match.
 - If the image is unreadable or contains no financial data, return: {"error":"cannot_read"}
 Do NOT include any text outside the JSON.`,
           },
@@ -188,7 +190,7 @@ Do NOT include any text outside the JSON.`,
     type:        parsed.type === "sale" ? "sale" : "expense",
     amount:      Number(parsed.amount),
     description: String(parsed.description ?? "").slice(0, 100),
-    category:    String(parsed.category ?? "Other"),
+    category:    normalizeCategory(String(parsed.category ?? "Other")),
   };
 }
 

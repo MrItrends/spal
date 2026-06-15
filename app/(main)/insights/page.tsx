@@ -8,8 +8,9 @@ import {
 } from "recharts";
 import {
   BarChart3, Trophy, TriangleAlert, TrendingUp, TrendingDown,
-  ShoppingBag, Tag, HeartPulse, ArrowRight, Flame,
+  ShoppingBag, Tag, HeartPulse, ArrowRight, Flame, Pencil, X, Check,
 } from "lucide-react";
+import { SALE_CATEGORIES } from "@/lib/utils/category";
 
 import { formatCurrency } from "@/lib/utils/currency";
 import type { BusinessRecord } from "@/lib/types";
@@ -246,8 +247,28 @@ function DiagnosisCard({ icon, tag, title, body, variant, askPrompt }: Diagnosis
 }
 
 // ─── Top sellers breakdown ────────────────────────────────────────────────────
-function TopSellersCard({ records, periodLabel }: { records: BusinessRecord[]; periodLabel: string }) {
+function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: BusinessRecord[]; periodLabel: string; onCategoryRenamed: () => void }) {
   const router = useRouter();
+  const [renamingCat, setRenamingCat] = useState<string | null>(null);
+  const [newName,     setNewName]     = useState("");
+  const [saving,      setSaving]      = useState(false);
+
+  async function handleRename() {
+    if (!renamingCat || !newName.trim()) return;
+    setSaving(true);
+    try {
+      await fetch("/api/records/category", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: renamingCat, to: newName.trim() }),
+      });
+      setRenamingCat(null);
+      setNewName("");
+      onCategoryRenamed();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const byItem = useMemo(() => {
     const acc: Record<string, number> = {};
@@ -344,15 +365,24 @@ function TopSellersCard({ records, periodLabel }: { records: BusinessRecord[]; p
       {/* By category */}
       {byCategory.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-3">By category</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">By category</p>
+            <p className="text-[10px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>Tap name to rename</p>
+          </div>
           <div className="space-y-2.5">
             {byCategory.map((cat, i) => (
               <div key={cat.name}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[12.5px] font-medium text-spal-navy flex items-center gap-1.5">
+                  <button
+                    onClick={() => { setRenamingCat(cat.name); setNewName(cat.name); }}
+                    className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
+                  >
                     <Tag size={11} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
-                    {cat.name}
-                  </span>
+                    <span className="text-[12.5px] font-medium text-spal-navy underline decoration-dotted underline-offset-2 decoration-neutral-300">
+                      {cat.name}
+                    </span>
+                    <Pencil size={10} strokeWidth={2} className="text-neutral-300" />
+                  </button>
                   <span className="text-[12px] font-medium text-neutral-500">
                     {totalSales > 0 ? `${Math.round((cat.amount / totalSales) * 100)}%` : "—"}
                     <span className="ml-1.5 text-spal-navy font-semibold">{formatCurrency(cat.amount)}</span>
@@ -372,6 +402,74 @@ function TopSellersCard({ records, periodLabel }: { records: BusinessRecord[]; p
           </div>
         </div>
       )}
+
+      {/* Rename category sheet */}
+      <AnimatePresence>
+        {renamingCat && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-30 bg-black/40"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setRenamingCat(null); setNewName(""); }}
+            />
+            <motion.div
+              className="fixed left-0 right-0 z-40 bg-white rounded-t-3xl p-5"
+              style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "tween", duration: 0.28, ease: "easeOut" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Rename category
+                </p>
+                <button onClick={() => { setRenamingCat(null); setNewName(""); }} className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
+                  <X size={14} strokeWidth={2.5} className="text-neutral-500" />
+                </button>
+              </div>
+              <p className="text-[12px] text-neutral-400 mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
+                Renaming <span className="font-semibold text-spal-navy">{renamingCat}</span> will update all records with this category.
+                If you rename it to an existing category they will merge.
+              </p>
+
+              {/* Quick-pick canonical names */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {SALE_CATEGORIES.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setNewName(c)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-colors"
+                    style={{
+                      background: newName === c ? "#22C55E" : "#F8FAFC",
+                      color: newName === c ? "#fff" : "#374151",
+                      borderColor: newName === c ? "#22C55E" : "#E5E7EB",
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                placeholder="Or type a custom name…"
+                className="w-full h-11 rounded-xl border border-neutral-200 px-4 text-[14px] text-spal-navy outline-none focus:border-spal-green mb-4"
+                style={{ fontFamily: "var(--font-satoshi)" }}
+              />
+
+              <button
+                onClick={handleRename}
+                disabled={saving || !newName.trim() || newName.trim() === renamingCat}
+                className="w-full h-12 rounded-2xl font-bold text-[14px] text-white flex items-center justify-center gap-2 disabled:opacity-40 transition-opacity"
+                style={{ background: "#22C55E", fontFamily: "var(--font-satoshi)" }}
+              >
+                {saving ? "Saving…" : <><Check size={16} strokeWidth={2.5} /> Save</>}
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -648,7 +746,7 @@ export default function InsightsPage() {
       {/* ── NEW: Top sellers ─────────────────────────────────────────────────── */}
       {!loading && records.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
-          <TopSellersCard records={records} periodLabel={periodLabel} />
+          <TopSellersCard records={records} periodLabel={periodLabel} onCategoryRenamed={fetchData} />
         </motion.div>
       )}
 

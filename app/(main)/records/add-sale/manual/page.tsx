@@ -61,7 +61,7 @@ export default function ManualEntryPage() {
               type: "sale",
               amount: parseFloat(it.qty) * parseFloat(it.unitPrice),
               description: it.name.trim(),
-              category: "Sales",
+              category: "Other",
               input_method: "manual",
               record_date: date,
             }),
