@@ -45,17 +45,28 @@ FROM public.businesses b
 WHERE b.user_id = u.id AND u.active_business_id IS NULL;
 
 -- 4. Add business_id FK to core data tables (nullable — backfilled below)
+-- records always exists
 ALTER TABLE public.records
   ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
 
-ALTER TABLE public.daily_summaries
-  ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
+-- daily_summaries, user_goals, inventory_items may not exist yet — guard with DO blocks
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'daily_summaries') THEN
+    ALTER TABLE public.daily_summaries ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
+  END IF;
+END $$;
 
-ALTER TABLE public.user_goals
-  ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_goals') THEN
+    ALTER TABLE public.user_goals ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
+  END IF;
+END $$;
 
-ALTER TABLE public.inventory_items
-  ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'inventory_items') THEN
+    ALTER TABLE public.inventory_items ADD COLUMN IF NOT EXISTS business_id UUID REFERENCES public.businesses(id);
+  END IF;
+END $$;
 
 -- 5. Backfill business_id on all existing rows using each user's only business
 UPDATE public.records r
@@ -63,20 +74,23 @@ SET business_id = b.id
 FROM public.businesses b
 WHERE b.user_id = r.user_id AND r.business_id IS NULL;
 
-UPDATE public.daily_summaries d
-SET business_id = b.id
-FROM public.businesses b
-WHERE b.user_id = d.user_id AND d.business_id IS NULL;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'daily_summaries') THEN
+    UPDATE public.daily_summaries d SET business_id = b.id FROM public.businesses b WHERE b.user_id = d.user_id AND d.business_id IS NULL;
+  END IF;
+END $$;
 
-UPDATE public.user_goals ug
-SET business_id = b.id
-FROM public.businesses b
-WHERE b.user_id = ug.user_id AND ug.business_id IS NULL;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_goals') THEN
+    UPDATE public.user_goals ug SET business_id = b.id FROM public.businesses b WHERE b.user_id = ug.user_id AND ug.business_id IS NULL;
+  END IF;
+END $$;
 
-UPDATE public.inventory_items i
-SET business_id = b.id
-FROM public.businesses b
-WHERE b.user_id = i.user_id AND i.business_id IS NULL;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'inventory_items') THEN
+    UPDATE public.inventory_items i SET business_id = b.id FROM public.businesses b WHERE b.user_id = i.user_id AND i.business_id IS NULL;
+  END IF;
+END $$;
 
 -- 6. Indexes
 CREATE INDEX IF NOT EXISTS idx_businesses_user_id  ON public.businesses(user_id);
