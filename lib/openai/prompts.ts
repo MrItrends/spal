@@ -107,6 +107,14 @@ If you cannot extract any records, return: { "records": [] }
 Do NOT include any text outside the JSON.
 `.trim();
 
+const GOAL_LABELS: Record<string, string> = {
+  track_daily_sales:   "track their sales every day",
+  know_real_profit:    "understand their real profit after expenses",
+  reduce_expenses:     "reduce unnecessary spending",
+  grow_business:       "grow their business",
+  understand_spending: "understand their spending patterns",
+};
+
 export function buildDailyInsightPrompt(data: {
   sales: number;
   expenses: number;
@@ -115,7 +123,12 @@ export function buildDailyInsightPrompt(data: {
   recordCount: number;
   topExpense?: string;
   topSale?: string;
+  businessGoals?: string[];
 }): string {
+  const goalsLine = data.businessGoals?.length
+    ? `- This owner wants to: ${data.businessGoals.map(g => GOAL_LABELS[g] ?? g).join(", ")}`
+    : "";
+
   return `
 ${SPAL_SYSTEM_PROMPT}
 
@@ -126,9 +139,10 @@ Today's business summary for a ${data.businessType.replace("_", " ")}:
 - Number of records: ${data.recordCount}
 ${data.topExpense ? `- Biggest expense: ${data.topExpense}` : ""}
 ${data.topSale ? `- Best sale: ${data.topSale}` : ""}
+${goalsLine}
 
 Generate TWO things:
-1. A SHORT encouraging insight (1 sentence, max 20 words). Mention something specific.
+1. A SHORT encouraging insight (1 sentence, max 20 words). Mention something specific. If the owner has stated goals, tailor the insight to what matters to them.
 2. A friendly message (1 sentence, max 15 words). Celebrate if profit > 0.
 
 Return ONLY JSON:

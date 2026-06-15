@@ -58,14 +58,26 @@ export async function GET(req: NextRequest) {
         .eq("id", user.id)
         .single();
 
+      // Pull business_goals from the active business row
+      let businessGoals: string[] = [];
+      if (bizId) {
+        const { data: bizData } = await supabase
+          .from("businesses")
+          .select("business_goals")
+          .eq("id", bizId)
+          .single();
+        businessGoals = bizData?.business_goals ?? [];
+      }
+
       try {
         const result = await generateDailyInsight({
           totalSales,
           totalExpenses,
           profit,
-          records: records ?? [],
+          records:      records ?? [],
           businessType: userData?.business_type ?? "other",
           currency:     userData?.currency      ?? "NGN",
+          businessGoals,
         });
         ai_insight = result.insight;
         ai_message = result.message;

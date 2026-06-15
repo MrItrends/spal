@@ -95,6 +95,7 @@ export async function generateDailyInsight(data: {
   records: Array<{ type: string; amount: number; description?: string; category?: string }>;
   businessType: string;
   currency: string;
+  businessGoals?: string[];
 }): Promise<{ insight: string; message: string }> {
   // Find top expense and top sale
   const sales    = data.records.filter(r => r.type === "sale");
@@ -103,13 +104,14 @@ export async function generateDailyInsight(data: {
   const topExpense = expenses.sort((a, b) => b.amount - a.amount)[0];
 
   const prompt = buildDailyInsightPrompt({
-    sales:       data.totalSales,
-    expenses:    data.totalExpenses,
-    profit:      data.profit,
-    businessType: data.businessType,
-    recordCount: data.records.length,
-    topSale:     topSale?.description ?? undefined,
-    topExpense:  topExpense?.description ?? undefined,
+    sales:         data.totalSales,
+    expenses:      data.totalExpenses,
+    profit:        data.profit,
+    businessType:  data.businessType,
+    recordCount:   data.records.length,
+    topSale:       topSale?.description ?? undefined,
+    topExpense:    topExpense?.description ?? undefined,
+    businessGoals: data.businessGoals,
   });
 
   const response = await openai.chat.completions.create({

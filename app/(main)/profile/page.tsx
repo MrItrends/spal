@@ -18,6 +18,22 @@ import {
 } from "lucide-react";
 import type { TrackingMethod } from "@/store";
 
+const GOAL_LABELS: Record<string, string> = {
+  track_daily_sales:   "Track daily sales",
+  know_real_profit:    "Know my real profit",
+  reduce_expenses:     "Reduce expenses",
+  grow_business:       "Grow my business",
+  understand_spending: "Understand my spending",
+};
+
+const GOAL_SUBS: Record<string, string> = {
+  track_daily_sales:   "Know exactly how much you make each day",
+  know_real_profit:    "See what you actually keep after expenses",
+  reduce_expenses:     "Find where money is leaking out",
+  grow_business:       "Make better decisions to grow",
+  understand_spending: "See patterns in how you spend money",
+};
+
 const BIZ_TYPE_COLORS: Record<string, string> = {
   food_seller:    "#22C55E",
   bar_owner:      "#F97316",
@@ -47,7 +63,7 @@ const CURRENCIES = [
   { code: "GBP", label: "British Pound",  symbol: "£" },
 ];
 
-type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | "tracking-methods" | "biz-options" | null;
+type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | "tracking-methods" | "business-goals" | "biz-options" | null;
 
 const TRACKING_METHOD_LABELS: Partial<Record<TrackingMethod, string>> = {
   notebook:      "Notebook",
@@ -186,6 +202,27 @@ export default function ProfilePage() {
     } catch { /* continue regardless */ } finally {
       logout();
       router.push("/login");
+    }
+  }
+
+  async function saveActiveBusiness(updates: Record<string, unknown>): Promise<string | null> {
+    if (!activeBusiness) return "No active business.";
+    try {
+      const res  = await fetch(`/api/businesses/${activeBusiness.id}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(updates),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updated = { ...activeBusiness, ...updates };
+        setActiveBusiness(updated as typeof activeBusiness);
+        setBusinesses(businesses.map(b => b.id === activeBusiness.id ? updated as typeof activeBusiness : b));
+        return null;
+      }
+      return data.error ?? "Something went wrong.";
+    } catch {
+      return "Network error. Please check your connection.";
     }
   }
 
@@ -420,13 +457,23 @@ export default function ProfilePage() {
               icon:    <FolderInput size={18} strokeWidth={2} color="#2563EB" />,
               label:   "Record tracking methods",
               hint:    (() => {
-                const methods = ((user as unknown as { tracking_methods?: TrackingMethod[] })?.tracking_methods ?? [])
-                  .filter(m => m !== "nothing");
+                const methods = (activeBusiness?.tracking_methods ?? []).filter(m => m !== "nothing") as TrackingMethod[];
                 return methods.length > 0
                   ? methods.map(m => TRACKING_METHOD_LABELS[m] ?? m).join(", ")
                   : "How do you currently track records?";
               })(),
               sheet:   "tracking-methods" as SheetType,
+            },
+            {
+              icon:    <BookOpen size={18} strokeWidth={2} color="#8B5CF6" />,
+              label:   "Business goals",
+              hint:    (() => {
+                const goals = activeBusiness?.business_goals ?? [];
+                return goals.length > 0
+                  ? goals.map(g => GOAL_LABELS[g] ?? g).join(", ")
+                  : "What do you want to achieve?";
+              })(),
+              sheet:   "business-goals" as SheetType,
             },
           ] as { icon: React.ReactNode; label: string; hint: string; sheet: SheetType }[]).map((item, i, arr) => (
             <button
@@ -623,11 +670,21 @@ export default function ProfilePage() {
 
       <TrackingMethodsSheet
         open={activeSheet === "tracking-methods"}
-        currentMethods={((user as unknown as { tracking_methods?: TrackingMethod[] })?.tracking_methods ?? [])
-          .filter(m => m !== "nothing")}
+        currentMethods={(activeBusiness?.tracking_methods ?? []).filter(m => m !== "nothing") as TrackingMethod[]}
         onClose={() => setActiveSheet(null)}
         onSave={async (methods) => {
-          const err = await saveProfile({ tracking_methods: methods });
+          const err = await saveActiveBusiness({ tracking_methods: methods });
+          if (!err) setActiveSheet(null);
+          return err;
+        }}
+      />
+
+      <BusinessGoalsSheet
+        open={activeSheet === "business-goals"}
+        currentGoals={activeBusiness?.business_goals ?? []}
+        onClose={() => setActiveSheet(null)}
+        onSave={async (goals) => {
+          const err = await saveActiveBusiness({ business_goals: goals });
           if (!err) setActiveSheet(null);
           return err;
         }}
@@ -1242,6 +1299,98 @@ function TrackingMethodsSheet({ open, currentMethods, onClose, onSave }: {
         {error && <p className="text-xs text-red-500 text-center">{error}</p>}
         <Button fullWidth loading={saving} onClick={handleSave} disabled={!selected.size}>
           Save {selected.size > 0 ? `(${selected.size} selected)` : ""} ✓
+        </Button>
+      </div>
+    </Sheet>
+  );
+}
+
+// ── Business Goals sheet ──────────────────────────────────────────────────
+
+const GOALS_LIST = Object.keys(GOAL_LABELS) as (keyof typeof GOAL_LABELS)[];
+
+function BusinessGoalsSheet({ open, currentGoals, onClose, onSave }: {
+  open:         boolean;
+  currentGoals: string[];
+  onClose:      () => void;
+  onSave:       (goals: string[]) => Promise<string | null>;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(currentGoals));
+  const [saving,   setSaving]   = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) { setSelected(new Set(currentGoals)); setError(null); }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggle(g: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g); else next.add(g);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    const err = await onSave(Array.from(selected));
+    if (err) setError(err);
+    setSaving(false);
+  }
+
+  const GOAL_COLORS: Record<string, string> = {
+    track_daily_sales:   "#22C55E",
+    know_real_profit:    "#2563EB",
+    reduce_expenses:     "#F97316",
+    grow_business:       "#8B5CF6",
+    understand_spending: "#2563EB",
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose} title="What do you want to achieve?">
+      <div className="space-y-3">
+        <p className="text-sm text-neutral-500 leading-relaxed">
+          SPAL uses this to make your daily insights more relevant to you.
+        </p>
+        {GOALS_LIST.map(g => {
+          const isOn  = selected.has(g);
+          const color = GOAL_COLORS[g] ?? "#22C55E";
+          return (
+            <button
+              key={g}
+              onClick={() => toggle(g)}
+              className="w-full flex items-center gap-4 bg-neutral-50 rounded-2xl px-4 py-3.5 text-left transition-all duration-150"
+              style={{
+                border:    isOn ? `1.5px solid ${color}` : "1.5px solid transparent",
+                boxShadow: isOn ? `0 0 0 3px ${color}18` : "none",
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[15px] font-bold"
+                style={{ background: `${color}18`, color }}
+              >
+                {isOn ? <Check size={18} strokeWidth={2.5} /> : null}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13.5px] font-semibold text-spal-navy">{GOAL_LABELS[g]}</p>
+                <p className="text-[11.5px] text-neutral-400 mt-0.5">{GOAL_SUBS[g]}</p>
+              </div>
+              <div
+                className="w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150"
+                style={{
+                  border:     isOn ? `2px solid ${color}` : "2px solid #D4D4D8",
+                  background: isOn ? color : "transparent",
+                }}
+              >
+                {isOn && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+            </button>
+          );
+        })}
+        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+        <Button fullWidth loading={saving} onClick={handleSave}>
+          Save goals {selected.size > 0 ? `(${selected.size})` : ""} ✓
         </Button>
       </div>
     </Sheet>
