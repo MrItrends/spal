@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type User } from "@/store";
+import type { Business } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -13,8 +14,19 @@ import {
   Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
   Store, Coins, Receipt, ChevronRight, Camera, Flame, Check, AlertCircle,
   BookOpen, MessageCircle, Table2, LayoutGrid, FileText, FolderInput,
+  Plus, Archive, Building2,
 } from "lucide-react";
 import type { TrackingMethod } from "@/store";
+
+const BIZ_TYPE_COLORS: Record<string, string> = {
+  food_seller:    "#22C55E",
+  bar_owner:      "#F97316",
+  fashion_vendor: "#8B5CF6",
+  salon:          "#2563EB",
+  kiosk:          "#22C55E",
+  market_trader:  "#F97316",
+  other:          "#A1A1AA",
+};
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
   food_seller:    "Food Seller",
@@ -35,7 +47,7 @@ const CURRENCIES = [
   { code: "GBP", label: "British Pound",  symbol: "£" },
 ];
 
-type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | "tracking-methods" | null;
+type SheetType = "name" | "business" | "whatsapp" | "currency" | "notifications" | "add-email" | "add-phone" | "tracking-methods" | "biz-options" | null;
 
 const TRACKING_METHOD_LABELS: Partial<Record<TrackingMethod, string>> = {
   notebook:      "Notebook",
@@ -49,10 +61,13 @@ const TRACKING_METHOD_LABELS: Partial<Record<TrackingMethod, string>> = {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, setUser, logout } = useSPALStore();
+  const { user, setUser, logout, activeBusiness, setActiveBusiness, businesses, setBusinesses } = useSPALStore();
   const [signingOut,    setSigningOut]    = useState(false);
   const [activeSheet,   setActiveSheet]   = useState<SheetType>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [switchingBiz,  setSwitchingBiz]  = useState<string | null>(null);
+  const [bizToManage,   setBizToManage]   = useState<Business | null>(null);
+  const [switchToast,   setSwitchToast]   = useState<string | null>(null);
 
   // Business health (last 7 days)
   const [health, setHealth] = useState<"loading" | "profitable" | "breaking-even" | "spending-more" | "no-data">("loading");
@@ -79,6 +94,48 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => { fetchHealth(); }, [fetchHealth]);
+
+  useEffect(() => {
+    fetch("/api/businesses")
+      .then(r => r.json())
+      .then(d => { if (d.success) setBusinesses(d.data ?? []); })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function switchBusiness(biz: Business) {
+    if (biz.id === activeBusiness?.id || switchingBiz) return;
+    setSwitchingBiz(biz.id);
+    try {
+      await fetch("/api/user/active-business", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ business_id: biz.id }),
+      });
+      setActiveBusiness(biz);
+      setSwitchToast(biz.business_name);
+      setTimeout(() => setSwitchToast(null), 2500);
+    } catch { /* silent */ } finally {
+      setSwitchingBiz(null);
+    }
+  }
+
+  async function archiveBusiness(biz: Business) {
+    try {
+      await fetch(`/api/businesses/${biz.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_archived: true }),
+      });
+      const remaining = businesses.filter(b => b.id !== biz.id);
+      setBusinesses(remaining);
+      setActiveSheet(null);
+      setBizToManage(null);
+      // If we archived the active business, switch to the first remaining one
+      if (activeBusiness?.id === biz.id && remaining.length > 0) {
+        switchBusiness(remaining[0]);
+      }
+    } catch { /* silent */ }
+  }
 
   // Verified = name + business details + at least one contact (phone or whatsapp)
   const isVerified = !!(
@@ -240,6 +297,74 @@ export default function ProfilePage() {
         </Card>
       </motion.div>
 
+      {/* My Businesses */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+        <Card padding="none">
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+            <p className="text-sm font-bold text-spal-navy">My Businesses</p>
+            <button
+              onClick={() => router.push("/add-business")}
+              className="flex items-center gap-1 active:opacity-70 transition-opacity"
+            >
+              <Plus size={14} strokeWidth={2.5} color="#22C55E" />
+              <span className="text-[13px] font-semibold" style={{ color: "#22C55E" }}>Add business</span>
+            </button>
+          </div>
+          <div className="pb-2">
+            {businesses.map((biz, i) => {
+              const isActive  = biz.id === activeBusiness?.id;
+              const typeColor = BIZ_TYPE_COLORS[biz.business_type] ?? "#22C55E";
+              return (
+                <div
+                  key={biz.id}
+                  className={`flex items-center gap-3 px-4 py-3 active:bg-neutral-50 transition-colors ${i < businesses.length - 1 ? "border-b border-neutral-50" : ""}`}
+                >
+                  {/* Coloured initial */}
+                  <button
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                    onClick={() => switchBusiness(biz)}
+                    disabled={!!switchingBiz}
+                  >
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[15px] font-bold"
+                      style={{ background: typeColor }}
+                    >
+                      {biz.business_name[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-spal-navy truncate">{biz.business_name}</p>
+                      <p className="text-xs text-neutral-400 mt-0.5 truncate">{BUSINESS_TYPE_LABELS[biz.business_type] ?? "Business"}</p>
+                    </div>
+                    {isActive && (
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#22C55E" }}>
+                        <Check size={11} strokeWidth={3} color="#fff" />
+                      </div>
+                    )}
+                    {switchingBiz === biz.id && (
+                      <div className="w-5 h-5 rounded-full border-2 border-spal-green border-t-transparent animate-spin flex-shrink-0" />
+                    )}
+                  </button>
+                  {/* Options */}
+                  <button
+                    onClick={() => { setBizToManage(biz); setActiveSheet("biz-options"); }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 flex-shrink-0 active:bg-neutral-200 transition-colors ml-1"
+                    aria-label="Business options"
+                  >
+                    <ChevronRight size={15} strokeWidth={2} className="text-neutral-400" />
+                  </button>
+                </div>
+              );
+            })}
+            {businesses.length === 0 && (
+              <div className="px-4 py-3 flex items-center gap-2 text-neutral-400">
+                <Building2 size={16} strokeWidth={1.5} />
+                <span className="text-[13px]">No businesses yet</span>
+              </div>
+            )}
+          </div>
+        </Card>
+      </motion.div>
+
       {/* Settings */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Card padding="none">
@@ -381,6 +506,62 @@ export default function ProfilePage() {
       </motion.div>
 
       <div className="h-4" />
+
+      {/* ── Switch toast ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {switchToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-2xl shadow-lg"
+            style={{ background: "#0F172A" }}
+          >
+            <p className="text-white text-[13px] font-semibold whitespace-nowrap">
+              Switched to {switchToast}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Business options sheet ─────────────────────────────────── */}
+      <Sheet
+        open={activeSheet === "biz-options"}
+        onClose={() => { setActiveSheet(null); setBizToManage(null); }}
+        title={bizToManage?.business_name ?? "Business"}
+      >
+        {bizToManage && (
+          <div className="space-y-3 pb-4">
+            <p className="text-[13px] text-neutral-400">
+              {BUSINESS_TYPE_LABELS[bizToManage.business_type] ?? "Business"}
+            </p>
+            <button
+              onClick={() => {
+                setActiveSheet(null);
+                setBizToManage(null);
+                router.push(`/add-business/rename?id=${bizToManage.id}&name=${encodeURIComponent(bizToManage.business_name)}`);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-4 bg-neutral-50 rounded-xl text-left active:bg-neutral-100 transition-colors"
+            >
+              <Pencil size={18} strokeWidth={2} color="#0F172A" />
+              <span className="text-[14px] font-semibold text-spal-navy">Rename business</span>
+            </button>
+            {businesses.length > 1 && (
+              <button
+                onClick={() => archiveBusiness(bizToManage)}
+                className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-left active:bg-red-50 transition-colors"
+                style={{ border: "1.5px solid #FEE2E2" }}
+              >
+                <Archive size={18} strokeWidth={2} color="#EF4444" />
+                <div>
+                  <p className="text-[14px] font-semibold" style={{ color: "#EF4444" }}>Archive business</p>
+                  <p className="text-[12px] text-neutral-400 mt-0.5">Your data is kept — you can restore it later</p>
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+      </Sheet>
 
       {/* ── Bottom Sheets ─────────────────────────────────────────── */}
 

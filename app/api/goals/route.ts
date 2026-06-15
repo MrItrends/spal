@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveBusinessId } from "@/lib/business";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -31,40 +32,25 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
+    const bizId = await getActiveBusinessId(supabase, user.id);
+
     // 1. Fetch user's saved goals
-    const { data: goals } = await supabase
+    let goalsQuery = supabase
       .from("user_goals")
       .select("*")
       .eq("user_id", user.id)
       .eq("is_active", true);
+    if (bizId) goalsQuery = goalsQuery.eq("business_id", bizId);
+    const { data: goals } = await goalsQuery;
 
     // 2. Compute current progress for each goal type from records
-    //    — we fetch four aggregated numbers in parallel
-    const [dayRes, weekRes, monthRes, yearRes] = await Promise.all([
-      // daily sales
-      supabase.from("records")
-        .select("amount")
-        .eq("user_id", user.id)
-        .eq("type", "sale")
-        .gte("created_at", startOf("day")),
-      // weekly: sales and expenses (for profit)
-      supabase.from("records")
-        .select("type, amount")
-        .eq("user_id", user.id)
-        .gte("created_at", startOf("week")),
-      // monthly sales
-      supabase.from("records")
-        .select("amount")
-        .eq("user_id", user.id)
-        .eq("type", "sale")
-        .gte("created_at", startOf("month")),
-      // yearly sales
-      supabase.from("records")
-        .select("amount")
-        .eq("user_id", user.id)
-        .eq("type", "sale")
-        .gte("created_at", startOf("year")),
-    ]);
+    let dayQ   = supabase.from("records").select("amount").eq("user_id", user.id).eq("type", "sale").gte("created_at", startOf("day"));
+    let weekQ  = supabase.from("records").select("type, amount").eq("user_id", user.id).gte("created_at", startOf("week"));
+    let monthQ = supabase.from("records").select("amount").eq("user_id", user.id).eq("type", "sale").gte("created_at", startOf("month"));
+    let yearQ  = supabase.from("records").select("amount").eq("user_id", user.id).eq("type", "sale").gte("created_at", startOf("year"));
+    if (bizId) { dayQ = dayQ.eq("business_id", bizId); weekQ = weekQ.eq("business_id", bizId); monthQ = monthQ.eq("business_id", bizId); yearQ = yearQ.eq("business_id", bizId); }
+
+    const [dayRes, weekRes, monthRes, yearRes] = await Promise.all([dayQ, weekQ, monthQ, yearQ]);
 
     const dailySales   = (dayRes.data   ?? []).reduce((s, r) => s + Number(r.amount), 0);
     const weeklyProfit = (weekRes.data  ?? []).reduce((s, r) => s + (r.type === "sale" ? Number(r.amount) : -Number(r.amount)), 0);
@@ -109,10 +95,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid goal data" }, { status: 400 });
     }
 
+    const bizId = await getActiveBusinessId(supabase, user.id);
+
     const { data, error } = await supabase
       .from("user_goals")
       .upsert(
-        { user_id: user.id, goal_type, target_amount: Number(target_amount), is_active: true },
+        { user_id: user.id, business_id: bizId ?? undefined, goal_type, target_amount: Number(target_amount), is_active: true },
         { onConflict: "user_id,goal_type" }
       )
       .select()

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSPALStore } from "@/store";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -17,14 +17,28 @@ import {
   ArrowUp, ArrowDown, ScanLine, FolderInput, Package,
 } from "lucide-react";
 
-export default function HomePage() {
+function HomePageInner() {
   const router = useRouter();
-  const { user, addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
+  const params = useSearchParams();
+  const { user, addSheetOpen, setAddSheet, recordSavedAt, activeBusiness, setActiveBusiness, setBusinesses } = useSPALStore();
   usePushNotifications(user?.id);
   const greeting = getGreeting();
   const name = user?.full_name ?? user?.business_name ?? "there";
+  const businessName = activeBusiness?.business_name ?? user?.business_name ?? "";
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [newBizToast, setNewBizToast] = useState<string | null>(null);
+
+  // Show "welcome to [business]" toast when redirected from add-business flow
+  useEffect(() => {
+    const nb = params.get("newBusiness");
+    if (nb) {
+      setNewBizToast(nb);
+      setTimeout(() => setNewBizToast(null), 3000);
+      // Clean URL
+      router.replace("/home");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetch("/api/notifications")
       .then(r => r.json())
@@ -43,6 +57,23 @@ export default function HomePage() {
   // Undo delete
   const [undoState,  setUndoState]  = useState<{ id: string; record: BusinessRecord } | null>(null);
   const pendingIdRef = useRef<string | null>(null);
+
+  // Bootstrap businesses once on mount
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/businesses")
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.data?.length) {
+          setBusinesses(d.data);
+          const active = d.data.find((b: { id: string }) => b.id === user.active_business_id) ?? d.data[0];
+          if (active && (!activeBusiness || activeBusiness.id !== active.id)) {
+            setActiveBusiness(active);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = useCallback(async () => {
     try {
@@ -132,6 +163,17 @@ export default function HomePage() {
             <h1 className="text-white text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>
               {name}
             </h1>
+            {businessName && (
+              <button
+                onClick={() => router.push("/profile")}
+                className="flex items-center gap-1 mt-0.5 active:opacity-70 transition-opacity"
+              >
+                <span className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {businessName}
+                </span>
+                <span className="text-white/50 text-[10px]">›</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -438,7 +480,32 @@ export default function HomePage() {
           />
         )}
       </AnimatePresence>
+
+      {/* New business welcome toast */}
+      <AnimatePresence>
+        {newBizToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-2xl shadow-lg"
+            style={{ background: "#22C55E" }}
+          >
+            <p className="text-white text-[13px] font-semibold whitespace-nowrap">
+              Welcome to {newBizToast}! 🎉
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomePageInner />
+    </Suspense>
   );
 }
 

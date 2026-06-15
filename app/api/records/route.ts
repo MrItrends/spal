@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/utils/dates";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
 import { normalizeCategory } from "@/lib/utils/category";
+import { getActiveBusinessId } from "@/lib/business";
 
 // GET /api/records — fetch records for current user
 export async function GET(req: NextRequest) {
@@ -18,6 +19,8 @@ export async function GET(req: NextRequest) {
     const type      = searchParams.get("type");       // sale | expense
     const limit     = parseInt(searchParams.get("limit") ?? "50");
 
+    const bizId = await getActiveBusinessId(supabase, user.id);
+
     let query = supabase
       .from("records")
       .select("*")
@@ -25,6 +28,8 @@ export async function GET(req: NextRequest) {
       .order("record_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    if (bizId) query = query.eq("business_id", bizId);
 
     if (date)      query = query.eq("record_date", date);
     if (startDate) query = query.gte("record_date", startDate);
@@ -55,10 +60,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "type and amount are required" }, { status: 400 });
     }
 
+    const bizId = await getActiveBusinessId(supabase, user.id);
+
     const { data, error } = await supabase
       .from("records")
       .insert({
         user_id: user.id,
+        business_id: bizId ?? undefined,
         type,
         amount: parseFloat(amount),
         description: description?.trim() || null,

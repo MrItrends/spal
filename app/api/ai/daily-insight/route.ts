@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateDailyInsight } from "@/lib/openai/chat";
 import { todayISO } from "@/lib/utils/dates";
+import { getActiveBusinessId } from "@/lib/business";
 
 // GET /api/ai/daily-insight — always computes fresh totals; only caches AI text
 export async function GET(req: NextRequest) {
@@ -13,12 +14,16 @@ export async function GET(req: NextRequest) {
 
     const date = new URL(req.url).searchParams.get("date") || todayISO();
 
+    const bizId = await getActiveBusinessId(supabase, user.id);
+
     // ── Always fetch live records for fresh totals ─────────────────────────────
-    const { data: records } = await supabase
+    let recordsQuery = supabase
       .from("records")
       .select("type, amount, description, category")
       .eq("user_id", user.id)
       .eq("record_date", date);
+    if (bizId) recordsQuery = recordsQuery.eq("business_id", bizId);
+    const { data: records } = await recordsQuery;
 
     const totalSales    = (records ?? []).filter(r => r.type === "sale")
                            .reduce((s, r) => s + Number(r.amount), 0);
@@ -75,6 +80,7 @@ export async function GET(req: NextRequest) {
       .upsert(
         {
           user_id:        user.id,
+          business_id:    bizId ?? undefined,
           summary_date:   date,
           total_sales:    totalSales,
           total_expenses: totalExpenses,

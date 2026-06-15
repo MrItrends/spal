@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Badge } from "@/lib/gamification/badges";
+import type { Business } from "@/lib/types";
 
 export type BusinessType =
   | "food_seller"
@@ -47,6 +48,7 @@ export interface User {
   inventory_setup_done?: boolean;
   inventory_track_sales?: boolean;
   tracking_methods?: TrackingMethod[];
+  active_business_id?: string;
 }
 
 export interface DailySummary {
@@ -94,6 +96,12 @@ interface SPALStore {
   newBadge: Badge | null;
   setNewBadge: (badge: Badge | null) => void;
 
+  // Multi-business
+  activeBusiness: Business | null;
+  businesses: Business[];
+  setActiveBusiness: (b: Business) => void;
+  setBusinesses: (bs: Business[]) => void;
+
   // Paywall — computed from user.subscription_plan
   isPro: boolean;
 
@@ -132,6 +140,12 @@ export const useSPALStore = create<SPALStore>()(
       recordSavedAt: 0,
       bumpRecordSaved: () => set({ recordSavedAt: Date.now() }),
 
+      // Multi-business
+      activeBusiness: null,
+      businesses: [],
+      setActiveBusiness: (b) => set({ activeBusiness: b }),
+      setBusinesses: (bs) => set({ businesses: bs }),
+
       // Gamification
       newBadge: null,
       setNewBadge: (badge) => set({ newBadge: badge }),
@@ -145,6 +159,8 @@ export const useSPALStore = create<SPALStore>()(
           todaySummary: null,
           onboardingData: {},
           newBadge: null,
+          activeBusiness: null,
+          businesses: [],
         }),
     }),
     {
@@ -153,6 +169,7 @@ export const useSPALStore = create<SPALStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         onboardingData: state.onboardingData,
+        activeBusiness: state.activeBusiness,
       }),
     }
   )

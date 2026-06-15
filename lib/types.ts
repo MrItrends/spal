@@ -31,6 +31,19 @@ export interface User {
   last_active?: string;
   onboarding_completed: boolean;
   created_at: string;
+  active_business_id?: string;
+}
+
+export interface Business {
+  id: string;
+  user_id: string;
+  business_name: string;
+  business_type: BusinessType;
+  currency: string;
+  tracking_methods: string[];
+  business_goals: string[];
+  is_archived: boolean;
+  created_at: string;
 }
 
 export type RecordType = "sale" | "expense";
