@@ -173,8 +173,11 @@ export default function AskSPALPage() {
     setVoiceState("idle");
   }
 
+  // Height of the fixed input bar — used to pad the scroll area so last message isn't hidden
+  const INPUT_BAR_H = "5rem"; // ~80px covers all three voice states
+
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col" style={{ minHeight: "100%" }}>
       {/* Header */}
       <div className="px-4 pt-5 pb-3 bg-spal-bg border-b border-neutral-100 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -188,8 +191,16 @@ export default function AskSPALPage() {
         </div>
       </div>
 
-      {/* Messages area — grows to push input down */}
-      <div className="flex-1 px-4 py-4 pb-2">
+      {/*
+        Messages / empty-state area.
+        padding-bottom clears the fixed input bar (INPUT_BAR_H) so the last
+        message is never hidden beneath it. The fixed input sits above the
+        bottom nav, so we also clear that (4rem + safe-area).
+      */}
+      <div
+        className="flex-1 overflow-y-auto scroll-container px-4 py-4"
+        style={{ paddingBottom: `calc(${INPUT_BAR_H} + 4rem + env(safe-area-inset-bottom, 0px))` }}
+      >
         {messages.length === 0 ? (
           <EmptyChat name={name} onPrompt={sendMessage} />
         ) : (
@@ -242,12 +253,21 @@ export default function AskSPALPage() {
         )}
       </div>
 
-      {/* Input bar — sticky at the bottom of the scroll container, sits right above BottomNav */}
-      <div className="sticky bottom-0 z-10 bg-spal-bg">
+      {/*
+        Input bar — fixed just above the bottom nav.
+        Because #app-root has transform:translateZ(0) it acts as the containing
+        block for fixed children, so left/right/bottom are relative to the
+        app shell (not the browser viewport). This keeps it inside the 480px
+        shell on desktop and perfectly above the nav on all screen sizes.
+      */}
+      <div
+        className="fixed left-0 right-0 z-20 bg-spal-bg border-t border-neutral-100"
+        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
+      >
         <AnimatePresence mode="wait">
           {voiceState === "recording" ? (
             <motion.div key="rec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="border-t border-neutral-100 px-5 pt-4 pb-5">
+              className="px-5 pt-4 pb-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="flex items-end gap-[3px] h-6">
                   {[0.5, 0.9, 0.6, 1, 0.7, 0.9, 0.5, 0.6, 0.8].map((h, i) => (
@@ -272,15 +292,15 @@ export default function AskSPALPage() {
             </motion.div>
           ) : voiceState === "transcribing" ? (
             <motion.div key="trans" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="border-t border-neutral-100 px-5 pt-3 pb-5">
-              <div className="flex items-center justify-center gap-2 py-2">
+              className="px-5 py-4">
+              <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-spal-green border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm text-neutral-400">Transcribing…</p>
               </div>
             </motion.div>
           ) : (
             <motion.div key="idle" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="px-4 py-3 border-t border-neutral-100">
+              className="px-4 py-3">
               <div className="flex items-center gap-2 bg-neutral-50 rounded-2xl px-3 h-12 border border-neutral-200 focus-within:border-spal-blue transition-colors">
                 <motion.button onClick={handleVoiceTap} disabled={loading} whileTap={{ scale: 0.88 }}
                   className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0 disabled:opacity-30">
