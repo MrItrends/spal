@@ -128,30 +128,53 @@ export default function ImportRecordPage() {
     setShowPicker(false);
   }
 
-  // ── Parse: file ───────────────────────────────────────────────────────────
-  async function handleFile(file: File | null | undefined) {
-    if (!file) return;
-    if (!file.name.match(/\.(csv|xlsx|xls|pdf|txt)$/i)) {
-      setParseError("Please upload a CSV, Excel, or PDF file.");
-      return;
-    }
+  // ── Duplicate file detection ──────────────────────────────────────────────
+  const DUPE_KEY = "spal_imported_files";
+  function getImportedFiles(): string[] {
+    try { return JSON.parse(localStorage.getItem(DUPE_KEY) ?? "[]"); } catch { return []; }
+  }
+  function markFileImported(name: string) {
+    const list = getImportedFiles();
+    if (!list.includes(name)) localStorage.setItem(DUPE_KEY, JSON.stringify([...list, name]));
+  }
+  function isDuplicateFile(name: string) {
+    return getImportedFiles().includes(name);
+  }
+
+  const [dupeFile,    setDupeFile]    = useState<File | null>(null);
+  const [showDupeBanner, setDupeBanner] = useState(false);
+
+  async function doProcessFile(file: File) {
     setParseError("");
     setProcessing(true);
     try {
-      const text = await file.text();
-      const res  = await fetch("/api/ai/import-records", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ text }),
-      });
+      const fd = new FormData();
+      fd.append("file", file);
+      const res  = await fetch("/api/ai/import-records", { method: "POST", body: fd });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       appendRecords(data.data ?? []);
+      markFileImported(file.name);
     } catch {
       setParseError("Couldn't read the file. Try exporting as CSV and uploading again.");
     } finally {
       setProcessing(false);
     }
+  }
+
+  // ── Parse: file ───────────────────────────────────────────────────────────
+  async function handleFile(file: File | null | undefined) {
+    if (!file) return;
+    if (!file.name.match(/\.(csv|xlsx|xls|ods|pdf|txt)$/i)) {
+      setParseError("Please upload a CSV, Excel (.xlsx), or PDF file.");
+      return;
+    }
+    if (isDuplicateFile(file.name)) {
+      setDupeFile(file);
+      setDupeBanner(true);
+      return;
+    }
+    await doProcessFile(file);
   }
 
   // ── Parse: image ──────────────────────────────────────────────────────────
@@ -361,10 +384,51 @@ export default function ImportRecordPage() {
             )}
 
             {/* Hidden file inputs */}
-            <input ref={fileRef}  type="file" accept=".csv,.xlsx,.xls,.pdf,.txt" className="hidden"
-              onChange={e => handleFile(e.target.files?.[0])} />
+            <input ref={fileRef}  type="file" accept=".csv,.xlsx,.xls,.ods,.pdf,.txt" className="hidden"
+              onChange={e => { handleFile(e.target.files?.[0]); e.target.value = ""; }} />
             <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden"
-              onChange={e => handleImage(e.target.files?.[0])} />
+              onChange={e => { handleImage(e.target.files?.[0]); e.target.value = ""; }} />
+
+            {/* Duplicate file warning */}
+            <AnimatePresence>
+              {showDupeBanner && dupeFile && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mt-4 rounded-2xl overflow-hidden"
+                  style={{ border: "1.5px solid #FCD34D", background: "#FFFBEB" }}
+                >
+                  <div className="px-4 pt-4 pb-3">
+                    <div className="flex items-start gap-2.5 mb-3">
+                      <AlertCircle size={16} strokeWidth={2} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-[13px] font-bold text-amber-800 leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
+                          Looks like you&apos;ve imported this file before
+                        </p>
+                        <p className="text-[12px] text-amber-700 mt-0.5 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
+                          <span className="font-semibold">{dupeFile.name}</span> was already uploaded. Importing again may create duplicate records.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setDupeBanner(false); setDupeFile(null); }}
+                        className="flex-1 h-10 rounded-xl border border-amber-300 text-[12.5px] font-semibold text-amber-700 active:opacity-70"
+                        style={{ fontFamily: "var(--font-satoshi)" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => { setDupeBanner(false); doProcessFile(dupeFile); setDupeFile(null); }}
+                        className="flex-1 h-10 rounded-xl bg-amber-500 text-white text-[12.5px] font-bold active:opacity-80"
+                        style={{ fontFamily: "var(--font-satoshi)" }}
+                      >
+                        Import anyway
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Processing indicator */}
             <AnimatePresence>
