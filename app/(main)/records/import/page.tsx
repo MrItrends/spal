@@ -236,8 +236,9 @@ export default function ImportRecordPage() {
   const handleSave = useCallback(async () => {
     if (!records.length || saving) return;
     setSaving(true);
+    setParseError("");
     try {
-      await Promise.all(
+      const results = await Promise.all(
         records.map(r =>
           fetch("/api/records", {
             method:  "POST",
@@ -250,13 +251,21 @@ export default function ImportRecordPage() {
               input_method: "import",
               record_date:  r.record_date ?? fallbackDate,
             }),
-          })
+          }).then(res => res.json())
         )
       );
-      setSavedCount(records.length);
+      const failed = results.filter(r => !r.success).length;
+      if (failed > 0 && failed === results.length) {
+        setParseError("Couldn't save records. Please check your connection and try again.");
+        setSaving(false);
+        return;
+      }
+      const saved = results.filter(r => r.success).length;
+      setSavedCount(saved);
       bumpRecordSaved();
       setRecords([]);
     } catch {
+      setParseError("Something went wrong while saving. Please try again.");
       setSaving(false);
     }
   }, [records, saving, fallbackDate, bumpRecordSaved]);

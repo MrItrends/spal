@@ -9,9 +9,11 @@ import * as XLSX from "xlsx";
 // JSON: { text } → GPT parse
 
 function xlsxToText(buffer: ArrayBuffer): string {
-  const wb = XLSX.read(buffer, { type: "array" });
+  // cellDates: true ensures date cells are returned as JS Date objects, not serials
+  const wb = XLSX.read(buffer, { type: "array", cellDates: true });
   return wb.SheetNames.map(name => {
-    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name], { blankrows: false });
+    // dateNF forces date cells to render as YYYY-MM-DD in the CSV output
+    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name], { blankrows: false, dateNF: "YYYY-MM-DD" });
     return `=== ${name} ===\n${csv}`;
   }).join("\n\n");
 }
