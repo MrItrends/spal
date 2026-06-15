@@ -16,7 +16,7 @@ export default function WelcomePage() {
   }, []);
 
   return (
-    <div className="flex-1 relative overflow-hidden" style={{ background: "#0F172A" }}>
+    <div className="h-full relative overflow-hidden" style={{ background: "#0F172A" }}>
 
       {/* ── Splash overlay ── */}
       <AnimatePresence>
