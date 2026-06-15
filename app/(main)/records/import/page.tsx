@@ -93,7 +93,7 @@ export default function ImportRecordPage() {
             .filter(m => m !== "nothing") as TrackingMethod[];
           if (dbMethods.length > 0) {
             setMethods(dbMethods);
-            setActive(dbMethods[0]);
+            // Don't auto-select — let user choose from their saved methods
             setLP(false);
             return;
           }
@@ -104,7 +104,6 @@ export default function ImportRecordPage() {
       const fallback = ((user as unknown as { tracking_methods?: TrackingMethod[] })
         ?.tracking_methods ?? []).filter(m => m !== "nothing");
       setMethods(fallback);
-      setActive(fallback[0] ?? null);
       setLP(false);
     }
     load();
@@ -293,7 +292,7 @@ export default function ImportRecordPage() {
           </div>
         )}
 
-        {/* ── Inline method picker ───────────────────────────────────────── */}
+        {/* ── Inline method picker (no saved methods) ───────────────────── */}
         {!loadingProfile && showPicker && (
           <MethodPicker
             current={methods}
@@ -301,55 +300,38 @@ export default function ImportRecordPage() {
           />
         )}
 
+        {/* ── Method chooser (has saved methods, none chosen yet) ────────── */}
+        {!loadingProfile && !showPicker && methods.length > 0 && !activeMethod && (
+          <MethodChooser
+            methods={methods}
+            onSelect={setActive}
+          />
+        )}
+
         {/* ── Upload UI ─────────────────────────────────────────────────── */}
-        {!loadingProfile && !showPicker && (
+        {!loadingProfile && !showPicker && activeMethod && (
           <>
-            {/* Title + change methods link */}
+            {/* Title + back-to-chooser link */}
             <div className="flex items-start justify-between mb-5">
               <div>
                 <h1 className="text-[22px] font-bold text-spal-navy leading-tight" style={{ fontFamily: "var(--font-satoshi)" }}>
-                  Import Records
+                  {METHOD_META[activeMethod].label}
                 </h1>
                 <p className="text-[13px] text-neutral-400 mt-1" style={{ fontFamily: "var(--font-satoshi)" }}>
                   SPAL reads your records and extracts them automatically.
                 </p>
               </div>
-              <button
-                onClick={() => setShowPicker(true)}
-                className="flex items-center gap-1 text-[11px] font-semibold mt-1 flex-shrink-0"
-                style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
-              >
-                <Pencil size={11} strokeWidth={2.5} />
-                Change
-              </button>
+              {methods.length > 1 && (
+                <button
+                  onClick={() => { setActive(null); setRecords([]); setParseError(""); }}
+                  className="flex items-center gap-1 text-[11px] font-semibold mt-1 flex-shrink-0"
+                  style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
+                >
+                  <Pencil size={11} strokeWidth={2.5} />
+                  Switch
+                </button>
+              )}
             </div>
-
-            {/* Method tabs */}
-            {methods.length > 1 && (
-              <div className="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-5 px-5 scroll-container">
-                {methods.map(m => {
-                  const info     = METHOD_META[m];
-                  const isActive = activeMethod === m;
-                  return (
-                    <motion.button
-                      key={m}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActive(m)}
-                      className="flex items-center gap-2 px-4 h-10 rounded-full flex-shrink-0 text-[13px] font-semibold transition-all duration-150"
-                      style={{
-                        background: isActive ? "#0F172A" : "#fff",
-                        color:      isActive ? "#fff"    : "#6B7280",
-                        border:     isActive ? "none"    : "1.5px solid #E5E7EB",
-                        fontFamily: "var(--font-satoshi)",
-                      }}
-                    >
-                      {info.icon}
-                      {info.label}
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Upload area */}
             {meta && (
@@ -520,6 +502,81 @@ export default function ImportRecordPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ── MethodChooser — pick from saved methods ───────────────────────────────────
+
+function MethodChooser({
+  methods,
+  onSelect,
+}: {
+  methods:  TrackingMethod[];
+  onSelect: (m: TrackingMethod) => void;
+}) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <h1
+        className="text-[22px] font-bold text-spal-navy leading-tight mb-1"
+        style={{ fontFamily: "var(--font-satoshi)" }}
+      >
+        Where are your records?
+      </h1>
+      <p className="text-[13px] text-neutral-400 mb-6" style={{ fontFamily: "var(--font-satoshi)" }}>
+        Pick the one you want to import from today.
+      </p>
+
+      <div className="space-y-3">
+        {methods.map((m, i) => {
+          const info = METHOD_META[m];
+          return (
+            <motion.button
+              key={m}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onSelect(m)}
+              className="w-full flex items-center gap-4 bg-white rounded-2xl px-4 py-4 text-left transition-all duration-150 active:opacity-80"
+              style={{
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04)",
+                border:    "1.5px solid #F0F0F0",
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${info.accent}14`, color: info.accent }}
+              >
+                {info.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {info.label}
+                </p>
+                <p className="text-[12px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  {info.sub}
+                </p>
+              </div>
+              <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Nudge to update methods */}
+      <div className="mt-8 flex items-center justify-center gap-1.5">
+        <p className="text-[12px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
+          Using a different method now?
+        </p>
+        <a
+          href="/profile"
+          className="text-[12px] font-semibold"
+          style={{ color: "#2563EB", fontFamily: "var(--font-satoshi)" }}
+        >
+          Update in Settings
+        </a>
+      </div>
+    </motion.div>
   );
 }
 
