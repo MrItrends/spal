@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mic, Square } from "lucide-react";
+import { ArrowLeft, Mic, Square, Clock } from "lucide-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -408,14 +408,14 @@ export default function VoiceEntryPage() {
                   <button
                     key={s}
                     onClick={() => setPaymentStatus(s)}
-                    className="flex-1 h-9 rounded-full text-[12px] font-bold transition-all duration-150"
+                    className="flex-1 h-9 rounded-full text-[12px] font-bold transition-all duration-150 flex items-center justify-center gap-1.5"
                     style={{
                       background: paymentStatus === s ? (s === 'paid' ? '#22C55E' : '#F97316') : '#E5E7EB',
                       color: paymentStatus === s ? '#fff' : '#6B7280',
                       fontFamily,
                     }}
                   >
-                    {s === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+                    {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
                   </button>
                 ))}
               </div>

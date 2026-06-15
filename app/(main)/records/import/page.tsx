@@ -10,7 +10,7 @@ import {
   ArrowLeft, BookOpen, MessageCircle, Table2, LayoutGrid,
   FileText, Receipt, FileUp, ImageIcon, AlignLeft,
   ArrowUpRight, ArrowDownLeft, Calendar, CheckCircle2,
-  AlertCircle, ChevronRight, Pencil,
+  AlertCircle, ChevronRight, Pencil, Clock,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -1043,14 +1043,14 @@ function ReviewCard({
                 <button
                   key={s}
                   onClick={() => onChange({ payment_status: s, confidence: "high" })}
-                  className="flex-1 h-8 rounded-full text-[11px] font-bold transition-all duration-150"
+                  className="flex-1 h-8 rounded-full text-[11px] font-bold transition-all duration-150 flex items-center justify-center gap-1"
                   style={{
                     background: record.payment_status === s ? (s === 'paid' ? '#22C55E' : '#F97316') : '#F4F4F5',
                     color: record.payment_status === s ? '#fff' : '#9CA3AF',
                     fontFamily: "var(--font-satoshi)",
                   }}
                 >
-                  {s === 'paid' ? '✓ Paid' : '⏳ Owes me'}
+                  {s === 'paid' ? <><span>✓</span> Paid</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
                 </button>
               ))}
             </div>

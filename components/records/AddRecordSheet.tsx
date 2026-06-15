@@ -7,7 +7,7 @@ import { PillChip } from "@/components/ui/PillChip";
 import { useSPALStore } from "@/store";
 import type { BusinessRecord } from "@/lib/types";
 import type { Badge } from "@/lib/gamification/badges";
-import { Camera, X, CheckCircle2, Minus, Plus, Zap } from "lucide-react";
+import { Camera, X, CheckCircle2, Minus, Plus, Zap, Clock } from "lucide-react";
 import { SALE_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/categories";
 
 interface AddRecordSheetProps {
@@ -525,7 +525,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                         <button
                           key={status}
                           onClick={() => setPaymentStatus(status)}
-                          className="flex-1 h-10 rounded-full text-[13px] font-bold transition-all duration-150"
+                          className="flex-1 h-10 rounded-full text-[13px] font-bold transition-all duration-150 flex items-center justify-center gap-1.5"
                           style={{
                             background: paymentStatus === status
                               ? (status === 'paid' ? '#22C55E' : '#F97316')
@@ -533,7 +533,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                             color: paymentStatus === status ? '#fff' : '#71717A',
                           }}
                         >
-                          {status === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+                          {status === 'paid' ? <><span>✓</span> Paid now</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
                         </button>
                       ))}
                     </div>

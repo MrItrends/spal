@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RotateCcw, Plus } from "lucide-react";
+import { ArrowLeft, RotateCcw, Plus, Clock } from "lucide-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -256,14 +256,14 @@ export default function PictureConfirmPage() {
                     <button
                       key={s}
                       onClick={() => setPaymentStatus(s)}
-                      className="flex-1 h-9 rounded-full text-[12px] font-bold transition-all duration-150"
+                      className="flex-1 h-9 rounded-full text-[12px] font-bold transition-all duration-150 flex items-center justify-center gap-1.5"
                       style={{
                         background: paymentStatus === s ? (s === 'paid' ? '#16A34A' : '#F97316') : 'rgba(255,255,255,0.6)',
                         color: paymentStatus === s ? '#fff' : '#4B5563',
                         fontFamily,
                       }}
                     >
-                      {s === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+                      {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
                     </button>
                   ))}
                 </div>
