@@ -327,11 +327,18 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
             {byItem.map((item, i) => (
               <div key={item.name}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[12.5px] font-medium text-spal-navy truncate max-w-[55%]">
-                    {i === 0 && <span className="text-[10px] font-bold mr-1.5" style={{ color: "#2D7A3A" }}>BEST</span>}
-                    {item.name}
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[12.5px] font-medium text-spal-navy truncate">{item.name}</span>
+                    {i === 0 && (
+                      <span
+                        className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: "#DCFCE7", color: "#15803D" }}
+                      >
+                        Best
+                      </span>
+                    )}
                   </span>
-                  <span className="text-[12px] font-semibold text-spal-navy">{formatCurrency(item.amount)}</span>
+                  <span className="text-[12px] font-semibold text-spal-navy flex-shrink-0 ml-2">{formatCurrency(item.amount)}</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-neutral-100 overflow-hidden">
                   <motion.div
