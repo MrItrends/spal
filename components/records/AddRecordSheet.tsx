@@ -32,10 +32,12 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   const [amount,        setAmount]        = useState("");
   const [description,   setDescription]   = useState("");
   const [category,      setCategory]      = useState("");
-  const [loading,       setLoading]       = useState(false);
-  const [deleting,      setDeleting]      = useState(false);
-  const [success,       setSuccess]       = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [loading,        setLoading]        = useState(false);
+  const [deleting,       setDeleting]       = useState(false);
+  const [success,        setSuccess]        = useState(false);
+  const [deleteConfirm,  setDeleteConfirm]  = useState(false);
+  const [paymentStatus,  setPaymentStatus]  = useState<'paid' | 'owing'>('paid');
+  const [customerName,   setCustomerName]   = useState('');
   const [scanning,      setScanning]      = useState(false);
   const [scanError,     setScanError]     = useState("");
   const [wasScanned,    setWasScanned]    = useState(false);
@@ -55,6 +57,8 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
       setAmount(String(record.amount));
       setDescription(record.description ?? "");
       setCategory(record.category ?? "");
+      setPaymentStatus(record.payment_status ?? 'paid');
+      setCustomerName(record.customer_name ?? '');
       setDeleteConfirm(false);
     }
   }, [record, open]);
@@ -132,10 +136,12 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
           method:  "PATCH",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({
-            id:          record.id,
-            amount:      parseFloat(amount),
-            description: description.trim() || undefined,
-            category:    category || undefined,
+            id:             record.id,
+            amount:         parseFloat(amount),
+            description:    description.trim() || undefined,
+            category:       category || undefined,
+            payment_status: paymentStatus,
+            customer_name:  customerName.trim() || undefined,
           }),
         });
         const data = await res.json();
@@ -151,10 +157,12 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({
             type,
-            amount:      parseFloat(amount),
-            description: finalDesc,
-            category:    category || undefined,
-            input_method: wasScanned ? "scan" : (selectedItem ? "quick" : "text"),
+            amount:         parseFloat(amount),
+            description:    finalDesc,
+            category:       category || undefined,
+            input_method:   wasScanned ? "scan" : (selectedItem ? "quick" : "text"),
+            payment_status: type === "sale" ? paymentStatus : "paid",
+            customer_name:  type === "sale" && paymentStatus === "owing" ? (customerName.trim() || undefined) : undefined,
           }),
         });
         const data = await res.json();
@@ -232,6 +240,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
 
   function reset() {
     setAmount(""); setDescription(""); setCategory("");
+    setPaymentStatus('paid'); setCustomerName('');
     setSuccess(false); setDeleteConfirm(false);
     setScanError(""); setScanning(false); setWasScanned(false);
     clearSelection();
@@ -505,8 +514,76 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                   </div>
                 </div>
 
+                {/* ── Did they pay? (sales only) ── */}
+                {type === "sale" && (
+                  <div className="mb-5">
+                    <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wide block mb-2">
+                      Did they pay?
+                    </label>
+                    <div className="flex gap-2">
+                      {(['paid', 'owing'] as const).map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => setPaymentStatus(status)}
+                          className="flex-1 h-10 rounded-full text-[13px] font-bold transition-all duration-150"
+                          style={{
+                            background: paymentStatus === status
+                              ? (status === 'paid' ? '#22C55E' : '#F97316')
+                              : '#F4F4F5',
+                            color: paymentStatus === status ? '#fff' : '#71717A',
+                          }}
+                        >
+                          {status === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+                        </button>
+                      ))}
+                    </div>
+                    <AnimatePresence>
+                      {paymentStatus === 'owing' && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Customer name (optional — e.g. Mama Ngozi)"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            className="mt-2 w-full h-11 px-4 bg-orange-50 rounded-2xl border-2 border-orange-100 focus:border-spal-orange text-sm text-spal-navy placeholder:text-neutral-400 outline-none transition-colors"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
                 {/* ── Save / Delete ── */}
                 <div className="mt-5">
+                  {/* Mark as Paid shortcut — only in edit mode for owing sales */}
+                  {isEdit && record?.type === 'sale' && record?.payment_status === 'owing' && paymentStatus === 'owing' && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                      onClick={async () => {
+                        setLoading(true);
+                        await fetch("/api/records", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: record.id, payment_status: "paid" }),
+                        });
+                        setPaymentStatus('paid');
+                        setLoading(false);
+                        setSuccess(true);
+                        setTimeout(() => { setSuccess(false); reset(); onClose(); onSuccess?.(); }, 1000);
+                      }}
+                      className="w-full h-12 rounded-full font-bold text-[14px] text-white mb-3 flex items-center justify-center gap-2"
+                      style={{ background: '#22C55E' }}
+                    >
+                      ✓ Mark as Paid
+                    </motion.button>
+                  )}
+
                   <Button
                     fullWidth size="lg" loading={loading} disabled={!isValid}
                     onClick={handleSave}

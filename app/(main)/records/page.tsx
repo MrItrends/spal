@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { ArrowUp, ArrowDown, Download, CheckSquare, ScanLine, FolderInput, Package } from "lucide-react";
 import type { BusinessRecord } from "@/lib/types";
 
-type Filter = "all" | "sale" | "expense";
+type Filter = "all" | "sale" | "expense" | "owing";
 
 function dateLabel(recordDate: string): string {
   const today = new Date().toISOString().split("T")[0];
@@ -160,7 +160,11 @@ export default function RecordsPage() {
 
   function handleEditClose() { setEditRecord(null); }
 
-  const filtered = records.filter((r) => filter === "all" ? true : r.type === filter);
+  const filtered = records.filter((r) => {
+    if (filter === "all")    return true;
+    if (filter === "owing")  return r.payment_status === "owing";
+    return r.type === filter;
+  });
   const grouped  = filtered.reduce<Record<string, BusinessRecord[]>>((acc, r) => {
     const label = dateLabel(r.record_date);
     (acc[label] ??= []).push(r);
@@ -201,7 +205,7 @@ export default function RecordsPage() {
               <div className="flex items-center gap-3">
                 {records.length > 0 && (
                   <span className="text-xs text-neutral-400">
-                    {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : "expenses"}
+                    {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : filter === "expense" ? "expenses" : "owing"}
                   </span>
                 )}
                 {records.length > 0 && (
@@ -227,21 +231,50 @@ export default function RecordsPage() {
           )}
         </div>
 
+        {/* Debtors banner — shown when any records are owing */}
+        {(() => {
+          const owingRecords = records.filter(r => r.payment_status === "owing");
+          const owingTotal   = owingRecords.reduce((s, r) => s + r.amount, 0);
+          if (owingRecords.length === 0) return null;
+          const names = [...new Set(owingRecords.map(r => r.customer_name).filter(Boolean))];
+          const subtitle = names.length > 0
+            ? `${names.slice(0, 2).join(", ")}${names.length > 2 ? ` +${names.length - 2} more` : ""} ${owingRecords.length === 1 ? "hasn't" : "haven't"} paid yet`
+            : `${owingRecords.length} ${owingRecords.length === 1 ? "sale" : "sales"} not yet paid`;
+          return (
+            <button
+              onClick={() => setFilter("owing")}
+              className="w-full mb-4 rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-80 transition-opacity text-left"
+              style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
+            >
+              <div>
+                <p className="text-[13px] font-bold" style={{ color: "#C2410C", fontFamily: "var(--font-satoshi)" }}>
+                  💸 {formatCurrency(owingTotal)} owed to you
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: "#EA580C", fontFamily: "var(--font-satoshi)" }}>
+                  {subtitle}
+                </p>
+              </div>
+              <span className="text-[11px] font-semibold" style={{ color: "#EA580C", fontFamily: "var(--font-satoshi)" }}>View →</span>
+            </button>
+          );
+        })()}
+
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-4">
-          {(["all", "sale", "expense"] as Filter[]).map((f) => (
+        <div className="flex gap-1.5 mb-4">
+          {(["all", "sale", "expense", "owing"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => { setFilter(f); exitSelectMode(); }}
-              className={`flex-1 h-10 rounded-full text-sm font-semibold transition-all duration-200 ${
+              className={`flex-1 h-10 rounded-full text-[12px] font-semibold transition-all duration-200 ${
                 filter === f
-                  ? f === "sale" ? "bg-spal-green text-white"
+                  ? f === "sale"    ? "bg-spal-green text-white"
                   : f === "expense" ? "bg-spal-orange text-white"
+                  : f === "owing"   ? "bg-orange-500 text-white"
                   : "bg-spal-navy text-white"
                   : "bg-neutral-100 text-neutral-500"
               }`}
             >
-              {f === "all" ? "All" : f === "sale" ? "Sales" : "Expenses"}
+              {f === "all" ? "All" : f === "sale" ? "Sales" : f === "expense" ? "Expenses" : "Owing"}
             </button>
           ))}
         </div>
@@ -296,7 +329,7 @@ export default function RecordsPage() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.035 }}
                       className="rounded-[16px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]"
-                      style={{ border: "1px solid rgba(228,228,231,0.6)" }}
+                      style={{ border: record.payment_status === "owing" ? "1px solid #FED7AA" : "1px solid rgba(228,228,231,0.6)" }}
                     >
                       <SwipeableRow
                         onEdit={() => handleRecordTap(record)}
@@ -316,7 +349,13 @@ export default function RecordsPage() {
                             <p className="text-[13px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
                               {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
                             </p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              {record.payment_status === "owing" && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                                  style={{ background: "#FFF7ED", color: "#C2410C" }}>
+                                  Owing
+                                </span>
+                              )}
                               {record.category && (
                                 <>
                                   <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
@@ -327,7 +366,12 @@ export default function RecordsPage() {
                                   <span className="text-xs text-neutral-300">·</span>
                                 </>
                               )}
-                              <span className="text-[11px] text-neutral-400">{formatTime(record.created_at)}</span>
+                              {record.customer_name && (
+                                <span className="text-[11px] text-neutral-400 truncate max-w-[80px]">{record.customer_name}</span>
+                              )}
+                              {!record.customer_name && (
+                                <span className="text-[11px] text-neutral-400">{formatTime(record.created_at)}</span>
+                              )}
                             </div>
                           </div>
                           <p

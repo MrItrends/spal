@@ -16,13 +16,15 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ReviewRecord {
-  _id:         string;
-  type:        "sale" | "expense";
-  amount:      number;
-  description: string;
-  category:    string;
-  record_date: string | null;
-  confidence:  "high" | "low";
+  _id:            string;
+  type:           "sale" | "expense";
+  amount:         number;
+  description:    string;
+  category:       string;
+  record_date:    string | null;
+  confidence:     "high" | "low";
+  payment_status: "paid" | "owing";
+  customer_name:  string;
 }
 
 // ── Method metadata ───────────────────────────────────────────────────────────
@@ -219,7 +221,15 @@ export default function ImportRecordPage() {
   }
 
   function appendRecords(raw: Omit<ReviewRecord, "_id">[]) {
-    setRecords(prev => [...prev, ...raw.map(r => ({ ...r, _id: uid() }))]);
+    setRecords(prev => [
+      ...prev,
+      ...raw.map(r => ({
+        ...r,
+        _id: uid(),
+        payment_status: (r.payment_status ?? "paid") as "paid" | "owing",
+        customer_name:  r.customer_name ?? "",
+      })),
+    ]);
   }
 
   function updateRecord(id: string, patch: Partial<ReviewRecord>) {
@@ -244,12 +254,14 @@ export default function ImportRecordPage() {
             method:  "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              type:         r.type,
-              amount:       r.amount,
-              description:  r.description,
-              category:     r.category || undefined,
-              input_method: "import",
-              record_date:  r.record_date ?? fallbackDate,
+              type:           r.type,
+              amount:         r.amount,
+              description:    r.description,
+              category:       r.category || undefined,
+              input_method:   "import",
+              record_date:    r.record_date ?? fallbackDate,
+              payment_status: r.payment_status ?? "paid",
+              customer_name:  r.payment_status === "owing" ? (r.customer_name || undefined) : undefined,
             }),
           }).then(res => res.json())
         )
@@ -1022,6 +1034,38 @@ function ReviewCard({
             </button>
           )}
         </div>
+
+        {/* Payment status — sales only */}
+        {record.type === "sale" && (
+          <div className="mb-2.5">
+            <div className="flex gap-1.5">
+              {(['paid', 'owing'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => onChange({ payment_status: s, confidence: "high" })}
+                  className="flex-1 h-8 rounded-full text-[11px] font-bold transition-all duration-150"
+                  style={{
+                    background: record.payment_status === s ? (s === 'paid' ? '#22C55E' : '#F97316') : '#F4F4F5',
+                    color: record.payment_status === s ? '#fff' : '#9CA3AF',
+                    fontFamily: "var(--font-satoshi)",
+                  }}
+                >
+                  {s === 'paid' ? '✓ Paid' : '⏳ Owes me'}
+                </button>
+              ))}
+            </div>
+            {record.payment_status === 'owing' && (
+              <input
+                type="text"
+                value={record.customer_name}
+                onChange={e => onChange({ customer_name: e.target.value })}
+                placeholder="Customer name (optional)"
+                className="mt-1.5 w-full h-8 px-3 rounded-xl text-[11px] text-spal-navy outline-none"
+                style={{ background: '#FFF7ED', border: '1px solid #FED7AA', fontFamily: "var(--font-satoshi)" }}
+              />
+            )}
+          </div>
+        )}
 
         {/* Date + Remove */}
         <div className="flex items-center justify-between">

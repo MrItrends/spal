@@ -59,6 +59,8 @@ export interface BusinessRecord {
   raw_input?: string;
   record_date: string;
   created_at: string;
+  payment_status?: 'paid' | 'owing';
+  customer_name?: string;
 }
 
 export interface DailySummary {

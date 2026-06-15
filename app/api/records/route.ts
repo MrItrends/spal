@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { type, amount, description, category, input_method, raw_input, record_date } = body;
+    const { type, amount, description, category, input_method, raw_input, record_date, payment_status, customer_name } = body;
 
     if (!type || !amount) {
       return NextResponse.json({ success: false, error: "type and amount are required" }, { status: 400 });
@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
         input_method: input_method || "text",
         raw_input: raw_input || null,
         record_date: record_date || todayISO(),
+        payment_status: payment_status ?? "paid",
+        customer_name: customer_name?.trim() || null,
       })
       .select()
       .single();
@@ -146,14 +148,16 @@ export async function PATCH(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const { id, amount, description, category, record_date } = await req.json();
+    const { id, amount, description, category, record_date, payment_status, customer_name } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: "id required" }, { status: 400 });
 
     const updates: Record<string, unknown> = {};
-    if (amount      !== undefined) updates.amount      = parseFloat(amount);
-    if (description !== undefined) updates.description = description?.trim() || null;
-    if (category    !== undefined) updates.category    = normalizeCategory(category);
-    if (record_date !== undefined) updates.record_date = record_date;
+    if (amount         !== undefined) updates.amount         = parseFloat(amount);
+    if (description    !== undefined) updates.description    = description?.trim() || null;
+    if (category       !== undefined) updates.category       = normalizeCategory(category);
+    if (record_date    !== undefined) updates.record_date    = record_date;
+    if (payment_status !== undefined) updates.payment_status = payment_status;
+    if (customer_name  !== undefined) updates.customer_name  = customer_name?.trim() || null;
 
     const { data, error } = await supabase
       .from("records")

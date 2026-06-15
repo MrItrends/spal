@@ -35,6 +35,8 @@ export default function ManualEntryPage() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'owing'>('paid');
+  const [customerName, setCustomerName] = useState('');
 
   const updateItem = useCallback((idx: number, field: keyof Item, val: string) => {
     setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: val } : it));
@@ -64,6 +66,8 @@ export default function ManualEntryPage() {
               category: "Other",
               input_method: "manual",
               record_date: date,
+              payment_status: paymentStatus,
+              customer_name: paymentStatus === 'owing' ? (customerName.trim() || undefined) : undefined,
             }),
           })
         )
@@ -264,6 +268,44 @@ export default function ManualEntryPage() {
         className="fixed cta-bottom left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-4 pt-3"
         style={{ background: "linear-gradient(to top, #F7F9F5 80%, transparent)" }}
       >
+        {/* Payment toggle */}
+        <div className="mb-3">
+          <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-2" style={{ fontFamily }}>
+            Did they pay?
+          </p>
+          <div className="flex gap-2 mb-2">
+            {(['paid', 'owing'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setPaymentStatus(s)}
+                className="flex-1 h-10 rounded-full text-[13px] font-bold transition-all duration-150"
+                style={{
+                  background: paymentStatus === s ? (s === 'paid' ? '#22C55E' : '#F97316') : '#E5E7EB',
+                  color: paymentStatus === s ? '#fff' : '#6B7280',
+                  fontFamily,
+                }}
+              >
+                {s === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+              </button>
+            ))}
+          </div>
+          <AnimatePresence>
+            {paymentStatus === 'owing' && (
+              <motion.input
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 44 }}
+                exit={{ opacity: 0, height: 0 }}
+                type="text"
+                value={customerName}
+                onChange={e => setCustomerName(e.target.value)}
+                placeholder="Customer name (optional)"
+                className="w-full px-4 rounded-xl text-[13px] text-spal-navy outline-none"
+                style={{ background: '#FFF7ED', border: '1.5px solid #FED7AA', fontFamily }}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+
         {saveError && (
           <p className="text-[12px] text-red-600 font-medium text-center mb-2" style={{ fontFamily }}>
             ⚠️ {saveError}

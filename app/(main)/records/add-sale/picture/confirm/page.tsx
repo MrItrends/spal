@@ -29,6 +29,8 @@ export default function PictureConfirmPage() {
   const [items, setItems] = useState<ExtractedItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'owing'>('paid');
+  const [customerName, setCustomerName] = useState('');
 
   useEffect(() => {
     const b64 = sessionStorage.getItem("spal_receipt_b64");
@@ -83,9 +85,11 @@ export default function PictureConfirmPage() {
               type: "sale",
               amount: it.amount,
               description: it.name,
-              category: it.category ?? "Sales",
+              category: it.category ?? "Other",
               input_method: "picture",
               record_date: date,
+              payment_status: paymentStatus,
+              customer_name: paymentStatus === 'owing' ? (customerName.trim() || undefined) : undefined,
             }),
           })
         )
@@ -233,16 +237,51 @@ export default function PictureConfirmPage() {
               </button>
 
               {/* Summary */}
-              <div className="mt-4 rounded-2xl px-4 py-4 flex items-center justify-between" style={{ background: "#E8F5E9" }}>
-                <div>
-                  <p className="text-[12px] text-green-700 font-medium" style={{ fontFamily }}>
-                    {items.length} {items.length === 1 ? "item" : "items"} · {totalUnits} units sold
+              <div className="mt-4 rounded-2xl px-4 py-4" style={{ background: "#E8F5E9" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-[12px] text-green-700 font-medium" style={{ fontFamily }}>
+                      {items.length} {items.length === 1 ? "item" : "items"} · {totalUnits} units sold
+                    </p>
+                    <p className="text-[13px] text-green-800 font-semibold mt-0.5" style={{ fontFamily }}>Total Sale</p>
+                  </div>
+                  <p className="text-[20px] font-bold" style={{ fontFamily, color: "#16A34A" }}>
+                    {formatCurrency(totalAmount)}
                   </p>
-                  <p className="text-[13px] text-green-800 font-semibold mt-0.5" style={{ fontFamily }}>Total Sale</p>
                 </div>
-                <p className="text-[20px] font-bold" style={{ fontFamily, color: "#16A34A" }}>
-                  {formatCurrency(totalAmount)}
-                </p>
+                {/* Payment toggle */}
+                <p className="text-[10px] font-semibold text-green-700 uppercase tracking-wide mb-1.5" style={{ fontFamily }}>Did they pay?</p>
+                <div className="flex gap-2">
+                  {(['paid', 'owing'] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setPaymentStatus(s)}
+                      className="flex-1 h-9 rounded-full text-[12px] font-bold transition-all duration-150"
+                      style={{
+                        background: paymentStatus === s ? (s === 'paid' ? '#16A34A' : '#F97316') : 'rgba(255,255,255,0.6)',
+                        color: paymentStatus === s ? '#fff' : '#4B5563',
+                        fontFamily,
+                      }}
+                    >
+                      {s === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+                    </button>
+                  ))}
+                </div>
+                <AnimatePresence>
+                  {paymentStatus === 'owing' && (
+                    <motion.input
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 40 }}
+                      exit={{ opacity: 0, height: 0 }}
+                      type="text"
+                      value={customerName}
+                      onChange={e => setCustomerName(e.target.value)}
+                      placeholder="Customer name (optional)"
+                      className="mt-2 w-full px-3 rounded-xl text-[12px] text-spal-navy outline-none"
+                      style={{ background: '#FFF7ED', border: '1.5px solid #FED7AA', fontFamily }}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}

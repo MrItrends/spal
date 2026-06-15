@@ -15,7 +15,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ─── Parse records from natural language ──────────────────────────────────────
 export async function parseRecordsFromText(text: string): Promise<
-  Array<{ type: "sale" | "expense"; qty: number; unit_price: number; amount: number; description: string; category: string }>
+  Array<{ type: "sale" | "expense"; qty: number; unit_price: number; amount: number; description: string; category: string; payment_status: "paid" | "owing"; customer_name: string | null }>
 > {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -35,12 +35,14 @@ export async function parseRecordsFromText(text: string): Promise<
 
 // ─── Import records: parse from text (batch import flow) ─────────────────────
 export interface ImportedRecord {
-  type:        "sale" | "expense";
-  amount:      number;
-  description: string;
-  category:    string;
-  record_date: string | null;
-  confidence:  "high" | "low";
+  type:           "sale" | "expense";
+  amount:         number;
+  description:    string;
+  category:       string;
+  record_date:    string | null;
+  confidence:     "high" | "low";
+  payment_status: "paid" | "owing";
+  customer_name:  string | null;
 }
 
 export async function parseImportFromText(text: string): Promise<ImportedRecord[]> {

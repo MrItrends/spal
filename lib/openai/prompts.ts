@@ -42,6 +42,12 @@ Category rules (IMPORTANT — use ONLY these exact names, no variations):
 - Drink-related sales → "Drinks"
 - If nothing fits → "Other"
 
+Payment status rules:
+- "payment_status": "paid" if customer paid immediately. "owing" if they will pay later.
+  Detect: "on credit", "owes me", "hasn't paid", "will pay later", "sell am on credit", "owe", "credit"
+  Default to "paid" if not mentioned.
+- "customer_name": if a name is mentioned alongside an owing sale (e.g. "sold to Emeka on credit" → "Emeka"). Null if not mentioned.
+
 Return ONLY valid JSON in this exact format:
 {
   "records": [
@@ -51,7 +57,9 @@ Return ONLY valid JSON in this exact format:
       "unit_price": number,
       "amount": number,
       "description": string,
-      "category": string
+      "category": string,
+      "payment_status": "paid" | "owing",
+      "customer_name": string | null
     }
   ]
 }
@@ -76,6 +84,8 @@ Rules:
 - Do NOT invent names like "Food Sales", "Beverages", "General", "Groceries". Pick the closest match.
 - Food-related sales → "Food". Drink-related → "Drinks". Anything else unclear → "Other".
 - description should be the item/purpose name only, short and clear.
+- "payment_status": "paid" by default. Set to "owing" if a column or value indicates credit, unpaid, balance due, or not yet paid (e.g. "credit", "owed", "not paid", "balance").
+- "customer_name": extract the customer or debtor name if present. Null if not present.
 
 Return ONLY valid JSON:
 {
@@ -86,7 +96,9 @@ Return ONLY valid JSON:
       "description": string,
       "category": string,
       "record_date": "YYYY-MM-DD" | null,
-      "confidence": "high" | "low"
+      "confidence": "high" | "low",
+      "payment_status": "paid" | "owing",
+      "customer_name": string | null
     }
   ]
 }

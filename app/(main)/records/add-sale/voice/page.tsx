@@ -35,13 +35,15 @@ export default function VoiceEntryPage() {
   const router = useRouter();
   const { bumpRecordSaved } = useSPALStore();
 
-  const [date,       setDate]      = useState(() => new Date().toISOString().slice(0, 10));
-  const [status,     setStatus]    = useState<Status>("idle");
-  const [elapsed,    setElapsed]   = useState(0);
-  const [transcript, setTranscript]= useState("");
-  const [items,      setItems]     = useState<ParsedItem[]>([]);
-  const [saving,     setSaving]    = useState(false);
-  const [barHeights, setBarHeights]= useState<number[]>(Array(BAR_COUNT).fill(8));
+  const [date,          setDate]         = useState(() => new Date().toISOString().slice(0, 10));
+  const [status,        setStatus]       = useState<Status>("idle");
+  const [elapsed,       setElapsed]      = useState(0);
+  const [transcript,    setTranscript]   = useState("");
+  const [items,         setItems]        = useState<ParsedItem[]>([]);
+  const [saving,        setSaving]       = useState(false);
+  const [barHeights,    setBarHeights]   = useState<number[]>(Array(BAR_COUNT).fill(8));
+  const [paymentStatus, setPaymentStatus]= useState<'paid' | 'owing'>('paid');
+  const [customerName,  setCustomerName] = useState('');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef        = useRef<Blob[]>([]);
@@ -131,11 +133,13 @@ export default function VoiceEntryPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               type,
-              amount:       it.amount,
-              description:  it.description,
-              category:     it.category ?? (type === "sale" ? "Sales" : "Expenses"),
-              input_method: "voice",
-              record_date:  date,
+              amount:         it.amount,
+              description:    it.description,
+              category:       it.category ?? (type === "sale" ? "Other" : "Other"),
+              input_method:   "voice",
+              record_date:    date,
+              payment_status: type === "sale" ? paymentStatus : "paid",
+              customer_name:  type === "sale" && paymentStatus === "owing" ? (customerName.trim() || undefined) : undefined,
             }),
           })
         )
@@ -397,6 +401,40 @@ export default function VoiceEntryPage() {
             className="fixed cta-bottom left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-4 pt-3"
             style={{ background: "linear-gradient(to top, #F7F9F5 80%, transparent)" }}
           >
+            {/* Payment toggle */}
+            <div className="mb-2">
+              <div className="flex gap-2 mb-1.5">
+                {(['paid', 'owing'] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setPaymentStatus(s)}
+                    className="flex-1 h-9 rounded-full text-[12px] font-bold transition-all duration-150"
+                    style={{
+                      background: paymentStatus === s ? (s === 'paid' ? '#22C55E' : '#F97316') : '#E5E7EB',
+                      color: paymentStatus === s ? '#fff' : '#6B7280',
+                      fontFamily,
+                    }}
+                  >
+                    {s === 'paid' ? '✓ Paid now' : '⏳ Owes me'}
+                  </button>
+                ))}
+              </div>
+              <AnimatePresence>
+                {paymentStatus === 'owing' && (
+                  <motion.input
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 40 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    type="text"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    placeholder="Customer name (optional)"
+                    className="w-full px-3 rounded-xl text-[12px] text-spal-navy outline-none mb-1.5"
+                    style={{ background: '#FFF7ED', border: '1.5px solid #FED7AA', fontFamily }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
             <button
               onClick={() => saveAs("sale", saleItems)}
               disabled={saving}
