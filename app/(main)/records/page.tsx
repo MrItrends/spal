@@ -9,7 +9,7 @@ import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { ExportSheet } from "@/components/records/ExportSheet";
 import { UndoToast } from "@/components/ui/UndoToast";
-import { ArrowUp, ArrowDown, Plus, Download, CheckSquare } from "lucide-react";
+import { ArrowUp, ArrowDown, Download, CheckSquare } from "lucide-react";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense";
@@ -346,23 +346,6 @@ export default function RecordsPage() {
         )}
       </div>
 
-      {/* FAB — hidden in select mode */}
-      <AnimatePresence>
-        {!addSheetOpen && !editRecord && !selectMode && (
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setAddSheet("sale")}
-            className="fixed bottom-24 right-4 w-14 h-14 bg-spal-green rounded-full flex items-center justify-center text-white z-30"
-            style={{ boxShadow: "0 4px 16px rgba(29,185,84,0.45)" }}
-            aria-label="Add record"
-          >
-            <Plus size={24} strokeWidth={2.5} />
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       {/* Add sheets */}
       <AddRecordSheet type="sale"    open={addSheetOpen === "sale"}    onClose={() => setAddSheet(null)} onSuccess={fetchRecords} />
