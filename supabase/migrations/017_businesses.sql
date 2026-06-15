@@ -23,15 +23,14 @@ CREATE POLICY "Users manage own businesses"
   USING (auth.uid() = user_id);
 
 -- 2. Migrate existing users → one business row per user from their current profile
--- Alias "u" avoids column-name ambiguity with businesses.tracking_methods
 INSERT INTO public.businesses (user_id, business_name, business_type, currency, tracking_methods, business_goals)
 SELECT
   u.id,
   COALESCE(u.business_name, 'My Business'),
   COALESCE(u.business_type, 'other'),
   COALESCE(u.currency, 'NGN'),
-  COALESCE(u.tracking_methods, '{}'),
-  COALESCE(u.business_goals, '{}')
+  '{}',
+  '{}'
 FROM public.users u
 ON CONFLICT DO NOTHING;
 
