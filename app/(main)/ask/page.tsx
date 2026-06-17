@@ -67,6 +67,7 @@ export default function AskSPALPage() {
   const recognitionRef    = useRef<any>(null);
   const pendingTranscript = useRef<string | null>(null);
   const silenceTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingRef         = useRef(false); // user is typing → pause the mic loop
   const audioCtxRef       = useRef<AudioContext | null>(null);
   const audioSourceRef    = useRef<AudioBufferSourceNode | null>(null);
   const startTimeRef      = useRef<number | null>(null);
@@ -131,7 +132,8 @@ export default function AskSPALPage() {
   // We run a continuous recognizer and use our own 1.1s silence timer so SPAL
   // replies fast — much quicker than the browser's built-in end-of-speech delay.
   const startRecognition = useCallback(() => {
-    if (endedRef.current || !chatActiveRef.current) return;
+    if (endedRef.current || !chatActiveRef.current || typingRef.current) return;
+    if (recognitionRef.current) return; // one recognizer at a time
     const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
     if (!SR) return;
 
@@ -150,7 +152,7 @@ export default function AskSPALPage() {
       clearSilence();
       silenceTimerRef.current = setTimeout(() => {
         try { r.stop(); } catch { /* already stopped */ }
-      }, 1100);
+      }, 850);
     };
 
     r.onresult = (e: any) => {
@@ -169,8 +171,8 @@ export default function AskSPALPage() {
       recognitionRef.current = null;
       if (endedRef.current) return;
       // no-speech / aborted = just silence, keep listening
-      if (chatActiveRef.current) setTimeout(startRecognition, 200);
-      else setSessionSync("idle");
+      if (chatActiveRef.current && !typingRef.current) setTimeout(startRecognition, 200);
+      else if (!typingRef.current) setSessionSync("idle");
     };
 
     r.onend = () => {
@@ -184,10 +186,10 @@ export default function AskSPALPage() {
       if (transcript) {
         // Got speech — send to SPAL (mic restarts after SPAL responds)
         sendAndRespond(transcript);
-      } else if (chatActiveRef.current) {
+      } else if (chatActiveRef.current && !typingRef.current) {
         // Pure silence, no words — restart mic to keep listening
         setTimeout(startRecognition, 150);
-      } else {
+      } else if (!typingRef.current) {
         setSessionSync("idle");
       }
     };
@@ -256,12 +258,28 @@ export default function AskSPALPage() {
     startRecognition();
   }
 
+  // ── Typing pauses the mic so it doesn't auto-submit voice over your text ───
+  function pauseForTyping() {
+    typingRef.current = true;
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    pendingTranscript.current = null;
+    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
+    if (sessionRef.current === "listening") setSessionSync("idle");
+  }
+
+  function resumeFromTyping() {
+    if (!typingRef.current) return;
+    typingRef.current = false;
+    if (chatActiveRef.current && !endedRef.current) startRecognition();
+  }
+
   // ── Text send ─────────────────────────────────────────────────────────────
   function handleTextSend() {
     const text = inputText.trim();
     if (!text || endedRef.current) return;
     ensureAudioCtx();
     setInputText("");
+    typingRef.current = false; // sendAndRespond will restart the mic when done
     chatActiveRef.current = true;
     setChatActive(true);
     sendAndRespond(text);
@@ -415,10 +433,11 @@ export default function AskSPALPage() {
               type="text"
               value={inputText}
               onChange={e => setInputText(e.target.value)}
+              onFocus={pauseForTyping}
+              onBlur={() => { if (!inputText.trim()) resumeFromTyping(); }}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleTextSend(); } }}
               placeholder="Ask Anything..."
-              disabled={isListening || isThinking || isSpeaking}
-              className="flex-1 bg-transparent text-[15px] font-medium outline-none disabled:opacity-40 placeholder:text-neutral-400"
+              className="flex-1 bg-transparent text-[15px] font-medium outline-none placeholder:text-neutral-400"
               style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}
             />
 
