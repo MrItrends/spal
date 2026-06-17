@@ -257,9 +257,8 @@ export default function AskSPALPage() {
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden"
+      className="fixed inset-0 flex flex-col overflow-hidden z-40"
       style={{
-        height: "100dvh",
         backgroundImage: "url(/spal-ai-bg.webp)",
         backgroundSize: "cover",
         backgroundPosition: "center",
