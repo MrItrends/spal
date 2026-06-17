@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft01Icon, Upload01Icon, ArrowRight01Icon } from "hugeicons-react";
+import { ArrowLeft01Icon, Upload01Icon, ArrowRight01Icon, Restaurant01Icon, Csv01Icon, File01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -251,7 +251,7 @@ export default function ImportEntryPage() {
                     style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#E8F5E9" }}>
-                      <span className="text-lg">🍽️</span>
+                      <Restaurant01Icon size={18} color="#22C55E" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13.5px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>{r.description}</p>
@@ -276,7 +276,7 @@ export default function ImportEntryPage() {
             <div className="space-y-2">
               {recentFiles.map((f, i) => (
                 <div key={i} className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                  <span className="text-xl">{f.name.endsWith(".csv") ? "📊" : "📁"}</span>
+                  {f.name.endsWith(".csv") ? <Csv01Icon size={20} color="#2563EB" className="flex-shrink-0" /> : <File01Icon size={20} color="#6B7280" className="flex-shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>{f.name}</p>
                     <p className="text-[11px] text-neutral-400 mt-0.5" style={{ fontFamily }}>

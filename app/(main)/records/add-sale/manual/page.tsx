@@ -3,11 +3,11 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft01Icon, PlusSignIcon, MinusSignIcon, Clock01Icon } from "hugeicons-react";
+import { ArrowLeft01Icon, PlusSignIcon, MinusSignIcon, Clock01Icon, Calendar03Icon, Tick01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 
-const BG = "#F7F9F5";
+const BG = "#EEF3E9";
 const fontFamily = "var(--font-satoshi)";
 
 interface Item {
@@ -110,7 +110,7 @@ export default function ManualEntryPage() {
         {/* Date + Time */}
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl px-3.5 py-3 flex items-center gap-2.5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-            <span className="text-base">📅</span>
+            <Calendar03Icon size={17} color="#6B7280" className="flex-shrink-0" />
             <input
               type="date"
               value={date}
@@ -120,7 +120,7 @@ export default function ManualEntryPage() {
             />
           </div>
           <div className="bg-white rounded-2xl px-3.5 py-3 flex items-center gap-2.5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-            <span className="text-base">🕐</span>
+            <Clock01Icon size={17} color="#6B7280" className="flex-shrink-0" />
             <input
               type="time"
               value={time}
@@ -285,7 +285,7 @@ export default function ManualEntryPage() {
                   fontFamily,
                 }}
               >
-                {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
+                {s === 'paid' ? <><Tick01Icon size={13} /> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
               </button>
             ))}
           </div>

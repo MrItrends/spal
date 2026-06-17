@@ -15,7 +15,7 @@ import { UndoToast } from "@/components/ui/UndoToast";
 import {
   Notification03Icon, User02Icon, Home01Icon, Menu01Icon, BarChartIcon,
   ArrowDown01Icon, ChartIncreaseIcon, ChartDecreaseIcon,
-  Wallet01Icon, ArrowUp01Icon,
+  Wallet01Icon, ArrowUp01Icon, Cancel01Icon,
 } from "hugeicons-react";
 import type { BusinessRecord } from "@/lib/types";
 
@@ -321,7 +321,7 @@ export default function RecordsPage() {
                   style={{ background: catStyle(c).bg, color: catStyle(c).color, fontFamily: "var(--font-satoshi)" }}
                 >
                   {c}
-                  <span className="ml-0.5 opacity-60 text-[10px]">✕</span>
+                  <Cancel01Icon size={11} className="ml-0.5 opacity-60" />
                 </button>
               ))}
               <div className="relative">

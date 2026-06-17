@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft01Icon } from "hugeicons-react";
+import { ArrowLeft01Icon, Tick01Icon } from "hugeicons-react";
 import { useSPALStore, type TrackingMethod } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
@@ -99,7 +99,7 @@ function TrackingContent() {
               boxShadow: useSame ? "0 0 0 3px #22C55E18" : "0 1px 3px rgba(0,0,0,0.04)",
             }}
           >
-            <span className="text-xl">✓</span>
+            <Tick01Icon size={20} color="#22C55E" className="flex-shrink-0" />
             <div className="flex-1">
               <p className="text-[14px] font-semibold text-spal-navy">Same as {activeBusiness.business_name}</p>
               <p className="text-[12px] text-neutral-400 mt-0.5">Carry over your existing tracking method</p>

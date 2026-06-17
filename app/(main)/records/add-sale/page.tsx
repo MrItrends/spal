@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Cancel01Icon, Mic01Icon, Camera01Icon, Upload01Icon, ArrowRight01Icon, File01Icon } from "hugeicons-react";
+import { Cancel01Icon, Mic01Icon, Camera01Icon, Upload01Icon, ArrowRight01Icon, File01Icon, Idea01Icon } from "hugeicons-react";
 
-const BG = "#F7F9F5";
+const BG = "#EEF3E9";
 const fontFamily = "var(--font-satoshi)";
 
 const METHODS = [
@@ -101,11 +101,12 @@ export default function AddSalePage() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="mt-5 rounded-2xl px-4 py-3.5"
+          className="mt-5 rounded-2xl px-4 py-3.5 flex items-start gap-2.5"
           style={{ background: "#E8F5E9" }}
         >
+          <Idea01Icon size={17} color="#2E7D32" className="flex-shrink-0 mt-0.5" />
           <p className="text-[12.5px] leading-relaxed" style={{ fontFamily, color: "#2E7D32" }}>
-            💡 SPAL can read handwriting, voice notes, and messy receipts — no need to type everything yourself.
+            SPAL can read handwriting, voice notes, and messy receipts — no need to type everything yourself.
           </p>
         </motion.div>
       </div>

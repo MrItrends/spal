@@ -1054,7 +1054,7 @@ function ReviewCard({
                     fontFamily: "var(--font-satoshi)",
                   }}
                 >
-                  {s === 'paid' ? <><span>✓</span> Paid</> : <><Clock01Icon size={13} />{' '}Owes me</>}
+                  {s === 'paid' ? <><Tick01Icon size={13} /> Paid</> : <><Clock01Icon size={13} />{' '}Owes me</>}
                 </button>
               ))}
             </div>

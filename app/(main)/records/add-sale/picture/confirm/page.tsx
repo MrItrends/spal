@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft01Icon, ArrowReloadHorizontalIcon, PlusSignIcon, Clock01Icon } from "hugeicons-react";
+import { ArrowLeft01Icon, ArrowReloadHorizontalIcon, PlusSignIcon, Clock01Icon, Restaurant01Icon, Tick01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -209,7 +209,7 @@ export default function PictureConfirmPage() {
                     }}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#E8F5E9" }}>
-                      <span className="text-lg">🍽️</span>
+                      <Restaurant01Icon size={18} color="#22C55E" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>{item.name}</p>
@@ -263,7 +263,7 @@ export default function PictureConfirmPage() {
                         fontFamily,
                       }}
                     >
-                      {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
+                      {s === 'paid' ? <><Tick01Icon size={13} /> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
                     </button>
                   ))}
                 </div>

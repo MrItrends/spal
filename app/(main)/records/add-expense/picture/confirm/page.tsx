@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft01Icon, ArrowReloadHorizontalIcon, PlusSignIcon } from "hugeicons-react";
+import { ArrowLeft01Icon, ArrowReloadHorizontalIcon, PlusSignIcon, ReceiptDollarIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -205,7 +205,7 @@ export default function PictureExpenseConfirmPage() {
                     }}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#FFF3E0" }}>
-                      <span className="text-lg">🧾</span>
+                      <ReceiptDollarIcon size={18} color="#F97316" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>{item.name}</p>
