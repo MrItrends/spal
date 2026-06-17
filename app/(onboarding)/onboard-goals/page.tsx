@@ -88,7 +88,7 @@ export default function GoalsPage() {
   const nudge = buildNudge(selected);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#EEF3E9" }}>
 
       {/* Header */}
       <div className="px-5 pt-12 pb-0">
@@ -189,7 +189,7 @@ export default function GoalsPage() {
       {/* Bottom — nudge + CTA */}
       <div
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-10 pt-6"
-        style={{ background: "linear-gradient(to top, #F8F7F4 65%, transparent)" }}
+        style={{ background: "linear-gradient(to top, #EEF3E9 65%, transparent)" }}
       >
         {/* Nudge */}
         <AnimatePresence>

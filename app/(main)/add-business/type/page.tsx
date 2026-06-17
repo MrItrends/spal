@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useSPALStore, type BusinessType } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
-const BG = "#F8F7F4";
+const BG = "#EEF3E9";
 
 const BUSINESS_TYPES: { type: BusinessType; label: string; sub: string; accent: string }[] = [
   { type: "food_seller",    label: "Food Seller",         sub: "Restaurant, buuka, food stall",       accent: "#22C55E" },

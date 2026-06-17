@@ -68,7 +68,7 @@ export default function BusinessNamePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col" style={{ background: "#EEF3E9" }}>
 
       {/* Header — back + progress */}
       <div className="px-5 pt-12">

@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useSPALStore, type TrackingMethod } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
-const BG = "#F8F7F4";
+const BG = "#EEF3E9";
 
 const METHODS: { method: TrackingMethod; label: string; icon: string }[] = [
   { method: "notebook",      label: "Notebook",      icon: "📓" },

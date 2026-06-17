@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useSPALStore } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
-const BG = "#F8F7F4";
+const BG = "#EEF3E9";
 
 const CURRENCIES = [
   { code: "NGN", label: "Nigerian Naira", symbol: "₦" },

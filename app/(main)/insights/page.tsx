@@ -145,7 +145,7 @@ function LiquidGauge({ fill, state }: { fill: number; state: HealthState }) {
   return (
     <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
       {/* Track circle */}
-      <div className="absolute inset-0 rounded-full" style={{ border: `3px solid ${color}`, background: "#F8F7F4", overflow: "hidden" }}>
+      <div className="absolute inset-0 rounded-full" style={{ border: `3px solid ${color}`, background: "#EEF3E9", overflow: "hidden" }}>
         {/* Liquid fill — animates from bottom */}
         <motion.div
           className="absolute bottom-0 left-0 right-0"
@@ -601,7 +601,7 @@ export default function InsightsPage() {
   }, [records, t, bestBucket, expenseRatio, topExpenseCat, periodLabel, bucketWord]);
 
   return (
-    <div className="px-5 pt-6 pb-6 space-y-4" style={{ background: "#F8F7F4", minHeight: "100%" }}>
+    <div className="px-5 pt-6 pb-6 space-y-4" style={{ background: "#EEF3E9", minHeight: "100%" }}>
 
       {/* Header */}
       <h1 className="text-[22px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>

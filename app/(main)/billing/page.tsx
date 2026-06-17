@@ -75,7 +75,7 @@ function BillingPageInner() {
   });
 
   return (
-    <div className="px-5 pt-6 pb-6 space-y-5" style={{ background: "#F8F7F4", minHeight: "100%" }}>
+    <div className="px-5 pt-6 pb-6 space-y-5" style={{ background: "#EEF3E9", minHeight: "100%" }}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <button

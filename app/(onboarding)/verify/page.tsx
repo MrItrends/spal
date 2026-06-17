@@ -123,7 +123,7 @@ export default function VerifyPage() {
   const filled = otp.every((d) => d !== "");
 
   return (
-    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col" style={{ background: "#EEF3E9" }}>
 
       {/* Header: back + progress (step 3 of 4) */}
       <div className="px-6 pt-12">

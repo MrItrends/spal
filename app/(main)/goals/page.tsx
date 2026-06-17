@@ -134,7 +134,7 @@ export default function GoalsPage() {
     : 0;
 
   return (
-    <div className="px-5 pt-6 pb-6 space-y-5 relative" style={{ background: "#F8F7F4", minHeight: "100%" }}>
+    <div className="px-5 pt-6 pb-6 space-y-5 relative" style={{ background: "#EEF3E9", minHeight: "100%" }}>
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>

@@ -97,7 +97,7 @@ export default function TrackingMethodsPage() {
   const nothingSelected = selected.has("nothing");
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#EEF3E9" }}>
 
       {/* Header */}
       <div className="px-5 pt-12 pb-0">
@@ -197,7 +197,7 @@ export default function TrackingMethodsPage() {
       {/* Bottom CTA */}
       <div
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-10 pt-16"
-        style={{ background: "linear-gradient(to top, #F8F7F4 60%, transparent)" }}
+        style={{ background: "linear-gradient(to top, #EEF3E9 60%, transparent)" }}
       >
         <button
           onClick={handleContinue}

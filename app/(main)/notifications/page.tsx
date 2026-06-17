@@ -92,7 +92,7 @@ export default function NotificationsPage() {
   const groups = groupByDate(notifications);
 
   return (
-    <div className="min-h-full pb-24" style={{ background: "#F8F7F4" }}>
+    <div className="min-h-full pb-24" style={{ background: "#EEF3E9" }}>
       {/* Header */}
       <div className="px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -437,7 +437,7 @@ export default function ScanPage() {
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             className="absolute inset-0 flex flex-col"
-            style={{ background: "#F8F7F4" }}
+            style={{ background: "#EEF3E9" }}
           >
             {/* Thumbnail strip at top */}
             {capturedUrl && (
@@ -527,7 +527,7 @@ export default function ScanPage() {
 
             {/* Save CTA */}
             <div className="absolute bottom-0 left-0 right-0 px-5 pt-3 pb-8"
-              style={{ background: "linear-gradient(to top, #F8F7F4 75%, transparent)" }}>
+              style={{ background: "linear-gradient(to top, #EEF3E9 75%, transparent)" }}>
               <button
                 onClick={handleSave}
                 disabled={saving || records.length === 0}

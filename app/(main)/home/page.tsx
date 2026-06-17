@@ -12,7 +12,7 @@ import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { UndoToast } from "@/components/ui/UndoToast";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
-  Bell, User, ArrowUp, ArrowDown, ExternalLink, LayoutGrid,
+  Bell, User, ArrowUp, ArrowDown, LayoutGrid,
   MessageSquare, TrendingUp, TrendingDown, ChevronUp, ChevronDown,
   Home, AlignJustify, BarChart2,
 } from "lucide-react";
@@ -249,9 +249,6 @@ function HomePageInner() {
             <p className="text-[16px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
               Your Sales Today
             </p>
-            <button onClick={() => router.push("/records")} aria-label="View records">
-              <ExternalLink size={16} strokeWidth={2} color="#9CA3AF" />
-            </button>
           </div>
 
           {/* Profit card */}
@@ -340,8 +337,12 @@ function HomePageInner() {
               Recent Sales
             </p>
             {records.length > 0 && (
-              <button onClick={() => router.push("/records")} aria-label="View all">
-                <ExternalLink size={16} strokeWidth={2} color="#9CA3AF" />
+              <button
+                onClick={() => router.push("/records")}
+                className="text-[12px] font-semibold text-neutral-400"
+                style={{ fontFamily: "var(--font-satoshi)" }}
+              >
+                View all
               </button>
             )}
           </div>

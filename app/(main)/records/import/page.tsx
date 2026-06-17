@@ -322,7 +322,7 @@ export default function ImportRecordPage() {
   const meta = activeMethod ? METHOD_META[activeMethod] : null;
 
   return (
-    <div className="min-h-full pb-32" style={{ background: "#F8F7F4" }}>
+    <div className="min-h-full pb-32" style={{ background: "#EEF3E9" }}>
       <PageHeader onBack={() => router.back()} />
 
       <div className="px-5">
@@ -574,7 +574,7 @@ export default function ImportRecordPage() {
             style={{
               bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
               paddingBottom: "12px",
-              background: "linear-gradient(to top, #F8F7F4 75%, transparent)",
+              background: "linear-gradient(to top, #EEF3E9 75%, transparent)",
             }}
           >
             <button

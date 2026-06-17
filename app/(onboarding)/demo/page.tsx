@@ -44,7 +44,7 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col" style={{ background: "#F8F7F4" }}>
+    <div className="flex-1 flex flex-col" style={{ background: "#EEF3E9" }}>
 
       {/* Progress */}
       <div className="px-5 pt-12">
