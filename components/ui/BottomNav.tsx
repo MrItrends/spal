@@ -75,7 +75,7 @@ const navItems: NavItem[] = [
 export function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname === "/home" || pathname === "/records" || pathname === "/insights") return null;
+  if (pathname === "/home" || pathname === "/records" || pathname === "/insights" || pathname.startsWith("/ask")) return null;
 
   return (
     <nav data-coachmark="bottom_nav" className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] glass-nav bottom-nav z-50">
