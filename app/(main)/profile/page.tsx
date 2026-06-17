@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
 import { enablePushNotifications, disablePushNotifications } from "@/hooks/usePushNotifications";
 import {
+  ArrowLeft01Icon,
   PencilEdit01Icon, Cancel01Icon, UserIcon, Mail01Icon, SmartPhone01Icon, ChatIcon, Notification01Icon, Notification02Icon,
   Store01Icon, Coins01Icon, ReceiptDollarIcon, ArrowRight01Icon, Camera01Icon, FireIcon, Tick01Icon, Alert01Icon,
   BookOpen01Icon, Message01Icon, GridViewIcon, File01Icon, Folder01Icon,
@@ -248,9 +249,19 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 pt-6 space-y-4">
-      <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
-        Profile
-      </h1>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => router.back()}
+          aria-label="Back"
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
+          style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}
+        >
+          <ArrowLeft01Icon size={18} color="#0F172A" />
+        </button>
+        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
+          Profile
+        </h1>
+      </div>
 
       {/* User card */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
