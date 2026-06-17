@@ -182,9 +182,8 @@ export default function AskSPALPage() {
     };
     recognition.onerror  = () => setSession("idle");
     recognition.onend    = () => {
-      // onend fires after silence — if still in user-speaking, trigger send
       recognitionRef.current = null;
-      if (session === "user-speaking") setSession("idle");
+      setSession("idle");
     };
 
     recognitionRef.current = recognition;
