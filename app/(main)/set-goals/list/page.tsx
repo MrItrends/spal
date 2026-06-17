@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { ArrowLeft01Icon, ArrowRight01Icon, Target01Icon, PlusSignIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import type { CoachGoal } from "@/lib/types";
@@ -67,7 +66,6 @@ function GoalCard({ goal, onClick }: { goal: CoachGoal; onClick: () => void }) {
 }
 
 export default function GoalsListPage() {
-  const router = useRouter();
   const { coachGoals } = useSPALStore();
 
   const groups: ("Today" | "Yesterday" | "Earlier")[] = ["Today", "Yesterday", "Earlier"];
@@ -80,7 +78,7 @@ export default function GoalsListPage() {
       {/* Header */}
       <div className="px-5 pt-12 pb-4 flex items-center gap-3">
         <button
-          onClick={() => router.push("/home")}
+          onClick={() => { window.location.href = "/home"; }}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
           style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}
           aria-label="Back"
@@ -100,7 +98,7 @@ export default function GoalsListPage() {
           <p className="text-[17px] font-bold text-spal-navy mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>No goals yet</p>
           <p className="text-[14px] text-neutral-400 max-w-[240px] mb-5">Tell SPAL your goals for today and it&apos;ll break them into simple steps.</p>
           <button
-            onClick={() => router.push("/set-goals/capture")}
+            onClick={() => { window.location.href = "/set-goals/capture"; }}
             className="h-11 px-6 rounded-full text-white font-bold text-[14px] active:scale-95 transition-transform"
             style={{ background: "#22C55E", fontFamily: "var(--font-satoshi)" }}
           >
@@ -116,7 +114,7 @@ export default function GoalsListPage() {
               </p>
               <div className="space-y-3">
                 {section.items.map((goal) => (
-                  <GoalCard key={goal.id} goal={goal} onClick={() => router.push(`/set-goals/${goal.id}`)} />
+                  <GoalCard key={goal.id} goal={goal} onClick={() => { window.location.href = `/set-goals/${goal.id}`; }} />
                 ))}
               </div>
             </div>
@@ -126,7 +124,7 @@ export default function GoalsListPage() {
 
       {/* Add goal FAB */}
       <button
-        onClick={() => router.push("/set-goals/capture")}
+        onClick={() => { window.location.href = "/set-goals/capture"; }}
         aria-label="Set a new goal"
         className="fixed z-50 w-14 h-14 rounded-full bg-spal-green flex items-center justify-center active:scale-95 transition-transform"
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", right: "20px", boxShadow: "0 8px 24px rgba(34,197,94,0.45)" }}

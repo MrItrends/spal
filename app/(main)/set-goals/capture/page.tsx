@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import {
   Cancel01Icon, Target01Icon, Mic01Icon, PencilEdit02Icon,
   ThumbsUpIcon, ThumbsDownIcon, Note04Icon, Loading03Icon,
@@ -27,7 +26,6 @@ function newId() {
 }
 
 export default function GoalCapturePage() {
-  const router = useRouter();
   const { addCoachGoals } = useSPALStore();
 
   const [phase, setPhase]           = useState<Phase>("idle");
@@ -160,7 +158,7 @@ export default function GoalCapturePage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 pt-12 pb-2">
         <button
-          onClick={() => router.push("/home")}
+          onClick={() => { window.location.href = "/home"; }}
           aria-label="Close"
           className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
           style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
@@ -168,7 +166,7 @@ export default function GoalCapturePage() {
           <Cancel01Icon size={18} color="#121212" />
         </button>
         <button
-          onClick={() => router.push("/set-goals/list")}
+          onClick={() => { window.location.href = "/set-goals/list"; }}
           aria-label="Your goals"
           className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
           style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
@@ -257,7 +255,7 @@ export default function GoalCapturePage() {
               </div>
 
               <button
-                onClick={() => router.push("/set-goals/list")}
+                onClick={() => { window.location.href = "/set-goals/list"; }}
                 className="w-full bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 active:scale-[0.98] transition-transform text-left"
                 style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}
               >

@@ -2,14 +2,12 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { Cancel01Icon, Target01Icon, AiMicIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
 const GRADIENT = "linear-gradient(180deg, #7B92F0 0%, #9FB4EE 30%, #BFD3E6 55%, #CFE3D4 78%, #DDEBD4 100%)";
 
 export default function SetGoalsWelcomePage() {
-  const router = useRouter();
   const { user } = useSPALStore();
   const name = user?.full_name?.split(" ")[0] ?? user?.business_name ?? "there";
 
@@ -18,7 +16,7 @@ export default function SetGoalsWelcomePage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 pt-12 pb-2">
         <button
-          onClick={() => router.push("/home")}
+          onClick={() => { window.location.href = "/home"; }}
           aria-label="Close"
           className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
           style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
@@ -26,7 +24,7 @@ export default function SetGoalsWelcomePage() {
           <Cancel01Icon size={18} color="#121212" />
         </button>
         <button
-          onClick={() => router.push("/set-goals/list")}
+          onClick={() => { window.location.href = "/set-goals/list"; }}
           aria-label="Your goals"
           className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
           style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
@@ -65,7 +63,7 @@ export default function SetGoalsWelcomePage() {
       <div className="px-5 pb-10" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 40px)" }}>
         <motion.button
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          onClick={() => router.push("/set-goals/capture")}
+          onClick={() => { window.location.href = "/set-goals/capture"; }}
           className="w-full h-14 rounded-2xl flex items-center justify-center gap-2.5 text-white font-bold text-[16px] active:scale-[0.98] transition-transform"
           style={{ background: "#22C55E", boxShadow: "0 8px 24px rgba(34,197,94,0.4)", fontFamily: "var(--font-satoshi)" }}
         >

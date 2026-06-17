@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ArrowLeft01Icon, Tick01Icon, Target01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
@@ -19,7 +19,6 @@ function groupLabel(iso: string): string {
 }
 
 export default function GoalDetailPage() {
-  const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { coachGoals, toggleBreakdown, markGoalAchieved } = useSPALStore();
 
@@ -32,7 +31,7 @@ export default function GoalDetailPage() {
           This goal isn&apos;t here anymore
         </p>
         <button
-          onClick={() => router.push("/set-goals/list")}
+          onClick={() => { window.location.href = "/set-goals/list"; }}
           className="h-11 px-6 rounded-full text-white font-bold text-[14px]"
           style={{ background: "#22C55E", fontFamily: "var(--font-satoshi)" }}
         >
@@ -49,7 +48,7 @@ export default function GoalDetailPage() {
       {/* Header — back + goal title inline */}
       <div className="px-5 pt-12 pb-4 flex items-center gap-3">
         <button
-          onClick={() => router.push("/set-goals/list")}
+          onClick={() => { window.location.href = "/set-goals/list"; }}
           className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
           style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}
           aria-label="Back"
