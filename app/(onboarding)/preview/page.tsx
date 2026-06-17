@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mic, TrendingUp, MessageCircle, Lightbulb } from "lucide-react";
+import { ArrowLeft01Icon, Mic01Icon, ChartIncreaseIcon, ChatIcon, BulbIcon } from "hugeicons-react";
 
 const FEATURES = [
   { icon: <VoiceIcon />,    label: "Record by voice",       sub: "Say it, SPAL writes it down" },
@@ -26,7 +26,7 @@ export default function PreviewPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft01Icon size={18} />
           </button>
           <div className="flex-1"><OnboardProgress step={4} total={4} /></div>
         </div>
@@ -161,7 +161,7 @@ function OnboardProgress({ step, total }: { step: number; total: number }) {
   );
 }
 
-function VoiceIcon()  { return <Mic          size={18} strokeWidth={1.8} />; }
-function ProfitIcon() { return <TrendingUp   size={18} strokeWidth={1.8} />; }
-function AskIcon()    { return <MessageCircle size={18} strokeWidth={1.8} />; }
-function InsightIcon(){ return <Lightbulb    size={18} strokeWidth={1.8} />; }
+function VoiceIcon()  { return <Mic01Icon        size={18} />; }
+function ProfitIcon() { return <ChartIncreaseIcon size={18} />; }
+function AskIcon()    { return <ChatIcon          size={18} />; }
+function InsightIcon(){ return <BulbIcon          size={18} />; }

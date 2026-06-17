@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { useSPALStore } from "@/store";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft01Icon } from "hugeicons-react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
           style={{ background: "#EAE9E7" }}
           aria-label="Go back"
         >
-          <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
+          <ArrowLeft01Icon size={18} color="#0F172A" />
         </button>
       </div>
 

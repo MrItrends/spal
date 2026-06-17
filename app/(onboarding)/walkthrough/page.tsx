@@ -3,10 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import {
-  X, TrendingUp, TrendingDown, ScanLine, FolderInput,
-  MessageCircle, ArrowRight,
-} from "lucide-react";
+import { TrendingDown, ScanLine, FolderInput } from "lucide-react";
+import { Cancel01Icon, ChartIncreaseIcon, ChatIcon, ArrowRight01Icon } from "hugeicons-react";
 
 const SLIDE_DURATION = 4500; // ms each slide auto-advances
 
@@ -76,7 +74,7 @@ function SlideIntro() {
 
 function SlideRecord() {
   const tiles = [
-    { icon: <TrendingUp  size={22} strokeWidth={2} color="#fff" />, label: "Add Sale",    bg: "#22C55E", delay: 0     },
+    { icon: <ChartIncreaseIcon size={22} color="#fff" />, label: "Add Sale",    bg: "#22C55E", delay: 0     },
     { icon: <TrendingDown size={22} strokeWidth={2} color="#fff" />, label: "Add Expense", bg: "#F97316", delay: 0.08  },
     { icon: <ScanLine    size={22} strokeWidth={2} color="#0F172A" />, label: "Scan",    bg: "#F1F5F9", delay: 0.16  },
     { icon: <FolderInput size={22} strokeWidth={2} color="#0F172A" />, label: "Import",  bg: "#F1F5F9", delay: 0.24  },
@@ -303,7 +301,7 @@ function SlideLoop() {
               </p>
             </div>
             {i < steps.length - 1 && (
-              <ArrowRight size={14} strokeWidth={2} className="text-neutral-200 flex-shrink-0" />
+              <ArrowRight01Icon size={14} className="text-neutral-200 flex-shrink-0" />
             )}
           </motion.div>
         ))}
@@ -330,7 +328,7 @@ function SlideReady({ onDone }: { onDone: () => void }) {
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
         <div className="w-20 h-20 rounded-full bg-spal-green flex items-center justify-center mx-auto">
-          <MessageCircle size={34} strokeWidth={1.5} color="#fff" />
+          <ChatIcon size={34} color="#fff" />
         </div>
       </motion.div>
 
@@ -457,7 +455,7 @@ export default function WalkthroughPage() {
           style={{ background: slide.dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }}
           aria-label="Skip and close"
         >
-          <X size={16} strokeWidth={2.5} color={slide.dark ? "#fff" : "#0F172A"} />
+          <Cancel01Icon size={16} color={slide.dark ? "#fff" : "#0F172A"} />
         </button>
       </div>
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight01Icon } from "hugeicons-react";
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -231,7 +231,7 @@ function GetStartedContent({
             className="w-[46px] h-[46px] rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: "rgba(255,255,255,0.22)" }}
           >
-            <ArrowRight size={20} strokeWidth={2.5} color="#fff" />
+            <ArrowRight01Icon size={20} color="#fff" />
           </div>
 
           {/* Label — centred in remaining space */}

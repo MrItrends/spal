@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSPALStore } from "@/store";
-import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
+import { ArrowLeft01Icon, EyeIcon, ViewIcon, Tick01Icon } from "hugeicons-react";
 
 export default function CreatePasswordPage() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export default function CreatePasswordPage() {
             style={{ background: "#EAE9E7" }}
             aria-label="Go back"
           >
-            <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
+            <ArrowLeft01Icon size={18} color="#0F172A" />
           </button>
           <OnboardProgress step={4} total={4} />
         </div>
@@ -105,7 +105,7 @@ export default function CreatePasswordPage() {
               className="ml-2 text-neutral-400 active:scale-90 transition-transform"
               aria-label={show ? "Hide password" : "Show password"}
             >
-              {show ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
+              {show ? <ViewIcon size={18} /> : <EyeIcon size={18} />}
             </button>
           </div>
 
@@ -115,7 +115,7 @@ export default function CreatePasswordPage() {
               className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
               style={{ background: hasLength ? "#22C55E" : "#E4E4E7" }}
             >
-              {hasLength && <Check size={11} strokeWidth={3} color="#fff" />}
+              {hasLength && <Tick01Icon size={11} color="#fff" />}
             </div>
             <span
               className="text-[13px]"

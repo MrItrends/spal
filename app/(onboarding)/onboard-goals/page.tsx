@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSPALStore, type BusinessGoal } from "@/store";
-import { ArrowLeft, Check, BarChart3, Scissors, TrendingUp, Search, DollarSign } from "lucide-react";
+import { ArrowLeft01Icon, Tick01Icon, ChartIncreaseIcon, Scissor01Icon, Search01Icon, Dollar01Icon } from "hugeicons-react";
 
 const GOALS: {
   goal: BusinessGoal;
@@ -18,7 +18,7 @@ const GOALS: {
     goal: "track_sales",
     label: "Track my sales daily",
     sub: "Know exactly how much I make each day",
-    icon: <BarChart3 size={20} strokeWidth={1.7} />,
+    icon: <ChartIncreaseIcon size={20} />,
     accent: "#22C55E",
     nudge: "SPAL records every sale in seconds. Just tap or speak. No forms.",
   },
@@ -26,7 +26,7 @@ const GOALS: {
     goal: "know_profit",
     label: "Know my real profit",
     sub: "See what I actually keep after expenses",
-    icon: <DollarSign size={20} strokeWidth={1.7} />,
+    icon: <Dollar01Icon size={20} />,
     accent: "#2563EB",
     nudge: "SPAL shows you exactly what you keep after every sale. Not just what you make.",
   },
@@ -34,7 +34,7 @@ const GOALS: {
     goal: "reduce_expenses",
     label: "Reduce my expenses",
     sub: "Find where money is leaking out",
-    icon: <Scissors size={20} strokeWidth={1.7} />,
+    icon: <Scissor01Icon size={20} />,
     accent: "#F97316",
     nudge: "SPAL spots your biggest spending patterns and shows you where money is quietly leaving.",
   },
@@ -42,7 +42,7 @@ const GOALS: {
     goal: "grow_business",
     label: "Grow my business",
     sub: "Make better decisions to grow",
-    icon: <TrendingUp size={20} strokeWidth={1.7} />,
+    icon: <ChartIncreaseIcon size={20} />,
     accent: "#8B5CF6",
     nudge: "SPAL tracks your best days, best products, and patterns so you know what to do more of.",
   },
@@ -50,7 +50,7 @@ const GOALS: {
     goal: "understand_spending",
     label: "Understand my spending",
     sub: "See patterns in how I spend money",
-    icon: <Search size={20} strokeWidth={1.7} />,
+    icon: <Search01Icon size={20} />,
     accent: "#2563EB",
     nudge: "SPAL gives you a simple breakdown of where your money goes every week. No guesswork.",
   },
@@ -99,7 +99,7 @@ export default function GoalsPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft01Icon size={18} />
           </button>
           <div className="flex-1"><OnboardProgress step={3} total={3} /></div>
         </div>
@@ -174,7 +174,7 @@ export default function GoalsPage() {
                       className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ background: item.accent }}
                     >
-                      <Check size={13} strokeWidth={2.5} color="white" />
+                      <Tick01Icon size={13} color="white" />
                     </motion.div>
                   ) : (
                     <div className="w-6 h-6 rounded-lg border-2 border-neutral-200 flex-shrink-0" />

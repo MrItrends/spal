@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft01Icon } from "hugeicons-react";
 
 const STEPS = [
   {
@@ -55,7 +55,7 @@ export default function DemoPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Go back"
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft01Icon size={18} />
           </button>
           <div className="flex-1"><OnboardProgress step={3} total={4} /></div>
         </div>
