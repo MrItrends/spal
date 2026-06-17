@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
-  Target, TrendingUp, Calendar, Trophy, ArrowRight,
-  Plus, X, Sparkles, Check,
-} from "lucide-react";
+  ArrowRight01Icon, PlusSignIcon, Cancel01Icon, SparklesIcon, Tick01Icon,
+  ChartIncreaseIcon, Trophy01Icon, Calendar01Icon, Target01Icon,
+} from "hugeicons-react";
 import { formatCurrency } from "@/lib/utils/currency";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,22 +36,22 @@ interface GoalMeta {
 const GOAL_META: Record<GoalType, GoalMeta> = {
   daily_sales: {
     label: "Daily sales",   period: "today",      hint: "What sales do you want to hit today?",
-    icon: <TrendingUp size={20} strokeWidth={2} color="#16A34A" />,
+    icon: <ChartIncreaseIcon size={20} color="#16A34A" />,
     accent: "#16A34A", tintBg: "#E0F4E9",
   },
   weekly_profit: {
     label: "Weekly profit", period: "this week",  hint: "How much profit do you want this week?",
-    icon: <Target size={20} strokeWidth={2} color="#2563EB" />,
+    icon: <Target01Icon size={20} color="#2563EB" />,
     accent: "#2563EB", tintBg: "#E3E9F8",
   },
   monthly_sales: {
     label: "Monthly sales", period: "this month", hint: "Total sales target for this month?",
-    icon: <Calendar size={20} strokeWidth={2} color="#EA580C" />,
+    icon: <Calendar01Icon size={20} color="#EA580C" />,
     accent: "#EA580C", tintBg: "#F3E5DD",
   },
   yearly_revenue: {
     label: "Yearly revenue",period: "this year",  hint: "Big yearly revenue ambition?",
-    icon: <Trophy size={20} strokeWidth={2} color="#8B5CF6" />,
+    icon: <Trophy01Icon size={20} color="#8B5CF6" />,
     accent: "#8B5CF6", tintBg: "#ECE5F9",
   },
 };
@@ -327,7 +327,7 @@ function GoalCard({
         className="mt-4 w-full flex items-center justify-center gap-2 h-11 rounded-full bg-neutral-50 hover:bg-neutral-100 active:scale-[0.99] transition-all"
         style={{ border: "1px solid rgba(15,23,42,0.08)" }}
       >
-        <Sparkles size={14} strokeWidth={2.2} className="text-spal-navy" />
+        <SparklesIcon size={14} className="text-spal-navy" />
         <span className="text-[13px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
           Ask a coach how to hit this
         </span>
@@ -363,7 +363,7 @@ function EmptyGoalCard({ type, onSet }: { type: GoalType; onSet: () => void }) {
         </p>
       </div>
       <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: meta.accent }}>
-        <Plus size={15} strokeWidth={2.5} color="#fff" />
+        <PlusSignIcon size={15} color="#fff" />
       </div>
     </motion.button>
   );
@@ -446,7 +446,7 @@ function SetGoalSheet({
               className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100"
               aria-label="Close"
             >
-              <X size={15} strokeWidth={2} className="text-neutral-500" />
+              <Cancel01Icon size={15} className="text-neutral-500" />
             </button>
           </div>
 
@@ -558,7 +558,7 @@ function CoachToast({
         style={{ background: "#0F172A", boxShadow: "0 12px 40px rgba(0,0,0,0.25)" }}
       >
         <div className="w-9 h-9 rounded-full bg-spal-green/15 flex items-center justify-center flex-shrink-0">
-          <Sparkles size={16} strokeWidth={2.2} className="text-spal-green" />
+          <SparklesIcon size={16} className="text-spal-green" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white text-[13.5px] font-bold leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
@@ -573,7 +573,7 @@ function CoachToast({
               className="flex-1 h-9 rounded-full bg-spal-green text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5"
               style={{ fontFamily: "var(--font-satoshi)" }}
             >
-              Talk to a coach <ArrowRight size={13} strokeWidth={2.5} />
+              Talk to a coach <ArrowRight01Icon size={13} />
             </button>
             <button
               onClick={onDismiss}
@@ -585,7 +585,7 @@ function CoachToast({
           </div>
         </div>
         <button onClick={onDismiss} className="text-white/40 -mt-1 -mr-1" aria-label="Dismiss">
-          <X size={15} strokeWidth={2} />
+          <Cancel01Icon size={15} />
         </button>
       </div>
     </motion.div>
@@ -607,4 +607,4 @@ function GoalsSkeleton() {
 }
 
 // Unused but kept for tree-shaking signals
-void Check;
+void Tick01Icon;

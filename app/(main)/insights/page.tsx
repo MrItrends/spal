@@ -7,9 +7,10 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import {
-  BarChart3, Trophy, TriangleAlert, TrendingUp, TrendingDown,
-  ShoppingBag, Tag, HeartPulse, ArrowRight, Flame, Pencil, X, Check,
-} from "lucide-react";
+  ChartIncreaseIcon, ArrowRight01Icon, PencilEdit01Icon, Cancel01Icon, Tick01Icon,
+  Trophy01Icon, Alert01Icon, ChartDecreaseIcon, ShoppingBag01Icon, Tag01Icon,
+  HeartCheckIcon, Fire01Icon,
+} from "hugeicons-react";
 import { SALE_CATEGORIES } from "@/lib/utils/category";
 
 import { formatCurrency } from "@/lib/utils/currency";
@@ -165,7 +166,7 @@ function LiquidGauge({ fill, state }: { fill: number; state: HealthState }) {
       </div>
       {/* Icon centered on top */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <HeartPulse size={28} strokeWidth={1.8} color={iconColor} />
+        <HeartCheckIcon size={28} color={iconColor} />
       </div>
       {/* Pulse ring when healthy */}
       {state === "healthy" && (
@@ -236,7 +237,7 @@ function DiagnosisCard({ icon, tag, title, body, variant, askPrompt }: Diagnosis
                 className="flex items-center gap-1 text-[12px] font-semibold"
                 style={{ color: "#2563EB" }}
               >
-                Ask SPAL <ArrowRight size={12} strokeWidth={2.5} />
+                Ask SPAL <ArrowRight01Icon size={12} />
               </button>
             )}
           </div>
@@ -312,7 +313,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
     <div className="bg-white rounded-2xl p-4 space-y-5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#DCFCE7" }}>
-          <Flame size={14} strokeWidth={2} color="#2D7A3A" />
+          <Fire01Icon size={14} color="#2D7A3A" />
         </div>
         <p className="text-[13.5px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
           What sold {periodLabel.toLowerCase()}
@@ -358,7 +359,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
               className="flex items-center gap-1 text-[12px] font-semibold mt-3"
               style={{ color: "#2563EB" }}
             >
-              Ask SPAL how to grow this <ArrowRight size={12} strokeWidth={2.5} />
+              Ask SPAL how to grow this <ArrowRight01Icon size={12} />
             </button>
           )}
         </div>
@@ -384,11 +385,11 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                     onClick={() => { setRenamingCat(cat.name); setNewName(cat.name); }}
                     className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
                   >
-                    <Tag size={11} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+                    <Tag01Icon size={11} className="text-neutral-300 flex-shrink-0" />
                     <span className="text-[12.5px] font-medium text-spal-navy underline decoration-dotted underline-offset-2 decoration-neutral-300">
                       {cat.name}
                     </span>
-                    <Pencil size={10} strokeWidth={2} className="text-neutral-300" />
+                    <PencilEdit01Icon size={10} className="text-neutral-300" />
                   </button>
                   <span className="text-[12px] font-medium text-neutral-500">
                     {totalSales > 0 ? `${Math.round((cat.amount / totalSales) * 100)}%` : "—"}
@@ -430,7 +431,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                   Rename category
                 </p>
                 <button onClick={() => { setRenamingCat(null); setNewName(""); }} className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
-                  <X size={14} strokeWidth={2.5} className="text-neutral-500" />
+                  <Cancel01Icon size={14} className="text-neutral-500" />
                 </button>
               </div>
               <p className="text-[12px] text-neutral-400 mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
@@ -471,7 +472,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                 className="w-full h-12 rounded-2xl font-bold text-[14px] text-white flex items-center justify-center gap-2 disabled:opacity-40 transition-opacity"
                 style={{ background: "#22C55E", fontFamily: "var(--font-satoshi)" }}
               >
-                {saving ? "Saving…" : <><Check size={16} strokeWidth={2.5} /> Save</>}
+                {saving ? "Saving…" : <><Tick01Icon size={16} /> Save</>}
               </button>
             </motion.div>
           </>
@@ -540,7 +541,7 @@ export default function InsightsPage() {
     // Profit health
     if (t.profit > 0) {
       cards.push({
-        icon: <TrendingUp size={16} strokeWidth={2} color="#2D7A3A" />,
+        icon: <ChartIncreaseIcon size={16} color="#2D7A3A" />,
         tag: "Profit",
         title: `You made ${formatCurrency(t.profit)} profit`,
         body: `${periodLabel}, your sales covered your costs and left you with ${formatCurrency(t.profit)}. That's a win.`,
@@ -549,7 +550,7 @@ export default function InsightsPage() {
       });
     } else if (t.profit < 0) {
       cards.push({
-        icon: <TrendingDown size={16} strokeWidth={2} color="#DF191C" />,
+        icon: <ChartDecreaseIcon size={16} color="#DF191C" />,
         tag: "Profit",
         title: `You spent ${formatCurrency(Math.abs(t.profit))} more than you made`,
         body: `${periodLabel} expenses were higher than your sales. Let's find where the money is going.`,
@@ -561,7 +562,7 @@ export default function InsightsPage() {
     // Best bucket
     if (bestBucket && (bestBucket.profit + bestBucket.expenses) > 0) {
       cards.push({
-        icon: <Trophy size={16} strokeWidth={2} color="#2D7A3A" />,
+        icon: <Trophy01Icon size={16} color="#2D7A3A" />,
         tag: "Sales",
         title: `${bestBucket.label} was your best ${bucketWord}`,
         body: `You made the most on ${bestBucket.label}${bestBucket.profit > 0 ? ` with ${formatCurrency(bestBucket.profit)} in profit` : ""}.`,
@@ -574,7 +575,7 @@ export default function InsightsPage() {
     if (expenseRatio !== null && t.expenses > 0) {
       const isHigh = expenseRatio > 70;
       cards.push({
-        icon: <TriangleAlert size={16} strokeWidth={2} color={isHigh ? "#DF191C" : "#FF7A00"} />,
+        icon: <Alert01Icon size={16} color={isHigh ? "#DF191C" : "#FF7A00"} />,
         tag: "Spending",
         title: `${expenseRatio}% of sales went to expenses`,
         body: isHigh
@@ -588,7 +589,7 @@ export default function InsightsPage() {
     // Top expense category
     if (topExpenseCat) {
       cards.push({
-        icon: <ShoppingBag size={16} strokeWidth={2} color="#FF7A00" />,
+        icon: <ShoppingBag01Icon size={16} color="#FF7A00" />,
         tag: "Spending",
         title: `${topExpenseCat[0]} is your biggest cost`,
         body: `You spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]} ${periodLabel.toLowerCase()}. This is your single largest expense.`,
@@ -741,9 +742,9 @@ export default function InsightsPage() {
                   color: HEALTH_COLOR[health.state],
                 }}
               >
-                <HeartPulse size={15} strokeWidth={2} />
+                <HeartCheckIcon size={15} />
                 Get a deeper diagnosis from SPAL
-                <ArrowRight size={13} strokeWidth={2.5} />
+                <ArrowRight01Icon size={13} />
               </button>
             )}
           </div>
@@ -777,7 +778,7 @@ export default function InsightsPage() {
       {!loading && records.length === 0 && (
         <div className="text-center py-10">
           <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
-            <BarChart3 size={26} strokeWidth={2} className="text-neutral-300" />
+            <ChartIncreaseIcon size={26} className="text-neutral-300" />
           </div>
           <p className="text-spal-navy font-semibold mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>
             No records for {dateRange}
@@ -817,7 +818,7 @@ function EmptyChart({ period }: { period: Period }) {
   const label = period === "today" ? "today" : period === "week" ? "in the last 7 days" : period === "month" ? "this month" : "this year";
   return (
     <div className="h-[200px] flex flex-col items-center justify-center text-center">
-      <BarChart3 size={32} strokeWidth={1.8} className="text-neutral-300 mb-2" />
+      <ChartIncreaseIcon size={32} className="text-neutral-300 mb-2" />
       <p className="text-[13px] text-neutral-500" style={{ fontFamily: "var(--font-satoshi)" }}>
         No activity {label} yet.
       </p>

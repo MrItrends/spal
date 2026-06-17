@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Cancel01Icon, Mic01Icon, Camera01Icon, Upload01Icon, ArrowRight01Icon } from "hugeicons-react";
-import { FileText } from "lucide-react";
+import { Cancel01Icon, Mic01Icon, Camera01Icon, Upload01Icon, ArrowRight01Icon, File01Icon } from "hugeicons-react";
 
 const BG = "#F7F9F5";
 const fontFamily = "var(--font-satoshi)";
@@ -13,7 +12,7 @@ const METHODS = [
     label: "Manual Entry",
     sub: "Type in your sale details quickly",
     href: "/records/add-sale/manual",
-    icon: <FileText size={22} strokeWidth={2} color="#22C55E" />,
+    icon: <File01Icon size={22} color="#22C55E" />,
     iconBg: "#E8F5E9",
   },
   {

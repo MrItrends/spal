@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSPALStore } from "@/store";
-import { RotateCw } from "lucide-react";
-import { ArrowLeft01Icon } from "hugeicons-react";
+import { ArrowLeft01Icon, ArrowReloadHorizontalIcon } from "hugeicons-react";
 
 export default function VerifyPage() {
   const router = useRouter();
@@ -204,7 +203,7 @@ export default function VerifyPage() {
               className="inline-flex items-center gap-2 px-4 h-[38px] rounded-full"
               style={{ background: "#F5F2E8" }}
             >
-              <RotateCw size={13} strokeWidth={2} className="text-neutral-400" />
+              <ArrowReloadHorizontalIcon size={13} className="text-neutral-400" />
               <span className="text-[13px] text-neutral-500 font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Resend in {resendTimer}s
               </span>
@@ -215,7 +214,7 @@ export default function VerifyPage() {
               className="inline-flex items-center gap-2 px-4 h-[38px] rounded-full active:scale-95 transition-transform"
               style={{ background: "#F5F2E8" }}
             >
-              <RotateCw size={13} strokeWidth={2.2} className="text-spal-green" />
+              <ArrowReloadHorizontalIcon size={13} className="text-spal-green" />
               <span className="text-[13px] text-spal-navy font-semibold" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Resend code
               </span>

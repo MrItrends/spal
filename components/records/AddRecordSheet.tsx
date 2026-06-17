@@ -7,7 +7,7 @@ import { PillChip } from "@/components/ui/PillChip";
 import { useSPALStore } from "@/store";
 import type { BusinessRecord } from "@/lib/types";
 import type { Badge } from "@/lib/gamification/badges";
-import { Camera, X, CheckCircle2, Minus, Plus, Zap, Clock } from "lucide-react";
+import { Camera01Icon, Cancel01Icon, MinusSignIcon, PlusSignIcon, ZapIcon, Clock01Icon } from "hugeicons-react";
 import { SALE_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/categories";
 
 interface AddRecordSheetProps {
@@ -296,7 +296,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                           className="absolute inset-0 rounded-full bg-spal-blue"
                         />
                         <div className="relative w-14 h-14 rounded-full bg-spal-blue/10 border-2 border-spal-blue flex items-center justify-center">
-                          <Camera size={24} className="text-spal-blue" strokeWidth={1.8} />
+                          <Camera01Icon size={24} className="text-spal-blue" />
                         </div>
                       </div>
                       <div className="text-center">
@@ -322,7 +322,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                         disabled={scanning}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-spal-blue-50 text-spal-blue text-xs font-semibold rounded-full border border-spal-blue-100 active:bg-spal-blue-100 transition-colors disabled:opacity-40"
                       >
-                        <Camera size={14} strokeWidth={2} />
+                        <Camera01Icon size={14} />
                         Scan
                       </motion.button>
                     )}
@@ -331,7 +331,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                       className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500"
                       aria-label="Close"
                     >
-                      <X size={16} strokeWidth={2} />
+                      <Cancel01Icon size={16} />
                     </button>
                   </div>
                 </div>
@@ -350,7 +350,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                 {!isEdit && topItems.length > 0 && (
                   <div className="mb-4">
                     <div className="flex items-center gap-1.5 mb-2">
-                      <Zap size={13} strokeWidth={2.2} className="text-spal-green" />
+                      <ZapIcon size={13} className="text-spal-green" />
                       <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide" style={{ fontFamily: "var(--font-satoshi)" }}>
                         Quick add
                       </label>
@@ -435,7 +435,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                           className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center active:scale-90 transition disabled:opacity-30"
                           aria-label="Decrease quantity"
                         >
-                          <Minus size={14} strokeWidth={2.5} className="text-spal-navy" />
+                          <MinusSignIcon size={14} className="text-spal-navy" />
                         </button>
                         <span className="w-9 text-center text-[15px] font-bold text-spal-navy tabular-nums" style={{ fontFamily: "var(--font-satoshi)" }}>
                           {quantity}
@@ -445,7 +445,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                           className="w-8 h-8 rounded-full bg-spal-green text-white flex items-center justify-center active:scale-90 transition"
                           aria-label="Increase quantity"
                         >
-                          <Plus size={14} strokeWidth={2.5} />
+                          <PlusSignIcon size={14} />
                         </button>
                       </div>
                     </motion.div>
@@ -533,7 +533,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                             color: paymentStatus === status ? '#fff' : '#71717A',
                           }}
                         >
-                          {status === 'paid' ? <><span>✓</span> Paid now</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
+                          {status === 'paid' ? <><span>✓</span> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
                         </button>
                       ))}
                     </div>
@@ -615,7 +615,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   );
 }
 
-void CheckCircle2;
 
 function SuccessState({ isEdit, type, amount }: { isEdit: boolean; type: string; amount: string }) {
   const messages = {

@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Bell, Trophy, TrendingUp, Megaphone, Flame, GraduationCap, Star,
-} from "lucide-react";
+  ArrowLeft01Icon, Notification01Icon, Trophy01Icon, ChartIncreaseIcon,
+  MegaphoneIcon, Fire01Icon, GraduationScrollIcon, StarIcon,
+} from "hugeicons-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,17 +26,17 @@ interface AppNotification {
 const TYPE_CONFIG: Record<string, {
   bg:     string;
   color:  string;
-  Icon:   React.ComponentType<{ size: number; strokeWidth: number; color: string }>;
+  Icon:   React.ComponentType<{ size: number; color: string }>;
   label:  string;
 }> = {
-  badge_unlocked: { bg: "#FEF3C7", color: "#D97706", Icon: Trophy,        label: "Badge" },
-  milestone:      { bg: "#F0FDF4", color: "#16A34A", Icon: TrendingUp,    label: "Milestone" },
-  streak:         { bg: "#FFF7ED", color: "#EA580C", Icon: Flame,         label: "Streak" },
-  app_update:     { bg: "#EFF6FF", color: "#2563EB", Icon: Megaphone,     label: "Update" },
-  coach:          { bg: "#F5F3FF", color: "#7C3AED", Icon: GraduationCap, label: "Coach" },
+  badge_unlocked: { bg: "#FEF3C7", color: "#D97706", Icon: Trophy01Icon,          label: "Badge" },
+  milestone:      { bg: "#F0FDF4", color: "#16A34A", Icon: ChartIncreaseIcon,     label: "Milestone" },
+  streak:         { bg: "#FFF7ED", color: "#EA580C", Icon: Fire01Icon,            label: "Streak" },
+  app_update:     { bg: "#EFF6FF", color: "#2563EB", Icon: MegaphoneIcon,         label: "Update" },
+  coach:          { bg: "#F5F3FF", color: "#7C3AED", Icon: GraduationScrollIcon,  label: "Coach" },
 };
 
-const FALLBACK_CONFIG = { bg: "#F3F4F6", color: "#6B7280", Icon: Star, label: "Notice" };
+const FALLBACK_CONFIG = { bg: "#F3F4F6", color: "#6B7280", Icon: StarIcon, label: "Notice" };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -102,7 +103,7 @@ export default function NotificationsPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Back"
           >
-            <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
+            <ArrowLeft01Icon size={18} color="#0F172A" />
           </button>
           <h1 className="text-[22px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
             Notifications
@@ -173,7 +174,7 @@ function NotificationCard({ n, index }: { n: AppNotification; index: number }) {
         {n.icon && n.type === "badge_unlocked" ? (
           <span className="text-[18px] leading-none">{n.icon}</span>
         ) : (
-          <cfg.Icon size={18} strokeWidth={2} color={cfg.color} />
+          <cfg.Icon size={18} color={cfg.color} />
         )}
       </div>
 
@@ -217,7 +218,7 @@ function EmptyState() {
     >
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
         style={{ background: "#F3F4F6" }}>
-        <Bell size={26} strokeWidth={1.5} color="#D1D5DB" />
+        <Notification01Icon size={26} color="#D1D5DB" />
       </div>
       <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
         Nothing here yet

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Activity, FileText, BarChart3, User } from "lucide-react";
+import { Activity01Icon, File01Icon, ChartIncreaseIcon, User02Icon } from "hugeicons-react";
 
 interface NavItem {
   href:    string;
@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
   {
     href:  "/home",
     label: "Home",
-    icon:  <Activity size={21} strokeWidth={1.7} />,
+    icon:  <Activity01Icon size={21} />,
     iconActive: (
       <Image
         src="/home icon.svg"
@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
   {
     href:  "/records",
     label: "Records",
-    icon:  <FileText size={21} strokeWidth={1.7} />,
+    icon:  <File01Icon size={21} />,
     iconActive: (
       <Image
         src="/records_icon.svg"
@@ -45,7 +45,7 @@ const navItems: NavItem[] = [
   {
     href:  "/insights",
     label: "Insights",
-    icon:  <BarChart3 size={21} strokeWidth={1.7} />,
+    icon:  <ChartIncreaseIcon size={21} />,
     iconActive: (
       <Image
         src="/insights_icon.svg"
@@ -59,7 +59,7 @@ const navItems: NavItem[] = [
   {
     href:  "/profile",
     label: "Profile",
-    icon:  <User size={21} strokeWidth={1.7} />,
+    icon:  <User02Icon size={21} />,
     iconActive: (
       <Image
         src="/profile_icon.svg"

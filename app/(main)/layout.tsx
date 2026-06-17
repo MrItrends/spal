@@ -3,7 +3,7 @@ import { UserHydration } from "@/components/UserHydration";
 import { VoiceRecorder } from "@/components/voice/VoiceRecorder";
 import { BadgeCelebration } from "@/components/gamification/BadgeCelebration";
 import { PWAInstallPrompt } from "@/components/shared/PWAInstallPrompt";
-import { SparkAvatar } from "@/components/shared/SparkAvatar";
+import { QuickMenuFab } from "@/components/shared/QuickMenuFab";
 
 export default function MainLayout({
   children,
@@ -24,8 +24,8 @@ export default function MainLayout({
         </div>
       </main>
       <BottomNav />
-      {/* Floating Spark avatar — opens Ask SPAL from anywhere */}
-      <SparkAvatar />
+      {/* Quick Menu FAB — record sale/expense, chat with SPAL */}
+      <QuickMenuFab />
       {/* Voice recorder overlay — triggered from anywhere via store */}
       <VoiceRecorder />
       {/* Badge celebration — rendered above everything */}

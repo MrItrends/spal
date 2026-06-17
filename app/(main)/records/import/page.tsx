@@ -11,11 +11,11 @@ import {
   Upload01Icon, Camera01Icon,
 } from "hugeicons-react";
 import {
-  BookOpen, MessageCircle, Table2, LayoutGrid,
-  FileText, Receipt, AlignLeft,
-  ArrowUpRight, ArrowDownLeft, Calendar, CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+  BookOpen01Icon, ChatIcon, Table01Icon, GridViewIcon,
+  File01Icon, ReceiptDollarIcon, AlignBoxTopLeftIcon,
+  ArrowUp01Icon, ArrowDown01Icon, Calendar01Icon, Tick01Icon,
+  Alert01Icon,
+} from "hugeicons-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,12 +40,12 @@ export const METHOD_META: Record<TrackingMethod, {
   inputType: "file" | "visual";
   accent:    string;
 }> = {
-  notebook:      { label: "Notebook",      sub: "You write in a physical notebook",          icon: <BookOpen      size={20} strokeWidth={2} />, inputType: "visual", accent: "#22C55E" },
-  whatsapp:      { label: "WhatsApp",      sub: "You message yourself or save notes there",  icon: <MessageCircle size={20} strokeWidth={2} />, inputType: "visual", accent: "#25D366" },
-  excel:         { label: "Excel",         sub: "You track in a spreadsheet",                icon: <Table2        size={20} strokeWidth={2} />, inputType: "file",   accent: "#217346" },
-  google_sheets: { label: "Google Sheets", sub: "You use Google Sheets",                     icon: <LayoutGrid    size={20} strokeWidth={2} />, inputType: "file",   accent: "#2563EB" },
-  notes_app:     { label: "Notes App",     sub: "You use a phone notes app",                 icon: <FileText      size={20} strokeWidth={2} />, inputType: "visual", accent: "#F59E0B" },
-  receipts:      { label: "Receipts",      sub: "You keep paper receipts or photos",         icon: <Receipt       size={20} strokeWidth={2} />, inputType: "visual", accent: "#F97316" },
+  notebook:      { label: "Notebook",      sub: "You write in a physical notebook",          icon: <BookOpen01Icon  size={20} />, inputType: "visual", accent: "#22C55E" },
+  whatsapp:      { label: "WhatsApp",      sub: "You message yourself or save notes there",  icon: <ChatIcon        size={20} />, inputType: "visual", accent: "#25D366" },
+  excel:         { label: "Excel",         sub: "You track in a spreadsheet",                icon: <Table01Icon     size={20} />, inputType: "file",   accent: "#217346" },
+  google_sheets: { label: "Google Sheets", sub: "You use Google Sheets",                     icon: <GridViewIcon    size={20} />, inputType: "file",   accent: "#2563EB" },
+  notes_app:     { label: "Notes App",     sub: "You use a phone notes app",                 icon: <File01Icon      size={20} />, inputType: "visual", accent: "#F59E0B" },
+  receipts:      { label: "Receipts",      sub: "You keep paper receipts or photos",         icon: <ReceiptDollarIcon size={20} />, inputType: "visual", accent: "#F97316" },
   nothing:       { label: "Other",         sub: "No set system yet",                          icon: <Upload01Icon  size={20} />, inputType: "file",   accent: "#A1A1AA" },
 };
 
@@ -292,7 +292,7 @@ export default function ImportRecordPage() {
       <div className="min-h-full flex flex-col items-center justify-center px-6 text-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>
           <div className="w-20 h-20 rounded-full bg-spal-green flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 size={36} color="white" strokeWidth={2} />
+            <Tick01Icon size={36} color="white" />
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -424,7 +424,7 @@ export default function ImportRecordPage() {
                 >
                   <div className="px-4 pt-4 pb-3">
                     <div className="flex items-start gap-2.5 mb-3">
-                      <AlertCircle size={16} strokeWidth={2} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                      <Alert01Icon size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-[13px] font-bold text-amber-800 leading-snug" style={{ fontFamily: "var(--font-satoshi)" }}>
                           Looks like you&apos;ve imported this file before
@@ -478,7 +478,7 @@ export default function ImportRecordPage() {
                   initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                   className="mt-4 flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-2xl px-4 py-3.5"
                 >
-                  <AlertCircle size={16} strokeWidth={2} className="text-red-400 mt-0.5 flex-shrink-0" />
+                  <Alert01Icon size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
                   <p className="text-[12.5px] text-red-600 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
                     {parseError}
                   </p>
@@ -502,7 +502,7 @@ export default function ImportRecordPage() {
                     {records.some(r => r.confidence === "low") && (
                       <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
                         style={{ background: "#FEF3C7", color: "#92400E", fontFamily: "var(--font-satoshi)" }}>
-                        <AlertCircle size={11} strokeWidth={2.5} />
+                        <Alert01Icon size={11} />
                         {records.filter(r => r.confidence === "low").length} needs review
                       </span>
                     )}
@@ -892,7 +892,7 @@ function VisualUploadZone({
       <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#EFF6FF" }}>
-            <AlignLeft size={15} strokeWidth={2} color="#2563EB" />
+            <AlignBoxTopLeftIcon size={15} color="#2563EB" />
           </div>
           <p className="text-[13px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
             Paste as text
@@ -968,7 +968,7 @@ function ReviewCard({
     >
       {isLow && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-amber-100" style={{ background: "#FFFBEB" }}>
-          <AlertCircle size={13} strokeWidth={2.5} color="#D97706" />
+          <Alert01Icon size={13} color="#D97706" />
           <p className="text-[11.5px] font-semibold text-amber-700" style={{ fontFamily: "var(--font-satoshi)" }}>
             SPAL isn&apos;t sure about this one — please review
           </p>
@@ -988,7 +988,7 @@ function ReviewCard({
                 fontFamily: "var(--font-satoshi)",
               }}
             >
-              <ArrowUpRight size={12} strokeWidth={2.5} />Sale
+              <ArrowUp01Icon size={12} />Sale
             </button>
             <button
               onClick={() => onChange({ type: "expense", confidence: "high" })}
@@ -999,7 +999,7 @@ function ReviewCard({
                 fontFamily: "var(--font-satoshi)",
               }}
             >
-              <ArrowDownLeft size={12} strokeWidth={2.5} />Expense
+              <ArrowDown01Icon size={12} />Expense
             </button>
           </div>
           <p className="text-[15px] font-bold flex-shrink-0"
@@ -1094,7 +1094,7 @@ function ReviewCard({
                 fontFamily: "var(--font-satoshi)",
               }}
             >
-              <Calendar size={11} strokeWidth={2.5} />
+              <Calendar01Icon size={11} />
               {record.record_date ? friendlyDate(record.record_date) : `Using fallback · ${friendlyDate(fallbackDate)}`}
             </button>
           )}

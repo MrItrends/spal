@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { Cancel01Icon, Download01Icon, File01Icon } from "hugeicons-react";
 
 interface Props {
   open: boolean;
@@ -111,7 +111,7 @@ export function ExportSheet({ open, onClose }: Props) {
                   Export records
                 </h2>
                 <button onClick={onClose} className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
-                  <X size={16} strokeWidth={2.5} className="text-neutral-500" />
+                  <Cancel01Icon size={16} className="text-neutral-500" />
                 </button>
               </div>
 
@@ -199,7 +199,7 @@ export function ExportSheet({ open, onClose }: Props) {
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Download size={18} strokeWidth={2.2} />
+                    <Download01Icon size={18} />
                     Export {format.toUpperCase()}
                   </>
                 )}

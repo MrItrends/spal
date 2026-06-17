@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import {
-  ArrowLeft, ScanLine, Camera, RefreshCcw, CheckCircle2,
-  ArrowUpRight, ArrowDownLeft, Calendar, AlertCircle, Pencil,
-  ZoomIn,
-} from "lucide-react";
+  ArrowLeft01Icon, ScanIcon, Camera01Icon, ArrowReloadHorizontalIcon, CheckmarkCircle02Icon,
+  ArrowUpRight01Icon, ArrowDownLeft01Icon, Calendar01Icon, Alert01Icon, PencilEdit01Icon,
+  ZoomInAreaIcon,
+} from "hugeicons-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -211,7 +211,7 @@ export default function ScanPage() {
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 22 }}>
           <div className="w-20 h-20 rounded-full bg-spal-green flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 size={38} color="white" strokeWidth={2} />
+            <CheckmarkCircle02Icon size={38} color="white" />
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -264,7 +264,7 @@ export default function ScanPage() {
                 style={{ background: "#0F172A" }}>
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                   style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <Camera size={28} strokeWidth={1.5} color="#fff" />
+                  <Camera01Icon size={28} color="#fff" />
                 </div>
                 <div className="text-center px-8">
                   <p className="text-white font-semibold text-base" style={{ fontFamily: "var(--font-satoshi)" }}>
@@ -312,7 +312,7 @@ export default function ScanPage() {
                       style={{ background: "linear-gradient(to right, transparent, #22C55E, transparent)" }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <ZoomIn size={18} strokeWidth={1.5} color="rgba(255,255,255,0.3)" />
+                      <ZoomInAreaIcon size={18} color="rgba(255,255,255,0.3)" />
                     </div>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function ScanPage() {
                 style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}
                 aria-label="Back"
               >
-                <ArrowLeft size={18} strokeWidth={2} color="#fff" />
+                <ArrowLeft01Icon size={18} color="#fff" />
               </button>
               <span className="text-white text-[15px] font-semibold" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Quick Scan
@@ -367,7 +367,7 @@ export default function ScanPage() {
                   className="absolute left-5 right-5 flex items-start gap-2.5 rounded-2xl px-4 py-3.5"
                   style={{ bottom: "140px", background: "rgba(239,68,68,0.9)", backdropFilter: "blur(8px)" }}
                 >
-                  <AlertCircle size={16} strokeWidth={2} color="#fff" className="mt-0.5 flex-shrink-0" />
+                  <Alert01Icon size={16} color="#fff" className="mt-0.5 flex-shrink-0" />
                   <p className="text-white text-[12.5px] leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
                     {error}
                   </p>
@@ -394,7 +394,7 @@ export default function ScanPage() {
                     {stage === "processing" ? (
                       <div className="w-7 h-7 rounded-full border-[3px] border-neutral-300 border-t-spal-green animate-spin" />
                     ) : (
-                      <ScanLine size={28} strokeWidth={1.8} color="#0F172A" />
+                      <ScanIcon size={28} color="#0F172A" />
                     )}
                   </motion.button>
 
@@ -405,7 +405,7 @@ export default function ScanPage() {
                     style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}
                     aria-label="Upload from gallery"
                   >
-                    <Camera size={18} strokeWidth={2} color="#fff" />
+                    <Camera01Icon size={18} color="#fff" />
                   </button>
                 </div>
                 {stage === "processing" && (
@@ -452,7 +452,7 @@ export default function ScanPage() {
                   style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)" }}
                   aria-label="Retake"
                 >
-                  <ArrowLeft size={17} strokeWidth={2} color="#0F172A" />
+                  <ArrowLeft01Icon size={17} color="#0F172A" />
                 </button>
                 {/* Retake button */}
                 <button
@@ -460,7 +460,7 @@ export default function ScanPage() {
                   className="absolute top-4 right-4 flex items-center gap-1.5 h-9 px-3.5 rounded-full"
                   style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)" }}
                 >
-                  <RefreshCcw size={13} strokeWidth={2.2} color="#0F172A" />
+                  <ArrowReloadHorizontalIcon size={13} color="#0F172A" />
                   <span className="text-[12px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                     Retake
                   </span>
@@ -482,7 +482,7 @@ export default function ScanPage() {
                 {records.some(r => r.confidence === "low") && (
                   <span className="mt-1 text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
                     style={{ background: "#FEF3C7", color: "#92400E", fontFamily: "var(--font-satoshi)" }}>
-                    <AlertCircle size={11} strokeWidth={2.5} />
+                    <Alert01Icon size={11} />
                     {records.filter(r => r.confidence === "low").length} to review
                   </span>
                 )}
@@ -588,7 +588,7 @@ function ScanReviewCard({
     >
       {isLow && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-amber-100" style={{ background: "#FFFBEB" }}>
-          <AlertCircle size={13} strokeWidth={2.5} color="#D97706" />
+          <Alert01Icon size={13} color="#D97706" />
           <p className="text-[11.5px] font-semibold text-amber-700" style={{ fontFamily: "var(--font-satoshi)" }}>
             SPAL isn&apos;t sure — please review
           </p>
@@ -610,8 +610,8 @@ function ScanReviewCard({
                 }}
               >
                 {t === "sale"
-                  ? <ArrowUpRight   size={12} strokeWidth={2.5} />
-                  : <ArrowDownLeft  size={12} strokeWidth={2.5} />}
+                  ? <ArrowUpRight01Icon   size={12} />
+                  : <ArrowDownLeft01Icon  size={12} />}
                 {t === "sale" ? "Sale" : "Expense"}
               </button>
             ))}
@@ -641,7 +641,7 @@ function ScanReviewCard({
               <p className="text-[13px] font-semibold text-spal-navy truncate flex-1" style={{ fontFamily: "var(--font-satoshi)" }}>
                 {record.description || <span className="text-neutral-300">Tap to add description</span>}
               </p>
-              <Pencil size={12} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+              <PencilEdit01Icon size={12} className="text-neutral-300 flex-shrink-0" />
             </button>
           )}
           {record.category && (
@@ -678,7 +678,7 @@ function ScanReviewCard({
                 fontFamily: "var(--font-satoshi)",
               }}
             >
-              <Calendar size={11} strokeWidth={2.5} />
+              <Calendar01Icon size={11} />
               {record.record_date ? friendlyDate(record.record_date) : `Fallback · ${friendlyDate(fallbackDate)}`}
             </button>
           )}

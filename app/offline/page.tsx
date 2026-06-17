@@ -2,14 +2,14 @@
  * Offline fallback page — shown by the service worker when the user
  * navigates to a page that isn't in cache and has no internet connection.
  */
-import { WifiOff } from "lucide-react";
+import { WifiOff01Icon } from "hugeicons-react";
 
 export default function OfflinePage() {
   return (
     <div className="h-full flex flex-col items-center justify-center gap-5 px-8 text-center">
       {/* Icon */}
       <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center">
-        <WifiOff size={34} strokeWidth={2} className="text-neutral-400" />
+        <WifiOff01Icon size={34} className="text-neutral-400" />
       </div>
 
       {/* Heading */}

@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSPALStore } from "@/store";
-import { Zap, Check, X } from "lucide-react";
+import { ZapIcon, Tick01Icon, Cancel01Icon } from "hugeicons-react";
 
 const FEATURES = [
   { label: "Record sales & expenses",   free: true,  pro: true  },
@@ -97,7 +97,7 @@ function UpgradeContent() {
         className="text-center"
       >
         <div className="w-16 h-16 bg-gradient-to-br from-spal-purple to-spal-blue rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-          <Zap size={28} strokeWidth={2.2} color="#fff" fill="#fff" />
+          <ZapIcon size={28} color="#fff" />
         </div>
         <h1 className="text-2xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
           Unlock SPAL Pro
@@ -164,8 +164,8 @@ function UpgradeContent() {
             <div className="flex justify-center">
               {typeof f.free === "boolean" ? (
                 f.free
-                  ? <Check size={16} strokeWidth={2.5} className="text-spal-green" />
-                  : <X size={16} strokeWidth={2.5} className="text-neutral-300" />
+                  ? <Tick01Icon size={16} className="text-spal-green" />
+                  : <Cancel01Icon size={16} className="text-neutral-300" />
               ) : (
                 <span className="text-[10px] text-neutral-500 font-medium text-center leading-tight">{f.free}</span>
               )}
@@ -173,8 +173,8 @@ function UpgradeContent() {
             <div className="flex justify-center">
               {typeof f.pro === "boolean" ? (
                 f.pro
-                  ? <Check size={16} strokeWidth={2.5} className="text-spal-green" />
-                  : <X size={16} strokeWidth={2.5} className="text-neutral-300" />
+                  ? <Tick01Icon size={16} className="text-spal-green" />
+                  : <Cancel01Icon size={16} className="text-neutral-300" />
               ) : (
                 <span className="text-[10px] text-spal-purple font-semibold text-center leading-tight">{f.pro}</span>
               )}

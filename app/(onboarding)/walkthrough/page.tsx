@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { TrendingDown, ScanLine, FolderInput } from "lucide-react";
-import { Cancel01Icon, ChartIncreaseIcon, ChatIcon, ArrowRight01Icon } from "hugeicons-react";
+import { Cancel01Icon, ChartIncreaseIcon, ChartDecreaseIcon, ChatIcon, ArrowRight01Icon, ScanIcon, Folder01Icon } from "hugeicons-react";
 
 const SLIDE_DURATION = 4500; // ms each slide auto-advances
 
@@ -75,9 +74,9 @@ function SlideIntro() {
 function SlideRecord() {
   const tiles = [
     { icon: <ChartIncreaseIcon size={22} color="#fff" />, label: "Add Sale",    bg: "#22C55E", delay: 0     },
-    { icon: <TrendingDown size={22} strokeWidth={2} color="#fff" />, label: "Add Expense", bg: "#F97316", delay: 0.08  },
-    { icon: <ScanLine    size={22} strokeWidth={2} color="#0F172A" />, label: "Scan",    bg: "#F1F5F9", delay: 0.16  },
-    { icon: <FolderInput size={22} strokeWidth={2} color="#0F172A" />, label: "Import",  bg: "#F1F5F9", delay: 0.24  },
+    { icon: <ChartDecreaseIcon size={22} color="#fff" />, label: "Add Expense", bg: "#F97316", delay: 0.08  },
+    { icon: <ScanIcon          size={22} color="#0F172A" />, label: "Scan",    bg: "#F1F5F9", delay: 0.16  },
+    { icon: <Folder01Icon      size={22} color="#0F172A" />, label: "Import",  bg: "#F1F5F9", delay: 0.24  },
   ];
 
   return (

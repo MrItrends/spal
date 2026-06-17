@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Home } from "lucide-react";
+import { Home01Icon01Icon } from "hugeicons-react";
 
 const COLS    = 4;
 const ROWS    = 3;
@@ -320,9 +320,9 @@ export default function NotFound() {
               cursor:       "pointer",
             }}
           >
-            <Home size={14} strokeWidth={2.2} color="rgba(255,255,255,0.7)" />
+            <Home01Icon size={14} strokeWidth={2.2} color="rgba(255,255,255,0.7)" />
             <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)", fontFamily: FF }}>
-              Home
+              Home01Icon
             </span>
           </motion.div>
         </Link>
@@ -404,7 +404,7 @@ export default function NotFound() {
                       boxShadow:  "0 4px 28px rgba(34,197,94,0.35)",
                     }}
                   >
-                    <Home size={18} strokeWidth={2.2} />
+                    <Home01Icon size={18} strokeWidth={2.2} />
                     Take me home
                   </motion.button>
                 </Link>

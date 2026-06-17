@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Delete01Icon } from "hugeicons-react";
 
 interface UndoToastProps {
   message:  string;
@@ -43,7 +43,7 @@ export function UndoToast({ message, onUndo, onExpire, duration = 10_000 }: Undo
       >
         <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
           style={{ background: "rgba(239,68,68,0.15)" }}>
-          <Trash2 size={14} color="#F87171" strokeWidth={2} />
+          <Delete01Icon size={14} color="#F87171" />
         </div>
         <p className="flex-1 text-[13px] font-medium text-white" style={{ fontFamily: "var(--font-satoshi)" }}>
           {message}

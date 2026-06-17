@@ -10,7 +10,7 @@
  */
 
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from "framer-motion";
-import { Trash2, Pencil, Check } from "lucide-react";
+import { Delete01Icon, PencilEdit01Icon, Tick01Icon } from "hugeicons-react";
 
 interface SwipeableRowProps {
   children:    React.ReactNode;
@@ -67,7 +67,7 @@ export function SwipeableRow({
               borderColor:  selected ? "#22C55E" : "#D1D5DB",
             }}
           >
-            {selected && <Check size={12} color="white" strokeWidth={3} />}
+            {selected && <Tick01Icon size={12} color="white" />}
           </div>
         </div>
         <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ export function SwipeableRow({
           style={{ opacity: useTransform(x, [REVEAL * 0.4, REVEAL], [0, 1]) }}
           className="flex flex-col items-center gap-0.5"
         >
-          <Trash2 size={18} color="white" strokeWidth={2} />
+          <Delete01Icon size={18} color="white" />
           <span className="text-white text-[10px] font-semibold" style={{ fontFamily: "var(--font-satoshi)" }}>Delete</span>
         </motion.div>
       </motion.div>
@@ -106,7 +106,7 @@ export function SwipeableRow({
           style={{ opacity: useTransform(x, [-REVEAL, -REVEAL * 0.4], [1, 0]) }}
           className="flex flex-col items-center gap-0.5"
         >
-          <Pencil size={18} color="white" strokeWidth={2} />
+          <PencilEdit01Icon size={18} color="white" />
           <span className="text-white text-[10px] font-semibold" style={{ fontFamily: "var(--font-satoshi)" }}>Edit</span>
         </motion.div>
       </motion.div>

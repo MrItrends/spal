@@ -12,10 +12,15 @@ import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { UndoToast } from "@/components/ui/UndoToast";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
-  Bell, User, ArrowUp, ArrowDown, LayoutGrid,
-  MessageSquare, TrendingUp, TrendingDown, ChevronUp, ChevronDown,
-  Home, AlignJustify, BarChart2,
-} from "lucide-react";
+  Notification03Icon,
+  User02Icon,
+  ArrowUp01Icon,
+  ArrowDown01Icon,
+  ChartIncreaseIcon,
+  Home01Icon,
+  Menu01Icon,
+  BarChartIcon,
+} from "hugeicons-react";
 import Link from "next/link";
 
 const BG = "#EEF3E9";
@@ -30,20 +35,6 @@ function HomePageInner() {
 
   const [unreadCount,   setUnreadCount]   = useState(0);
   const [newBizToast,   setNewBizToast]   = useState<string | null>(null);
-  const [quickMenuOpen, setQuickMenuOpen] = useState(false);
-  const quickMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close quick menu on outside click
-  useEffect(() => {
-    if (!quickMenuOpen) return;
-    function handler(e: MouseEvent) {
-      if (quickMenuRef.current && !quickMenuRef.current.contains(e.target as Node)) {
-        setQuickMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [quickMenuOpen]);
 
   useEffect(() => {
     const nb = params.get("newBusiness");
@@ -189,7 +180,7 @@ function HomePageInner() {
               className="w-11 h-11 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform"
               style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}
             >
-              <Bell size={18} strokeWidth={2} color="#0F172A" />
+              <Notification03Icon size={18} color="#0F172A" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white leading-none">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -208,7 +199,7 @@ function HomePageInner() {
               ) : (
                 <div className="w-full h-full bg-spal-green flex items-center justify-center">
                   <span className="text-white font-bold text-[15px]">
-                    {(user?.full_name ?? user?.business_name ?? "?")[0]?.toUpperCase() ?? <User size={18} color="#fff" strokeWidth={2} />}
+                    {(user?.full_name ?? user?.business_name ?? "?")[0]?.toUpperCase() ?? <User02Icon size={18} color="#fff" />}
                   </span>
                 </div>
               )}
@@ -219,9 +210,9 @@ function HomePageInner() {
         {/* ── Top nav pills ── */}
         <div className="px-5 mt-5 flex gap-2">
           {[
-            { href: "/home",     label: "Home",     icon: <Home     size={14} strokeWidth={2.2} /> },
-            { href: "/records",  label: "Records",  icon: <AlignJustify size={14} strokeWidth={2.2} /> },
-            { href: "/insights", label: "Insights", icon: <BarChart2    size={14} strokeWidth={2.2} /> },
+            { href: "/home",     label: "Home",     icon: <Home01Icon    size={14} /> },
+            { href: "/records",  label: "Records",  icon: <Menu01Icon    size={14} /> },
+            { href: "/insights", label: "Insights", icon: <BarChartIcon  size={14} /> },
           ].map(tab => {
             const isActive = tab.href === "/home";
             return (
@@ -354,12 +345,12 @@ function HomePageInner() {
               className="bg-white rounded-2xl px-4 py-10 text-center"
               style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
             >
-              <TrendingUp size={24} className="mx-auto mb-3 text-neutral-200" strokeWidth={2} />
+              <ChartIncreaseIcon size={24} className="mx-auto mb-3 text-neutral-200" />
               <p className="text-[13px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
                 No activity yet today.
               </p>
               <button
-                onClick={() => setQuickMenuOpen(true)}
+                onClick={() => router.push("/records/add-sale")}
                 className="mt-2 text-[13px] font-semibold"
                 style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
               >
@@ -390,8 +381,8 @@ function HomePageInner() {
                         style={{ background: record.type === "sale" ? "#F0FDF4" : "#FFF5ED" }}
                       >
                         {record.type === "sale"
-                          ? <ArrowUp   size={16} strokeWidth={2.2} color="#16A34A" />
-                          : <ArrowDown size={16} strokeWidth={2.2} color="#EA580C" />}
+                          ? <ArrowUp01Icon   size={16} color="#16A34A" />
+                          : <ArrowDown01Icon size={16} color="#EA580C" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13.5px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
@@ -427,75 +418,6 @@ function HomePageInner() {
         </div>
       </div>
 
-      {/* ── Quick Menu ── */}
-      <div
-        ref={quickMenuRef}
-        className="fixed z-50"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", right: "16px" }}
-      >
-        {/* Popup */}
-        <AnimatePresence>
-          {quickMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute bottom-[60px] right-0 bg-white rounded-2xl overflow-hidden"
-              style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.14)", minWidth: "190px" }}
-            >
-              <button
-                onClick={() => { setQuickMenuOpen(false); router.push("/records/add-sale"); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors border-b border-neutral-50"
-              >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#F0FDF4" }}>
-                  <TrendingUp size={15} strokeWidth={2.2} color="#16A34A" />
-                </div>
-                <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                  Record Sale
-                </span>
-              </button>
-              <button
-                onClick={() => { setQuickMenuOpen(false); router.push("/records/add-expense"); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors border-b border-neutral-50"
-              >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FFF5ED" }}>
-                  <TrendingDown size={15} strokeWidth={2.2} color="#EA580C" />
-                </div>
-                <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                  Record Expense
-                </span>
-              </button>
-              <button
-                onClick={() => { setQuickMenuOpen(false); router.push("/ask"); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#F0FDF4" }}>
-                  <MessageSquare size={15} strokeWidth={2.2} color="#22C55E" />
-                </div>
-                <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                  Chat with SPAL
-                </span>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Button */}
-        <button
-          onClick={() => setQuickMenuOpen(o => !o)}
-          aria-label="Quick Menu"
-          className="flex items-center gap-2 px-5 h-12 rounded-full font-bold text-[13px] text-white active:scale-95 transition-transform"
-          style={{
-            background: "#22C55E",
-            boxShadow: "0 4px 16px rgba(34,197,94,0.38)",
-            fontFamily: "var(--font-satoshi)",
-          }}
-        >
-          <LayoutGrid size={17} strokeWidth={2.2} color="#fff" />
-          Quick Menu
-        </button>
-      </div>
 
       {/* ── Sheets ── */}
       <AddRecordSheet type="sale"    open={addSheetOpen === "sale"}    onClose={() => setAddSheet(null)} onSuccess={handleRecordAdded} />
@@ -563,8 +485,8 @@ function PctBadge({ pct, small }: { pct: number; small?: boolean }) {
       }}
     >
       {isUp
-        ? <ChevronUp   size={small ? 10 : 11} strokeWidth={3} />
-        : <ChevronDown size={small ? 10 : 11} strokeWidth={3} />}
+        ? <ArrowUp01Icon   size={small ? 10 : 11} />
+        : <ArrowDown01Icon size={small ? 10 : 11} />}
       {Math.abs(pct)}%
     </div>
   );

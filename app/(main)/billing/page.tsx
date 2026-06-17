@@ -4,8 +4,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Receipt, CalendarClock, AlertCircle, Mic, Sparkles, CheckCircle2,
-} from "lucide-react";
+  ArrowLeft01Icon, Receipt01Icon, Clock01Icon, Alert01Icon, Mic01Icon, SparklesIcon, CheckmarkCircle02Icon,
+} from "hugeicons-react";
 import { ADVISORS, type Advisor } from "@/lib/advisors/config";
 import { formatCurrency } from "@/lib/utils/currency";
 
@@ -84,7 +84,7 @@ function BillingPageInner() {
           style={{ background: "#EAE9E7" }}
           aria-label="Go back"
         >
-          <ArrowLeft size={18} strokeWidth={2} color="#0F172A" />
+          <ArrowLeft01Icon size={18} color="#0F172A" />
         </button>
         <h1 className="text-[22px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
           Payment history
@@ -97,7 +97,7 @@ function BillingPageInner() {
           className="rounded-2xl p-4 flex items-start gap-3"
           style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}
         >
-          <CheckCircle2 size={18} className="text-spal-green flex-shrink-0 mt-0.5" />
+          <CheckmarkCircle02Icon size={18} className="text-spal-green flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-[13px] font-bold text-spal-green-700" style={{ fontFamily: "var(--font-satoshi)" }}>
               {subs.some((s) => s.coach_id === paidCoachId && s.status === "active")
@@ -119,7 +119,7 @@ function BillingPageInner() {
           className="rounded-2xl p-4 flex items-start gap-3"
           style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
         >
-          <AlertCircle size={18} className="text-spal-orange flex-shrink-0 mt-0.5" />
+          <Alert01Icon size={18} className="text-spal-orange flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-[13px] font-bold text-spal-orange-700" style={{ fontFamily: "var(--font-satoshi)" }}>
               Renewals coming up
@@ -135,7 +135,7 @@ function BillingPageInner() {
       <Section title="Active coaches">
         {activeSubs.length === 0 ? (
           <EmptyState
-            icon={<Sparkles size={26} className="text-neutral-300" />}
+            icon={<SparklesIcon size={26} className="text-neutral-300" />}
             title="No active coach subscriptions"
             sub="When you subscribe to a voice masterclass coach, it'll show up here with its renewal date."
             cta="Browse coaches"
@@ -156,7 +156,7 @@ function BillingPageInner() {
       <Section title="Receipts">
         {payments.length === 0 ? (
           <EmptyState
-            icon={<Receipt size={26} className="text-neutral-300" />}
+            icon={<Receipt01Icon size={26} className="text-neutral-300" />}
             title="No payments yet"
             sub="Receipts for every coach subscription you pay for will appear here."
           />
@@ -203,14 +203,14 @@ function ActiveCoachRow({ coach, renewsAt, amountKobo }: { coach: Advisor; renew
           <p className="text-[14px] font-bold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
             {coach.name}
           </p>
-          <Mic size={11} className="text-spal-navy/50" strokeWidth={2.2} />
+          <Mic01Icon size={11} className="text-spal-navy/50" />
         </div>
         <p className="text-[11.5px] text-neutral-500 truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
           {coach.title}
         </p>
         {renewsAt && (
           <div className="flex items-center gap-1 mt-1">
-            <CalendarClock size={11} className="text-neutral-400" strokeWidth={2} />
+            <Clock01Icon size={11} className="text-neutral-400" />
             <span className="text-[11px] text-neutral-500" style={{ fontFamily: "var(--font-satoshi)" }}>
               Renews {new Date(renewsAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
             </span>

@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Plus, Minus, Settings, Package,
-  AlertTriangle, Check, ChevronDown, X, Trash2,
-} from "lucide-react";
+  ArrowLeft01Icon, PlusSignIcon, MinusSignIcon, Settings01Icon, Package01Icon,
+  Alert01Icon, Tick01Icon, ArrowDown01Icon, Cancel01Icon, Delete01Icon,
+} from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { getInventoryConfig } from "@/lib/inventory-config";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -45,7 +45,7 @@ function UnitPicker({
         style={{ background: "#F3F4F6", color: "#374151", minWidth: 72 }}
       >
         {value || "unit"}
-        <ChevronDown size={13} strokeWidth={2.5} />
+        <ArrowDown01Icon size={13} />
       </button>
       <AnimatePresence>
         {open && (
@@ -66,7 +66,7 @@ function UnitPicker({
                 style={{ fontFamily }}
               >
                 {u}
-                {u === value && <Check size={13} strokeWidth={2.5} color="#22C55E" />}
+                {u === value && <Tick01Icon size={13} color="#22C55E" />}
               </button>
             ))}
             <div className="border-t border-gray-100 px-3 py-2">
@@ -211,7 +211,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
               </h2>
               <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(15,23,42,0.06)" }} aria-label="Close">
-                <X size={16} strokeWidth={2} />
+                <Cancel01Icon size={16} />
               </button>
             </div>
 
@@ -260,7 +260,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
             >
               <div className="w-5 h-5 rounded-md flex items-center justify-center"
                 style={{ background: form.showThreshold ? "#22C55E" : "#E5E7EB" }}>
-                {form.showThreshold && <Check size={11} strokeWidth={3} color="#fff" />}
+                {form.showThreshold && <Tick01Icon size={11} color="#fff" />}
               </div>
               <span className="text-[13px] font-medium text-neutral-600" style={{ fontFamily }}>
                 Set low stock alert
@@ -297,7 +297,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
             >
               <div className="w-5 h-5 rounded-md flex items-center justify-center"
                 style={{ background: form.showCost ? "#22C55E" : "#E5E7EB" }}>
-                {form.showCost && <Check size={11} strokeWidth={3} color="#fff" />}
+                {form.showCost && <Tick01Icon size={11} color="#fff" />}
               </div>
               <span className="text-[13px] font-medium text-neutral-600" style={{ fontFamily }}>
                 Add cost per unit <span className="text-neutral-400">(optional)</span>
@@ -334,7 +334,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
               <button onClick={handleDelete} disabled={deleting}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl mb-3 active:scale-[0.98] transition-all"
                 style={{ background: "#FEF2F2" }}>
-                <Trash2 size={15} strokeWidth={2} color="#EF4444" />
+                <Delete01Icon size={15} color="#EF4444" />
                 <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#EF4444" }}>
                   {deleting ? "Deleting…" : "Delete item"}
                 </span>
@@ -370,7 +370,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
               >
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ background: "#22C55E" }}>
-                  <Check size={17} strokeWidth={2.5} color="#fff" />
+                  <Tick01Icon size={17} color="#fff" />
                 </div>
                 <div>
                   <p className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily }}>
@@ -392,7 +392,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
               >
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ background: "#F3F4F6" }}>
-                  <Package size={17} strokeWidth={2} color="#6B7280" />
+                  <Package01Icon size={17} color="#6B7280" />
                 </div>
                 <div>
                   <p className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily }}>
@@ -488,7 +488,7 @@ function SettingsSheet({
             <h2 className="text-[18px] font-bold text-spal-navy" style={{ fontFamily }}>Inventory Settings</h2>
             <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
               style={{ background: "rgba(15,23,42,0.06)" }} aria-label="Close">
-              <X size={16} strokeWidth={2} />
+              <Cancel01Icon size={16} />
             </button>
           </div>
 
@@ -626,7 +626,7 @@ function SetupWizard({
                     border:     `1.5px solid ${it.selected ? "#22C55E" : "#E5E7EB"}`,
                   }}
                 >
-                  {it.selected && <Check size={12} strokeWidth={3} />}
+                  {it.selected && <Tick01Icon size={12} />}
                   {it.name}
                 </button>
               ))}
@@ -648,7 +648,7 @@ function SetupWizard({
                 className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40 active:scale-95"
                 style={{ background: "#22C55E" }}
               >
-                <Plus size={18} strokeWidth={2.5} color="#fff" />
+                <PlusSignIcon size={18} color="#fff" />
               </button>
             </div>
 
@@ -861,7 +861,7 @@ export default function InventoryPage() {
               style={{ background: "rgba(15,23,42,0.06)" }}
               aria-label="Back"
             >
-              <ArrowLeft size={18} strokeWidth={2} />
+              <ArrowLeft01Icon size={18} />
             </button>
             <div>
               <h1 className="text-[20px] font-bold text-spal-navy" style={{ fontFamily }}>{config.title}</h1>
@@ -879,7 +879,7 @@ export default function InventoryPage() {
               style={{ background: "rgba(15,23,42,0.06)" }}
               aria-label="Inventory settings"
             >
-              <Settings size={18} strokeWidth={2} />
+              <Settings01Icon size={18} />
             </button>
           )}
         </div>
@@ -894,7 +894,7 @@ export default function InventoryPage() {
               className="mx-5 mb-4 rounded-2xl px-4 py-3.5 flex items-center gap-3"
               style={{ background: "#FFF7ED", border: "1.5px solid #FED7AA" }}
             >
-              <AlertTriangle size={18} strokeWidth={2} color="#F97316" className="flex-shrink-0" />
+              <Alert01Icon size={18} color="#F97316" className="flex-shrink-0" />
               <p className="text-[12.5px] font-medium leading-snug" style={{ fontFamily, color: "#C2410C" }}>
                 {lowItems.length === 1
                   ? `${lowItems[0].name} is running low — ${fmtQty(lowItems[0].quantity)} ${lowItems[0].unit} left.`
@@ -931,7 +931,7 @@ export default function InventoryPage() {
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
                 style={{ background: "#F3F4F6" }}>
-                <Package size={26} strokeWidth={1.5} color="#9CA3AF" />
+                <Package01Icon size={26} color="#9CA3AF" />
               </div>
               <p className="text-[15px] font-semibold text-spal-navy mb-1" style={{ fontFamily }}>
                 {filter === "low" ? "No low stock items" : "No items yet"}
@@ -959,9 +959,8 @@ export default function InventoryPage() {
                     className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ background: isLow(item) ? "#FFF7ED" : "#F0FDF4" }}
                   >
-                    <Package
+                    <Package01Icon
                       size={20}
-                      strokeWidth={1.8}
                       color={isLow(item) ? "#F97316" : "#22C55E"}
                     />
                   </div>
@@ -999,7 +998,7 @@ export default function InventoryPage() {
                       style={{ background: "#F3F4F6" }}
                       aria-label={`Decrease ${item.name}`}
                     >
-                      <Minus size={14} strokeWidth={2.5} color="#374151" />
+                      <MinusSignIcon size={14} color="#374151" />
                     </button>
                     <button
                       onClick={() => quickAdjust(item, 1)}
@@ -1008,7 +1007,7 @@ export default function InventoryPage() {
                       style={{ background: "#22C55E" }}
                       aria-label={`Increase ${item.name}`}
                     >
-                      <Plus size={14} strokeWidth={2.5} color="#fff" />
+                      <PlusSignIcon size={14} color="#fff" />
                     </button>
                   </div>
                 </div>
@@ -1036,7 +1035,7 @@ export default function InventoryPage() {
             className="w-full h-14 rounded-2xl font-semibold text-[15px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
             style={{ fontFamily, background: "#22C55E" }}
           >
-            <Plus size={18} strokeWidth={2.5} />
+            <PlusSignIcon size={18} />
             Add {config.itemLabel}
           </button>
         </div>

@@ -9,7 +9,7 @@ import {
 } from "@/lib/advisors/config";
 import { formatTime } from "@/lib/utils/dates";
 import { formatCurrency } from "@/lib/utils/currency";
-import { Lock, Mic, MessageSquare, Check, X, Trash2, Sparkles } from "lucide-react";
+import { LockIcon, Mic01Icon, ChatIcon, Tick01Icon, Cancel01Icon, Delete01Icon, SparklesIcon } from "hugeicons-react";
 
 interface Conversation {
   id: string;
@@ -212,7 +212,7 @@ export default function LearnPage() {
                     className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-neutral-300 active:text-red-400 transition-colors"
                     aria-label="Delete conversation"
                   >
-                    <Trash2 size={15} strokeWidth={2} />
+                    <Delete01Icon size={15} />
                   </button>
                 </div>
               );
@@ -323,8 +323,8 @@ function CoachRow({
         {/* Mode pill */}
         <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white flex items-center justify-center" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
           {coach.mode === "voice"
-            ? <Mic size={9} strokeWidth={2.5} className="text-spal-navy" />
-            : <MessageSquare size={9} strokeWidth={2.5} className="text-spal-navy" />}
+            ? <Mic01Icon size={9} className="text-spal-navy" />
+            : <ChatIcon size={9} className="text-spal-navy" />}
         </div>
       </div>
 
@@ -359,7 +359,7 @@ function CoachRow({
           }}
         >
           {status === "locked" ? (
-            <span className="inline-flex items-center gap-1"><Lock size={11} strokeWidth={2.5} /> Unlock</span>
+            <span className="inline-flex items-center gap-1"><LockIcon size={11} /> Unlock</span>
           ) : "Chat"}
         </button>
         <button
@@ -441,8 +441,8 @@ function CoachPreviewSheet({
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">
                   {coach.mode === "voice"
-                    ? <Mic size={11} strokeWidth={2.2} className="text-spal-navy" />
-                    : <MessageSquare size={11} strokeWidth={2.2} className="text-spal-navy" />}
+                    ? <Mic01Icon size={11} className="text-spal-navy" />
+                    : <ChatIcon size={11} className="text-spal-navy" />}
                   <span className="text-[11px] font-semibold text-neutral-500" style={{ fontFamily: "var(--font-satoshi)" }}>
                     {coach.mode === "voice" ? "Voice masterclass" : "Text chat"}
                   </span>
@@ -450,7 +450,7 @@ function CoachPreviewSheet({
               </div>
             </div>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100" aria-label="Close">
-              <X size={15} strokeWidth={2} className="text-neutral-500" />
+              <Cancel01Icon size={15} className="text-neutral-500" />
             </button>
           </div>
 
@@ -471,11 +471,11 @@ function CoachPreviewSheet({
 
           {/* What you'll get */}
           <div className="space-y-2 mb-5">
-            <BioRow icon={<Sparkles size={14} className="text-spal-green" />} text={`Expertise: ${coach.expertise}`} />
+            <BioRow icon={<SparklesIcon size={14} className="text-spal-green" />} text={`Expertise: ${coach.expertise}`} />
             {coach.mode === "voice"
-              ? <BioRow icon={<Mic size={14} className="text-spal-blue" />} text="Real-time voice conversations" />
-              : <BioRow icon={<MessageSquare size={14} className="text-spal-blue" />} text="Unlimited text chat" />}
-            <BioRow icon={<Check size={14} className="text-spal-green" />} text="Speaks plain English — no jargon" />
+              ? <BioRow icon={<Mic01Icon size={14} className="text-spal-blue" />} text="Real-time voice conversations" />
+              : <BioRow icon={<ChatIcon size={14} className="text-spal-blue" />} text="Unlimited text chat" />}
+            <BioRow icon={<Tick01Icon size={14} className="text-spal-green" />} text="Speaks plain English — no jargon" />
           </div>
 
           {/* CTA */}
