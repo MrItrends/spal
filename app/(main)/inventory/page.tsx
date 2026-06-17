@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft01Icon, PlusSignIcon, MinusSignIcon, Settings01Icon, Package01Icon,
@@ -111,13 +112,14 @@ interface SheetItem {
   unit: string;
   threshold: string;
   costPrice: string;
+  sellPrice: string;
   showThreshold: boolean;
   showCost: boolean;
   wasBought: boolean | null; // null = not asked yet
 }
 
 function defaultSheet(unit: string): SheetItem {
-  return { name: "", quantity: "", unit, threshold: "5", costPrice: "",
+  return { name: "", quantity: "", unit, threshold: "5", costPrice: "", sellPrice: "",
            showThreshold: false, showCost: false, wasBought: null };
 }
 
@@ -140,6 +142,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
           unit: item.unit,
           threshold: fmtQty(item.low_stock_threshold),
           costPrice: item.cost_price != null ? String(item.cost_price) : "",
+          sellPrice: item.selling_price != null ? String(item.selling_price) : "",
           showThreshold: true,
           showCost: item.cost_price != null,
           wasBought: null,
@@ -164,6 +167,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
       return;
     }
 
+    const sell = form.sellPrice ? parseFloat(form.sellPrice) : null;
     setSaving(true);
     await onSave({
       name:                form.name.trim(),
@@ -171,6 +175,7 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
       unit:                form.unit,
       low_stock_threshold: form.showThreshold ? parseFloat(form.threshold) || 5 : 5,
       cost_price:          cost,
+      selling_price:       sell,
       logExpense:          cost != null && form.wasBought === true,
     });
     setSaving(false);
@@ -329,6 +334,26 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
               )}
             </AnimatePresence>
 
+            {/* Selling price */}
+            <div className="mb-3">
+              <label className="text-[11px] font-bold tracking-widest uppercase text-neutral-400 mb-1.5 block" style={{ fontFamily }}>
+                Selling price <span className="text-neutral-300">(per {form.unit})</span>
+              </label>
+              <div className="flex items-center gap-2 bg-white border rounded-2xl px-4 py-3" style={{ borderColor: "#E5E7EB" }}>
+                <span className="text-[13px] font-semibold text-spal-navy" style={{ fontFamily }}>₦</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.sellPrice}
+                  onChange={(e) => set("sellPrice", e.target.value)}
+                  placeholder="0.00"
+                  className="flex-1 text-[14px] text-spal-navy outline-none bg-transparent"
+                  style={{ fontFamily }}
+                />
+                <span className="text-[12px] text-neutral-400" style={{ fontFamily }}>each</span>
+              </div>
+            </div>
+
             {/* Delete (edit mode) */}
             {isEdit && onDelete && (
               <button onClick={handleDelete} disabled={deleting}
@@ -386,7 +411,8 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
                 onClick={() => { set("wasBought", false); setSaving(true);
                   onSave({ name: form.name.trim(), quantity: parseFloat(form.quantity), unit: form.unit,
                            low_stock_threshold: form.showThreshold ? parseFloat(form.threshold) || 5 : 5,
-                           cost_price: parseFloat(form.costPrice), logExpense: false }).finally(() => setSaving(false)); }}
+                           cost_price: parseFloat(form.costPrice),
+                           selling_price: form.sellPrice ? parseFloat(form.sellPrice) : null, logExpense: false }).finally(() => setSaving(false)); }}
                 className="w-full rounded-2xl px-4 py-4 text-left flex items-start gap-3 active:scale-[0.98] transition-transform"
                 style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB" }}
               >
@@ -432,7 +458,8 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
                 onClick={() => { setSaving(true);
                   onSave({ name: form.name.trim(), quantity: parseFloat(form.quantity), unit: form.unit,
                            low_stock_threshold: form.showThreshold ? parseFloat(form.threshold) || 5 : 5,
-                           cost_price: parseFloat(form.costPrice), logExpense: true }).finally(() => setSaving(false)); }}
+                           cost_price: parseFloat(form.costPrice),
+                           selling_price: form.sellPrice ? parseFloat(form.sellPrice) : null, logExpense: true }).finally(() => setSaving(false)); }}
                 className="w-full h-14 rounded-2xl font-semibold text-[15px] text-white flex items-center justify-center active:scale-[0.98] disabled:opacity-40"
                 style={{ fontFamily, background: "#22C55E" }}
               >
@@ -442,7 +469,8 @@ function AddItemSheet({ item, units, defaultUnit, itemLabel, onSave, onDelete, o
                 onClick={() => { setSaving(true);
                   onSave({ name: form.name.trim(), quantity: parseFloat(form.quantity), unit: form.unit,
                            low_stock_threshold: form.showThreshold ? parseFloat(form.threshold) || 5 : 5,
-                           cost_price: parseFloat(form.costPrice), logExpense: false }).finally(() => setSaving(false)); }}
+                           cost_price: parseFloat(form.costPrice),
+                           selling_price: form.sellPrice ? parseFloat(form.sellPrice) : null, logExpense: false }).finally(() => setSaving(false)); }}
                 className="w-full h-12 rounded-2xl font-semibold text-[14px] active:scale-[0.98]"
                 style={{ fontFamily, color: "#6B7280", background: "#F3F4F6" }}
               >
@@ -753,8 +781,34 @@ export default function InventoryPage() {
 
   useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-  const lowItems     = items.filter(isLow);
-  const filtered     = filter === "low" ? lowItems : items;
+  const outItems     = items.filter((it) => it.quantity <= 0);
+  const lowItems     = items.filter((it) => it.quantity > 0 && isLow(it));
+  const filtered     = filter === "low" ? [...outItems, ...lowItems] : items;
+
+  // Estimated inventory value — selling price preferred, cost as fallback
+  const estValue = items.reduce(
+    (sum, it) => sum + (it.selling_price ?? it.cost_price ?? 0) * it.quantity, 0
+  );
+
+  // Simple, on-brand insights computed from stock levels (no AI round-trip)
+  const insights: string[] = [];
+  if (outItems.length > 0) {
+    insights.push(
+      outItems.length === 1
+        ? `${outItems[0].name} is out of stock — restock to keep selling.`
+        : `${outItems.length} products are out of stock. Restock soon to keep selling.`
+    );
+  }
+  if (lowItems.length > 0) {
+    insights.push(
+      lowItems.length === 1
+        ? `${lowItems[0].name} is running low. Consider restocking it.`
+        : `${lowItems.length} products are running low. Check your restock list.`
+    );
+  }
+  if (insights.length === 0 && items.length > 0) {
+    insights.push("Your stock looks healthy. Keep it up!");
+  }
 
   // ── Quick adjust ────────────────────────────────────────────────────────────
   async function quickAdjust(item: InventoryItem, delta: number) {
@@ -884,25 +938,53 @@ export default function InventoryPage() {
           )}
         </div>
 
-        {/* Low stock banner */}
-        <AnimatePresence>
-          {lowItems.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              className="mx-5 mb-4 rounded-2xl px-4 py-3.5 flex items-center gap-3"
-              style={{ background: "#FFF7ED", border: "1.5px solid #FED7AA" }}
-            >
-              <Alert01Icon size={18} color="#F97316" className="flex-shrink-0" />
-              <p className="text-[12.5px] font-medium leading-snug" style={{ fontFamily, color: "#C2410C" }}>
-                {lowItems.length === 1
-                  ? `${lowItems[0].name} is running low — ${fmtQty(lowItems[0].quantity)} ${lowItems[0].unit} left.`
-                  : `${lowItems.length} items are running low. Tap "Low Stock" to see them.`}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* At-a-glance summary */}
+        {setupDone && items.length > 0 && (
+          <div className="px-5 mb-4">
+            <div className="grid grid-cols-2 gap-2.5 min-w-0">
+              <div className="rounded-2xl px-4 py-3.5 bg-white" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide" style={{ fontFamily }}>Total products</p>
+                <p className="text-[22px] font-black text-spal-navy mt-0.5" style={{ fontFamily }}>{items.length}</p>
+              </div>
+              <div className="rounded-2xl px-4 py-3.5 min-w-0" style={{ background: "#2563EB" }}>
+                <p className="text-[11px] font-semibold text-white/70 uppercase tracking-wide" style={{ fontFamily }}>Est. value</p>
+                <p className="text-white font-black mt-0.5 truncate" style={{ fontFamily, fontSize: "clamp(16px, 5.5vw, 22px)" }}>{formatCurrency(estValue)}</p>
+              </div>
+              <div className="rounded-2xl px-4 py-3.5" style={{ background: lowItems.length ? "#FFF7ED" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ fontFamily, color: lowItems.length ? "#C2410C" : "#9CA3AF" }}>Running low</p>
+                <p className="text-[22px] font-black mt-0.5" style={{ fontFamily, color: lowItems.length ? "#EA580C" : "#0F172A" }}>{lowItems.length}</p>
+              </div>
+              <div className="rounded-2xl px-4 py-3.5" style={{ background: outItems.length ? "#FEF2F2" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ fontFamily, color: outItems.length ? "#B91C1C" : "#9CA3AF" }}>Out of stock</p>
+                <p className="text-[22px] font-black mt-0.5" style={{ fontFamily, color: outItems.length ? "#DC2626" : "#0F172A" }}>{outItems.length}</p>
+              </div>
+            </div>
+
+            {/* SPAL insights */}
+            {insights.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {insights.map((msg, i) => (
+                  <div key={i} className="rounded-2xl px-4 py-3 flex items-start gap-2.5" style={{ background: "#F3EEFF" }}>
+                    <Image src="/spal-ai.webp" alt="SPAL" width={20} height={20} className="w-5 h-5 object-contain flex-shrink-0 mt-0.5" />
+                    <p className="text-[12.5px] font-medium leading-snug" style={{ fontFamily, color: "#5B21B6" }}>{msg}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Restock CTA */}
+            {(lowItems.length > 0 || outItems.length > 0) && (
+              <button
+                onClick={() => setFilter("low")}
+                className="w-full mt-3 h-12 rounded-2xl flex items-center justify-center gap-2 text-white font-bold text-[14px] active:scale-[0.98] transition-transform"
+                style={{ background: "#22C55E", fontFamily }}
+              >
+                <Alert01Icon size={16} color="#fff" />
+                View Restock List
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Filter tabs */}
         {items.length > 0 && (
@@ -919,7 +1001,7 @@ export default function InventoryPage() {
                   border: filter === f ? "none" : "1.5px solid #E5E7EB",
                 }}
               >
-                {f === "all" ? `All (${items.length})` : `Low Stock (${lowItems.length})`}
+                {f === "all" ? `All (${items.length})` : `Restock (${lowItems.length + outItems.length})`}
               </button>
             ))}
           </div>
@@ -974,15 +1056,23 @@ export default function InventoryPage() {
                       <p className="text-[14px] font-semibold text-spal-navy truncate" style={{ fontFamily }}>
                         {item.name}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <p className="text-[12.5px] font-medium"
-                          style={{ fontFamily, color: isLow(item) ? "#F97316" : "#6B7280" }}>
+                          style={{ fontFamily, color: item.quantity <= 0 ? "#DC2626" : isLow(item) ? "#F97316" : "#6B7280" }}>
                           {fmtQty(item.quantity)} {item.unit}
+                          {item.selling_price != null && ` · ${formatCurrency(item.selling_price)} each`}
                         </p>
-                        {isLow(item) && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: "#FFF7ED", color: "#C2410C" }}>
-                            LOW
+                        {item.quantity <= 0 ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FEF2F2", color: "#B91C1C" }}>
+                            OUT OF STOCK
+                          </span>
+                        ) : isLow(item) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#C2410C" }}>
+                            RUNNING LOW
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#F0FDF4", color: "#15803D" }}>
+                            HEALTHY
                           </span>
                         )}
                       </div>

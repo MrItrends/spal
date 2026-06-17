@@ -20,15 +20,25 @@ export async function PATCH(
     if (body.unit                !== undefined) updates.unit                = body.unit.trim();
     if (body.low_stock_threshold !== undefined) updates.low_stock_threshold = parseFloat(body.low_stock_threshold);
     if (body.cost_price          !== undefined) updates.cost_price          = body.cost_price != null ? parseFloat(body.cost_price) : null;
+    if (body.selling_price       !== undefined) updates.selling_price       = body.selling_price != null ? parseFloat(body.selling_price) : null;
 
-    const { data, error } = await supabase
-      .from("inventory_items")
-      .update(updates)
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .select()
-      .single();
+    async function runUpdate(payload: Record<string, unknown>) {
+      return supabase
+        .from("inventory_items")
+        .update(payload)
+        .eq("id", id)
+        .eq("user_id", user!.id)
+        .select()
+        .single();
+    }
 
+    let { data, error } = await runUpdate(updates);
+    // selling_price column may not exist yet (migration 020 not applied) — retry without it
+    if (error && /selling_price/.test(error.message)) {
+      const { selling_price: _omit, ...rest } = updates;
+      void _omit;
+      ({ data, error } = await runUpdate(rest));
+    }
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });

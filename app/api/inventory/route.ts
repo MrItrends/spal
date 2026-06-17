@@ -44,25 +44,32 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { name, quantity, unit, low_stock_threshold, cost_price } = body;
+    const { name, quantity, unit, low_stock_threshold, cost_price, selling_price } = body;
 
     if (!name || quantity === undefined || !unit) {
       return NextResponse.json({ success: false, error: "name, quantity and unit are required" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
-      .from("inventory_items")
-      .insert({
-        user_id:             user.id,
-        name:                name.trim(),
-        quantity:            parseFloat(quantity),
-        unit:                unit.trim(),
-        low_stock_threshold: low_stock_threshold != null ? parseFloat(low_stock_threshold) : 5,
-        cost_price:          cost_price != null ? parseFloat(cost_price) : null,
-      })
-      .select()
-      .single();
+    const row: Record<string, unknown> = {
+      user_id:             user.id,
+      name:                name.trim(),
+      quantity:            parseFloat(quantity),
+      unit:                unit.trim(),
+      low_stock_threshold: low_stock_threshold != null ? parseFloat(low_stock_threshold) : 5,
+      cost_price:          cost_price != null ? parseFloat(cost_price) : null,
+      selling_price:       selling_price != null ? parseFloat(selling_price) : null,
+    };
 
+    const insert = (payload: Record<string, unknown>) =>
+      supabase.from("inventory_items").insert(payload).select().single();
+
+    let { data, error } = await insert(row);
+    // selling_price column may not exist yet (migration 020 not applied) — retry without it
+    if (error && /selling_price/.test(error.message)) {
+      const { selling_price: _omit, ...rest } = row;
+      void _omit;
+      ({ data, error } = await insert(rest));
+    }
     if (error) throw error;
 
     return NextResponse.json({ success: true, data }, { status: 201 });
