@@ -312,18 +312,7 @@ export default function RecordsPage() {
 
           {/* Category dropdown — only show if there are categories */}
           {allCategories.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap flex-1" ref={catRef}>
-              {catFilter.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setCatFilter(prev => prev.filter(x => x !== c))}
-                  className="flex items-center gap-1 h-9 px-3 rounded-full text-[12px] font-semibold"
-                  style={{ background: catStyle(c).bg, color: catStyle(c).color, fontFamily: "var(--font-satoshi)" }}
-                >
-                  {c}
-                  <Cancel01Icon size={11} className="ml-0.5 opacity-60" />
-                </button>
-              ))}
+            <div className="flex items-center" ref={catRef}>
               <div className="relative">
                 <button
                   onClick={() => { setCatOpen(o => !o); setTypeOpen(false); }}
@@ -378,6 +367,23 @@ export default function RecordsPage() {
             </div>
           )}
         </div>
+
+        {/* ── Selected category chips (below the dropdowns) ── */}
+        {catFilter.length > 0 && (
+          <div className="px-5 mt-3 flex items-center gap-1.5 flex-wrap">
+            {catFilter.map(c => (
+              <button
+                key={c}
+                onClick={() => setCatFilter(prev => prev.filter(x => x !== c))}
+                className="flex items-center gap-1 h-9 px-3 rounded-full text-[12px] font-semibold active:scale-95 transition-transform"
+                style={{ background: catStyle(c).bg, color: catStyle(c).color, fontFamily: "var(--font-satoshi)" }}
+              >
+                {c}
+                <Cancel01Icon size={11} className="ml-0.5 opacity-60" />
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ── Owing banner ── */}
         {(() => {
