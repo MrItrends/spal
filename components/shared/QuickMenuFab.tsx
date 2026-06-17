@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import {
   ChartIncreaseIcon,
   ChartDecreaseIcon,
@@ -74,8 +75,8 @@ export function QuickMenuFab() {
               onClick={() => { setOpen(false); router.push("/ask"); }}
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#F0FDF4" }}>
-                <ChatIcon size={15} color="#22C55E" />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: "#F3EEFF" }}>
+                <Image src="/spal AI.png" alt="SPAL" width={28} height={28} className="w-7 h-7 object-contain" />
               </div>
               <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Chat with SPAL
