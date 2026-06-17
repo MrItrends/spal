@@ -7,69 +7,40 @@ import { useRouter } from "next/navigation";
 import { Cancel01Icon, Clock05Icon, ThumbsUpIcon, ThumbsDownIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface Message { role: "user" | "assistant"; content: string; timestamp: string; }
-type SessionState = "idle" | "user-speaking" | "thinking" | "spal-speaking" | "ended";
+type SessionState = "idle" | "listening" | "thinking" | "spal-speaking" | "ended";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtDuration(secs: number) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return m > 0 ? `${m}m ${s} secs` : `${s} secs`;
 }
 
-// ── Pulsing dots while SPAL speaks ───────────────────────────────────────────
-function SpeakingIndicator() {
-  const COLORS = ["#ED712E", "#2F63F5", "#8B3CFF"];
+// ── Gemini-style ambient orbs ─────────────────────────────────────────────────
+function AmbientOrbs({ speaking }: { speaking: boolean }) {
+  const orbs = [
+    { color: "#8B3CFF", size: 360, x: "0%",  y: "5%",  dur: 9,  delay: 0   },
+    { color: "#2F63F5", size: 300, x: "55%", y: "0%",  dur: 11, delay: 2   },
+    { color: "#ED712E", size: 240, x: "10%", y: "55%", dur: 8,  delay: 1   },
+    { color: "#22C55E", size: 220, x: "65%", y: "50%", dur: 10, delay: 3   },
+  ];
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-3"
-    >
-      {COLORS.map((color, i) => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {orbs.map((orb, i) => (
         <motion.div
           key={i}
-          className="w-3 h-3 rounded-full"
-          style={{ background: color }}
-          animate={{ scale: [1, 1.5, 1], opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.22, ease: "easeInOut" }}
+          className="absolute rounded-full"
+          style={{ width: orb.size, height: orb.size, left: orb.x, top: orb.y, background: orb.color, filter: "blur(80px)" }}
+          animate={{
+            x: [0, 28, -18, 12, 0],
+            y: [0, -22, 28, -10, 0],
+            scale: speaking ? [1.0, 1.35, 1.05, 1.2, 1.0] : [0.55, 0.7, 0.6, 0.65, 0.55],
+            opacity: speaking ? [0.55, 0.8, 0.6, 0.7, 0.55] : [0.16, 0.26, 0.18, 0.22, 0.16],
+          }}
+          transition={{ duration: orb.dur, repeat: Infinity, ease: "easeInOut", delay: orb.delay }}
         />
       ))}
-    </motion.div>
-  );
-}
-
-// ── Subtle animated background orbs (visible while SPAL speaks) ──────────────
-function BackgroundOrbs({ active }: { active: boolean }) {
-  return (
-    <AnimatePresence>
-      {active && (
-        <>
-          {[
-            { size: 220, x: -60, y: 80,  color: "rgba(139,60,255,0.22)", delay: 0 },
-            { size: 180, x: 180, y: 200, color: "rgba(47,99,245,0.18)",  delay: 0.4 },
-            { size: 140, x: 80,  y: 380, color: "rgba(237,113,46,0.15)", delay: 0.8 },
-          ].map((orb, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full pointer-events-none"
-              style={{ width: orb.size, height: orb.size, left: orb.x, top: orb.y, background: orb.color, filter: "blur(40px)" }}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: [1, 1.15, 1], x: [0, 12, 0], y: [0, -8, 0] }}
-              exit={{ opacity: 0, scale: 0.6 }}
-              transition={{
-                opacity: { duration: 0.5 },
-                scale: { duration: 3 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay: orb.delay },
-                x: { duration: 4 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: orb.delay },
-                y: { duration: 3.5 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: orb.delay },
-              }}
-            />
-          ))}
-        </>
-      )}
-    </AnimatePresence>
+    </div>
   );
 }
 
@@ -85,27 +56,31 @@ export default function AskSPALPage() {
   const [feedback,  setFeedback]  = useState<"up" | "down" | null>(null);
   const [duration,  setDuration]  = useState(0);
   const [inputText, setInputText] = useState("");
+  const [chatActive, setChatActive] = useState(false); // voice loop running
 
-  const startTimeRef   = useRef<number | null>(null);
-  const timerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
-  const inputRef       = useRef<HTMLInputElement>(null);
-  const audioCtxRef    = useRef<AudioContext | null>(null);
-  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const endedRef       = useRef(false); // prevents state updates after session ends
+  // Refs — so async callbacks always see latest values without re-creating
+  const endedRef          = useRef(false);
+  const chatActiveRef     = useRef(false);
+  const sessionRef        = useRef<SessionState>("idle");
+  const messagesRef       = useRef<Message[]>([]);
+  const convIdRef         = useRef<string | null>(null);
+  const recognitionRef    = useRef<any>(null);
+  const pendingTranscript = useRef<string | null>(null);
+  const audioCtxRef       = useRef<AudioContext | null>(null);
+  const audioSourceRef    = useRef<AudioBufferSourceNode | null>(null);
+  const startTimeRef      = useRef<number | null>(null);
+  const timerRef          = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inputRef          = useRef<HTMLInputElement>(null);
 
-  // Pre-fill from insights "Ask SPAL" CTAs
-  useEffect(() => {
-    const prefill = sessionStorage.getItem("spal_ask_prefill");
-    if (prefill) {
-      sessionStorage.removeItem("spal_ask_prefill");
-      setInputText(prefill);
-      setTimeout(() => inputRef.current?.focus(), 200);
-    }
-  }, []);
+  // Keep refs in sync with state
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { chatActiveRef.current = chatActive; }, [chatActive]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { convIdRef.current = convId; }, [convId]);
 
-  // Duration timer — starts on first message
+  function setSessionSync(s: SessionState) { sessionRef.current = s; setSession(s); }
+
+  // Duration timer
   useEffect(() => {
     if (messages.length === 1 && !startTimeRef.current) {
       startTimeRef.current = Date.now();
@@ -115,28 +90,18 @@ export default function AskSPALPage() {
     }
   }, [messages]);
 
-  function stopTimer() {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-  }
-
-  // Unlock AudioContext on first user interaction so TTS can play
-  function ensureAudioCtx() {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext();
-    }
-    if (audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume();
-    }
+  // ── Audio ────────────────────────────────────────────────────────────────────
+  function ensureAudioCtx(): AudioContext {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
     return audioCtxRef.current;
   }
 
-  // Stop any currently-playing TTS audio
   function stopAudio() {
     try { audioSourceRef.current?.stop(); } catch { /* already ended */ }
     audioSourceRef.current = null;
   }
 
-  // Speak via AudioContext — reliable even after async gaps
   async function speakText(text: string): Promise<void> {
     const ctx = ensureAudioCtx();
     const res = await fetch("/api/ai/tts", {
@@ -145,310 +110,334 @@ export default function AskSPALPage() {
       body: JSON.stringify({ text }),
     });
     if (!res.ok) throw new Error("TTS failed");
-    const arrayBuffer = await res.arrayBuffer();
+    const buf = await res.arrayBuffer();
     await ctx.resume();
-    const decoded = await ctx.decodeAudioData(arrayBuffer);
+    const decoded = await ctx.decodeAudioData(buf);
     return new Promise((resolve) => {
-      const source = ctx.createBufferSource();
-      source.buffer = decoded;
-      source.connect(ctx.destination);
-      source.onended = () => { audioSourceRef.current = null; resolve(); };
-      audioSourceRef.current = source;
-      source.start(0);
+      const src = ctx.createBufferSource();
+      src.buffer = decoded;
+      src.connect(ctx.destination);
+      src.onended = () => { audioSourceRef.current = null; resolve(); };
+      audioSourceRef.current = src;
+      src.start(0);
     });
   }
 
-  // ── Send message → get AI reply → speak it ────────────────────────────────
-  const sendMessage = useCallback(async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed || session === "thinking" || session === "spal-speaking" || session === "ended") return;
+  // ── Speech recognition (single utterance, auto-restarts in voice loop) ──────
+  // Declared before sendAndRespond so both can reference each other via closure
+  const startRecognition = useCallback(() => {
+    if (endedRef.current || !chatActiveRef.current) return;
+    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+    if (!SR) return;
 
-    ensureAudioCtx(); // unlock audio during user gesture
+    const r = new SR();
+    r.lang = "en-US";
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+    r.continuous = false;
 
-    const userMsg: Message = { role: "user", content: trimmed, timestamp: new Date().toISOString() };
-    const updatedMsgs = [...messages, userMsg];
-    setMessages(updatedMsgs);
-    setInputText("");
-    setSession("thinking");
+    r.onresult = (e: any) => {
+      const t = e.results[0]?.[0]?.transcript ?? "";
+      if (t.trim()) pendingTranscript.current = t.trim();
+    };
+
+    r.onerror = (e: any) => {
+      recognitionRef.current = null;
+      // no-speech = just silence, restart
+      if (!endedRef.current && chatActiveRef.current && e.error === "no-speech") {
+        setTimeout(startRecognition, 200);
+      } else if (!endedRef.current) {
+        setSessionSync("listening");
+        setTimeout(startRecognition, 500);
+      }
+    };
+
+    r.onend = () => {
+      recognitionRef.current = null;
+      if (endedRef.current) return;
+
+      const transcript = pendingTranscript.current;
+      pendingTranscript.current = null;
+
+      if (transcript) {
+        // Got speech — send to SPAL (mic will restart after SPAL responds)
+        sendAndRespond(transcript);
+      } else if (chatActiveRef.current) {
+        // Pure silence, no words — restart mic to keep listening
+        setTimeout(startRecognition, 200);
+      } else {
+        setSessionSync("idle");
+      }
+    };
+
+    recognitionRef.current = r;
+    setSessionSync("listening");
+    try { r.start(); } catch { /* already started */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Send user message → AI → TTS → restart mic ────────────────────────────
+  const sendAndRespond = useCallback(async (text: string) => {
+    if (endedRef.current) return;
+
+    const userMsg: Message = { role: "user", content: text, timestamp: new Date().toISOString() };
+    const updated = [...messagesRef.current, userMsg];
+    setMessages(updated); messagesRef.current = updated;
+    setSessionSync("thinking");
 
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, conversationId: convId }),
+        body: JSON.stringify({ message: text, conversationId: convIdRef.current }),
       });
       const data = await res.json();
       if (endedRef.current) return;
-      if (!data.success) { setSession("idle"); return; }
+      if (!data.success) { setSessionSync("listening"); if (chatActiveRef.current) startRecognition(); return; }
 
       const aiMsg: Message = { role: "assistant", content: data.data.reply, timestamp: new Date().toISOString() };
-      setMessages([...updatedMsgs, aiMsg]);
-      if (data.data.conversationId) setConvId(data.data.conversationId);
+      const all = [...updated, aiMsg];
+      setMessages(all); messagesRef.current = all;
+      if (data.data.conversationId) { setConvId(data.data.conversationId); convIdRef.current = data.data.conversationId; }
 
       if (endedRef.current) return;
-      setSession("spal-speaking");
+      setSessionSync("spal-speaking");
       await speakText(data.data.reply);
-      if (!endedRef.current) setSession("idle");
+
+      if (endedRef.current) return;
+      // After SPAL speaks, restart mic for seamless loop
+      if (chatActiveRef.current) {
+        setTimeout(startRecognition, 300);
+      } else {
+        setSessionSync("idle");
+      }
     } catch {
-      if (!endedRef.current) setSession("idle");
+      if (!endedRef.current) {
+        if (chatActiveRef.current) { setSessionSync("listening"); setTimeout(startRecognition, 500); }
+        else setSessionSync("idle");
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, session, convId]);
+  }, [startRecognition]);
 
-  // ── Web Speech API — auto-stop on silence ─────────────────────────────────
-  function startVoiceInput() {
-    if (session !== "idle") return;
+  // ── Activate voice mode ───────────────────────────────────────────────────
+  function activateVoice() {
+    ensureAudioCtx(); // unlock audio on user gesture
+    if (startTimeRef.current === null) {
+      startTimeRef.current = Date.now();
+      timerRef.current = setInterval(() => {
+        setDuration(Math.floor((Date.now() - startTimeRef.current!) / 1000));
+      }, 1000);
+    }
+    chatActiveRef.current = true;
+    setChatActive(true);
+    startRecognition();
+  }
+
+  // ── Text send ─────────────────────────────────────────────────────────────
+  function handleTextSend() {
+    const text = inputText.trim();
+    if (!text || endedRef.current) return;
     ensureAudioCtx();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    const recognition = new SR();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (e: any) => {
-      const transcript = e.results[0]?.[0]?.transcript ?? "";
-      if (transcript.trim()) sendMessage(transcript.trim());
-    };
-    recognition.onerror = () => { if (!endedRef.current) setSession("idle"); };
-    recognition.onend   = () => { recognitionRef.current = null; if (!endedRef.current) setSession("idle"); };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setSession("user-speaking");
+    setInputText("");
+    chatActiveRef.current = true;
+    setChatActive(true);
+    sendAndRespond(text);
   }
 
-  function stopVoiceInput() {
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setSession("idle");
-  }
-
-  // ── End session ─────────────────────────────────────────────────────────────
+  // ── End session ───────────────────────────────────────────────────────────
   async function endSession() {
     endedRef.current = true;
-    stopTimer();
+    chatActiveRef.current = false;
+    setChatActive(false);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     stopAudio();
-    if (recognitionRef.current) { recognitionRef.current.stop(); recognitionRef.current = null; }
-    const finalDuration = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0;
-    setDuration(finalDuration);
-    setSession("ended");
+    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
+    const dur = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0;
+    setDuration(dur);
+    setSessionSync("ended");
 
-    if (convId) {
+    if (convIdRef.current) {
       try {
-        await fetch(`/api/conversations/${convId}`, {
+        await fetch(`/api/conversations/${convIdRef.current}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ duration: finalDuration }),
+          body: JSON.stringify({ duration: dur }),
         });
       } catch { /* silent */ }
     }
   }
 
-  function handleSubmit() {
-    if (inputText.trim()) sendMessage(inputText);
-  }
-
-  const isBusy   = session === "thinking" || session === "spal-speaking";
-  const isEnded  = session === "ended";
-  const isActive = messages.length > 0 && session === "idle"; // show Stop only when truly idle + has messages
+  const isEnded    = session === "ended";
+  const isListening = session === "listening";
+  const isSpeaking  = session === "spal-speaking";
+  const isThinking  = session === "thinking";
 
   return (
     <div
       className="fixed inset-0 flex flex-col overflow-hidden z-40"
-      style={{
-        backgroundImage: "url(/spal-ai-bg.webp)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      style={{ background: "linear-gradient(160deg, #ECD5FF 0%, #C9A8FF 18%, #B8D0FF 48%, #D0E9FF 72%, #EAF4FF 100%)" }}
     >
-      {/* Animated background orbs when SPAL speaks */}
-      <BackgroundOrbs active={session === "spal-speaking"} />
+      <AmbientOrbs speaking={isSpeaking} />
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-5 pt-12 pb-2">
         <button
-          onClick={() => { if (messages.length > 0 && !isEnded) endSession().then(() => router.back()); else router.back(); }}
+          onClick={() => { if (!isEnded && messages.length > 0) endSession().then(() => router.back()); else router.back(); }}
           aria-label="Close"
-          className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center active:scale-95 transition-transform shadow-sm"
+          className="w-11 h-11 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
         >
-          <Cancel01Icon size={18} color="#0F172A" />
+          <Cancel01Icon size={18} color="#121212" />
         </button>
         <button
           onClick={() => router.push("/ask/history")}
           aria-label="Chat history"
-          className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center active:scale-95 transition-transform shadow-sm"
+          className="w-11 h-11 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
         >
-          <Clock05Icon size={18} color="#0F172A" />
+          <Clock05Icon size={18} color="#121212" />
         </button>
       </div>
 
-      {/* ── SPAL avatar + content ── */}
-      <div className="relative z-10 flex flex-col items-center flex-1 justify-center px-8 text-center" style={{ paddingBottom: "160px" }}>
+      {/* Center content */}
+      <div className="relative z-10 flex flex-col items-center flex-1 justify-center px-8 text-center" style={{ paddingBottom: "140px" }}>
         <motion.div
-          animate={session === "spal-speaking" ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-          transition={session === "spal-speaking" ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : {}}
-          className="mb-6"
-          style={{ filter: "drop-shadow(0 8px 24px rgba(139,60,255,0.35))" }}
+          animate={isSpeaking ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+          transition={isSpeaking ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : {}}
+          className="mb-5"
         >
-          <Image src="/spal-ai.webp" alt="SPAL" width={160} height={160} className="w-40 h-40 object-contain" priority />
+          <Image src="/spal-ai.webp" alt="SPAL" width={160} height={160} className="w-36 h-36 object-contain" priority />
         </motion.div>
 
-        <p className="text-[15px] text-white/80 font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>
+        <p className="text-[15px] font-semibold mb-3" style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}>
           Hello {name}
         </p>
 
         <AnimatePresence mode="wait">
           {isEnded ? (
-            // "Voice chat has ended" card
-            <motion.div
-              key="ended"
-              initial={{ opacity: 0, y: 12, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="bg-white rounded-2xl px-5 py-4 w-full max-w-[320px]"
-              style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}
-            >
+            <motion.div key="ended" initial={{ opacity: 0, y: 10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="bg-white/75 backdrop-blur-sm rounded-2xl px-5 py-4 w-full max-w-[300px]"
+              style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
                   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                    <rect x="3" y="5" width="4" height="14" rx="2" fill="#8B3CFF" opacity="0.4" />
-                    <rect x="8" y="3" width="4" height="18" rx="2" fill="#8B3CFF" opacity="0.7" />
-                    <rect x="13" y="7" width="4" height="10" rx="2" fill="#8B3CFF" />
-                    <rect x="18" y="9" width="3" height="6" rx="1.5" fill="#8B3CFF" opacity="0.5" />
+                    <rect x="3" y="5" width="4" height="14" rx="2" fill="#8B3CFF" opacity="0.4"/>
+                    <rect x="8" y="3" width="4" height="18" rx="2" fill="#8B3CFF" opacity="0.7"/>
+                    <rect x="13" y="7" width="4" height="10" rx="2" fill="#8B3CFF"/>
+                    <rect x="18" y="9" width="3" height="6" rx="1.5" fill="#8B3CFF" opacity="0.5"/>
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13.5px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Voice chat has ended</p>
+                  <p className="text-[13.5px] font-bold" style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}>Voice chat has ended</p>
                   <p className="text-[12px] text-neutral-400 mt-0.5">You spoke for {fmtDuration(duration)}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setFeedback("up")}
-                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                    style={{ background: feedback === "up" ? "#DCFCE7" : "transparent" }}
-                    aria-label="Thumbs up"
-                  >
-                    <ThumbsUpIcon size={16} color={feedback === "up" ? "#16A34A" : "#9CA3AF"} />
+                  <button onClick={() => setFeedback("up")} aria-label="Thumbs up"
+                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90"
+                    style={{ background: feedback === "up" ? "#DCFCE7" : "transparent" }}>
+                    <ThumbsUpIcon size={15} color={feedback === "up" ? "#16A34A" : "#9CA3AF"} />
                   </button>
-                  <button
-                    onClick={() => setFeedback("down")}
-                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                    style={{ background: feedback === "down" ? "#FEE2E2" : "transparent" }}
-                    aria-label="Thumbs down"
-                  >
-                    <ThumbsDownIcon size={16} color={feedback === "down" ? "#DC2626" : "#9CA3AF"} />
+                  <button onClick={() => setFeedback("down")} aria-label="Thumbs down"
+                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90"
+                    style={{ background: feedback === "down" ? "#FEE2E2" : "transparent" }}>
+                    <ThumbsDownIcon size={15} color={feedback === "down" ? "#DC2626" : "#9CA3AF"} />
                   </button>
                 </div>
               </div>
             </motion.div>
-          ) : session === "spal-speaking" ? (
-            <motion.div key="speaking" className="flex flex-col items-center gap-4">
-              <SpeakingIndicator />
-            </motion.div>
-          ) : session === "thinking" ? (
-            <motion.div key="thinking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-1.5">
-              {[0,1,2].map(i => (
-                <motion.div key={i} className="w-2 h-2 rounded-full bg-white/60"
-                  animate={{ opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }} />
+
+          ) : isSpeaking ? (
+            <motion.div key="speaking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+              {["#ED712E", "#2F63F5", "#8B3CFF"].map((c, i) => (
+                <motion.div key={i} className="w-3 h-3 rounded-full" style={{ background: c }}
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.22 }} />
               ))}
             </motion.div>
-          ) : session === "user-speaking" ? (
-            <motion.div key="user-speaking" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="flex items-center gap-2 bg-white/20 rounded-full px-4 py-2">
-              <motion.div className="w-2 h-2 rounded-full bg-red-400"
-                animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
-              <span className="text-white text-[13px] font-medium">Listening…</span>
+
+          ) : isThinking ? (
+            <motion.div key="thinking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-2">
+              {[0,1,2].map(i => (
+                <motion.div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(18,18,18,0.25)" }}
+                  animate={{ opacity: [0.25, 0.8, 0.25] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }} />
+              ))}
             </motion.div>
+
+          ) : isListening ? (
+            <motion.div key="listening" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-2">
+              <motion.div className="w-2 h-2 rounded-full bg-red-500"
+                animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 0.7, repeat: Infinity }} />
+              <span className="text-[13px] font-medium" style={{ color: "#121212" }}>Listening…</span>
+            </motion.div>
+
           ) : (
-            <motion.h1
-              key="prompt"
-              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              className="font-bold text-white leading-snug"
-              style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(22px,6.5vw,30px)", textShadow: "0 2px 12px rgba(0,0,0,0.25)" }}
-            >
+            <motion.h1 key="prompt" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              className="font-bold leading-snug"
+              style={{ color: "#121212", fontFamily: "var(--font-satoshi)", fontSize: "clamp(22px,6.5vw,30px)" }}>
               What do you want to ask me about your business?
             </motion.h1>
           )}
         </AnimatePresence>
       </div>
 
-      {/* ── Input bar (hidden when session ended) ── */}
+      {/* Input bar */}
       {!isEnded && (
         <div className="absolute left-0 right-0 z-20 px-5" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}>
           <div
-            className="flex items-center gap-3 px-5 h-[60px] rounded-full"
-            style={{ background: "rgba(255,255,255,0.22)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.4)" }}
+            className="flex items-center gap-3 px-4 h-[60px] rounded-full"
+            style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.8)" }}
           >
             <input
               ref={inputRef}
               type="text"
               value={inputText}
               onChange={e => setInputText(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleTextSend(); } }}
               placeholder="Ask Anything..."
-              disabled={isBusy}
-              className="flex-1 bg-transparent text-[15px] font-medium outline-none placeholder:text-white/60 text-white disabled:opacity-40"
-              style={{ fontFamily: "var(--font-satoshi)" }}
+              disabled={isListening || isThinking || isSpeaking}
+              className="flex-1 bg-transparent text-[15px] font-medium outline-none disabled:opacity-40 placeholder:text-neutral-400"
+              style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}
             />
 
             <AnimatePresence mode="wait">
-              {isBusy ? null : inputText.trim() ? (
-                <motion.button key="send" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={handleSubmit}
-                  className="w-10 h-10 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
-                  aria-label="Send">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#0F172A" strokeWidth={2.5}>
+              {inputText.trim() ? (
+                // Send button when typing
+                <motion.button key="send"
+                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={handleTextSend}
+                  className="w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
+                  style={{ background: "#8B3CFF" }} aria-label="Send">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </motion.button>
-              ) : session === "user-speaking" ? (
-                <motion.button key="mic-stop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={stopVoiceInput}
-                  className="flex items-center gap-1.5 h-9 px-3 rounded-full bg-red-500 active:scale-90 transition-transform flex-shrink-0"
-                  aria-label="Stop listening">
-                  <div className="w-3 h-3 bg-white rounded-sm" />
-                  <span className="text-white text-[12px] font-bold">Stop</span>
+
+              ) : chatActive ? (
+                // Red stop square — ends entire conversation
+                <motion.button key="stop"
+                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={endSession}
+                  className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
+                  aria-label="End conversation">
+                  <div className="w-4 h-4 rounded-sm bg-white" />
                 </motion.button>
+
               ) : (
-                <motion.button key="mic" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={startVoiceInput}
-                  disabled={isBusy}
-                  className="flex-shrink-0 active:scale-90 transition-transform disabled:opacity-40"
-                  aria-label="Speak">
+                // Waveform mic — tap to start voice chat
+                <motion.button key="mic"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  onClick={activateVoice}
+                  className="flex-shrink-0 active:scale-90 transition-transform" aria-label="Start voice chat">
                   <svg viewBox="0 0 36 24" fill="none" className="w-9 h-6">
                     {[3,7,11,15,19,23,27,31].map((x, i) => {
                       const hs = [8,14,20,24,22,16,10,6];
-                      const h = hs[i];
-                      return <rect key={x} x={x} y={(24-h)/2} width="3" height={h} rx="1.5" fill="rgba(255,255,255,0.7)" />;
+                      return <rect key={x} x={x} y={(24-hs[i])/2} width="3" height={hs[i]} rx="1.5" fill="rgba(18,18,18,0.35)" />;
                     })}
                   </svg>
                 </motion.button>
               )}
             </AnimatePresence>
           </div>
-
-          {/* Stop conversation — only when idle and messages exist */}
-          <AnimatePresence>
-            {isActive && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                className="flex justify-center mt-3"
-              >
-                <button
-                  onClick={endSession}
-                  className="flex items-center gap-2 h-9 px-5 rounded-full text-[13px] font-semibold active:scale-95 transition-transform"
-                  style={{ background: "rgba(255,255,255,0.25)", color: "#fff", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)" }}
-                >
-                  <div className="w-3 h-3 bg-white rounded-sm flex-shrink-0" />
-                  Stop
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       )}
     </div>
