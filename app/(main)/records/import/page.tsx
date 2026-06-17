@@ -7,10 +7,14 @@ import { useSPALStore } from "@/store";
 import type { TrackingMethod } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import {
-  ArrowLeft, BookOpen, MessageCircle, Table2, LayoutGrid,
-  FileText, Receipt, FileUp, ImageIcon, AlignLeft,
+  ArrowLeft01Icon, ArrowRight01Icon, PencilEdit01Icon, Clock01Icon,
+  Upload01Icon, Camera01Icon,
+} from "hugeicons-react";
+import {
+  BookOpen, MessageCircle, Table2, LayoutGrid,
+  FileText, Receipt, AlignLeft,
   ArrowUpRight, ArrowDownLeft, Calendar, CheckCircle2,
-  AlertCircle, ChevronRight, Pencil, Clock,
+  AlertCircle,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -42,7 +46,7 @@ export const METHOD_META: Record<TrackingMethod, {
   google_sheets: { label: "Google Sheets", sub: "You use Google Sheets",                     icon: <LayoutGrid    size={20} strokeWidth={2} />, inputType: "file",   accent: "#2563EB" },
   notes_app:     { label: "Notes App",     sub: "You use a phone notes app",                 icon: <FileText      size={20} strokeWidth={2} />, inputType: "visual", accent: "#F59E0B" },
   receipts:      { label: "Receipts",      sub: "You keep paper receipts or photos",         icon: <Receipt       size={20} strokeWidth={2} />, inputType: "visual", accent: "#F97316" },
-  nothing:       { label: "Other",         sub: "No set system yet",                          icon: <FileUp        size={20} strokeWidth={2} />, inputType: "file",   accent: "#A1A1AA" },
+  nothing:       { label: "Other",         sub: "No set system yet",                          icon: <Upload01Icon  size={20} />, inputType: "file",   accent: "#A1A1AA" },
 };
 
 const ALL_METHODS: TrackingMethod[] = [
@@ -371,7 +375,7 @@ export default function ImportRecordPage() {
                   className="flex items-center gap-1 text-[11px] font-semibold mt-1 flex-shrink-0"
                   style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
                 >
-                  <Pencil size={11} strokeWidth={2.5} />
+                  <PencilEdit01Icon size={11} />
                   Switch
                 </button>
               )}
@@ -553,7 +557,7 @@ export default function ImportRecordPage() {
                   "SPAL will flag any records it isn't sure about.",
                 ].map((tip, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <ChevronRight size={13} strokeWidth={2.5} className="text-spal-green mt-0.5 flex-shrink-0" />
+                    <ArrowRight01Icon size={13} className="text-spal-green mt-0.5 flex-shrink-0" />
                     <p className="text-[12.5px] text-neutral-500 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
                       {tip}
                     </p>
@@ -646,7 +650,7 @@ function MethodChooser({
                   {info.sub}
                 </p>
               </div>
-              <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+              <ArrowRight01Icon size={18} className="text-neutral-300 flex-shrink-0" />
             </motion.button>
           );
         })}
@@ -782,7 +786,7 @@ function PageHeader({ onBack }: { onBack: () => void }) {
         style={{ background: "rgba(15,23,42,0.06)" }}
         aria-label="Back"
       >
-        <ArrowLeft size={18} strokeWidth={2} />
+        <ArrowLeft01Icon size={18} />
       </button>
       <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
         Import Record
@@ -814,7 +818,7 @@ function FileUploadZone({
         style={{ border: "2px dashed #D1D5DB", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
       >
         <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#EFF6FF" }}>
-          <FileUp size={22} strokeWidth={2} color="#2563EB" />
+          <Upload01Icon size={22} color="#2563EB" />
         </div>
         <div className="text-center">
           <p className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
@@ -866,7 +870,7 @@ function VisualUploadZone({
         style={{ border: "1.5px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
       >
         <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#F0FDF4" }}>
-          <ImageIcon size={20} strokeWidth={2} color="#22C55E" />
+          <Camera01Icon size={20} color="#22C55E" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[13.5px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
@@ -876,7 +880,7 @@ function VisualUploadZone({
             {imageHint[method] ?? "Take a clear photo of your records"}
           </p>
         </div>
-        <ChevronRight size={16} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+        <ArrowRight01Icon size={16} className="text-neutral-300 flex-shrink-0" />
       </button>
 
       <div className="flex items-center gap-3">
@@ -1050,7 +1054,7 @@ function ReviewCard({
                     fontFamily: "var(--font-satoshi)",
                   }}
                 >
-                  {s === 'paid' ? <><span>✓</span> Paid</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
+                  {s === 'paid' ? <><span>✓</span> Paid</> : <><Clock01Icon size={13} />{' '}Owes me</>}
                 </button>
               ))}
             </div>

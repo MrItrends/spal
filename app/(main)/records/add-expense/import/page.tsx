@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, FileUp, ChevronRight } from "lucide-react";
+import { ArrowLeft01Icon, Upload01Icon, ArrowRight01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -146,7 +146,7 @@ export default function ImportExpensePage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>Import Entry</span>
       </div>
@@ -167,7 +167,7 @@ export default function ImportExpensePage() {
           style={{ border: "2px dashed #D1D5DB", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
         >
           <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#FFF3E0" }}>
-            <FileUp size={22} strokeWidth={2} color="#F97316" />
+            <Upload01Icon size={22} color="#F97316" />
           </div>
           <p className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily }}>Tap to choose a file</p>
           <p className="text-[11.5px] text-neutral-400" style={{ fontFamily }}>.csv, .xlsx, .xls, .pdf</p>
@@ -282,7 +282,7 @@ export default function ImportExpensePage() {
                       {formatBytes(f.size)} · {timeAgo(f.time)}
                     </p>
                   </div>
-                  <ChevronRight size={16} strokeWidth={2} className="text-neutral-300" />
+                  <ArrowRight01Icon size={16} className="text-neutral-300" />
                 </div>
               ))}
             </div>

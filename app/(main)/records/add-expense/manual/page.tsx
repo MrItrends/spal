@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Minus } from "lucide-react";
+import { ArrowLeft01Icon, PlusSignIcon, MinusSignIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 
@@ -92,7 +92,7 @@ export default function ManualExpensePage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>
           Manual Entry
@@ -199,7 +199,7 @@ export default function ManualExpensePage() {
                   style={{ background: "#FEE2E2" }}
                   aria-label="Remove item"
                 >
-                  <Minus size={12} strokeWidth={2.5} color="#EF4444" />
+                  <MinusSignIcon size={12} color="#EF4444" />
                 </button>
               ) : (
                 <div />
@@ -214,7 +214,7 @@ export default function ManualExpensePage() {
           className="mt-3 w-full h-11 rounded-xl bg-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           style={{ border: "1.5px dashed #E5E7EB" }}
         >
-          <Plus size={15} strokeWidth={2.5} color="#F97316" />
+          <PlusSignIcon size={15} color="#F97316" />
           <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#F97316" }}>Add Another Item</span>
         </button>
 

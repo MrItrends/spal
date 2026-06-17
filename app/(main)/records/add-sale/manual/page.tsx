@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Minus, Clock } from "lucide-react";
+import { ArrowLeft01Icon, PlusSignIcon, MinusSignIcon, Clock01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 
@@ -96,7 +96,7 @@ export default function ManualEntryPage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>
           Manual Entry
@@ -203,7 +203,7 @@ export default function ManualEntryPage() {
                   style={{ background: "#FEE2E2" }}
                   aria-label="Remove item"
                 >
-                  <Minus size={12} strokeWidth={2.5} color="#EF4444" />
+                  <MinusSignIcon size={12} color="#EF4444" />
                 </button>
               ) : (
                 <div />
@@ -218,7 +218,7 @@ export default function ManualEntryPage() {
           className="mt-3 w-full h-11 rounded-xl bg-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           style={{ border: "1.5px dashed #E5E7EB" }}
         >
-          <Plus size={15} strokeWidth={2.5} color="#22C55E" />
+          <PlusSignIcon size={15} color="#22C55E" />
           <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#22C55E" }}>Add Another Item</span>
         </button>
 
@@ -285,7 +285,7 @@ export default function ManualEntryPage() {
                   fontFamily,
                 }}
               >
-                {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
+                {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
               </button>
             ))}
           </div>

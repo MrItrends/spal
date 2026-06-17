@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RotateCcw, Plus } from "lucide-react";
+import { ArrowLeft01Icon, ArrowReloadHorizontalIcon, PlusSignIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -115,7 +115,7 @@ export default function PictureExpenseConfirmPage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>
           Picture Upload Confirmation
@@ -135,7 +135,7 @@ export default function PictureExpenseConfirmPage() {
                 style={{ background: "rgba(0,0,0,0.45)" }}
                 aria-label="Retake photo"
               >
-                <RotateCcw size={16} strokeWidth={2} color="#fff" />
+                <ArrowReloadHorizontalIcon size={16} color="#fff" />
                 <span className="text-[12px] font-semibold text-white" style={{ fontFamily }}>Retake</span>
               </button>
               <button
@@ -144,7 +144,7 @@ export default function PictureExpenseConfirmPage() {
                 style={{ background: "rgba(249,115,22,0.6)" }}
                 aria-label="Add another photo"
               >
-                <Plus size={16} strokeWidth={2} color="#fff" />
+                <PlusSignIcon size={16} color="#fff" />
                 <span className="text-[12px] font-semibold text-white" style={{ fontFamily }}>Add Photo</span>
               </button>
             </div>
@@ -228,7 +228,7 @@ export default function PictureExpenseConfirmPage() {
                 className="mt-3 w-full h-11 rounded-xl bg-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
                 style={{ border: "1.5px dashed #E5E7EB" }}
               >
-                <Plus size={15} strokeWidth={2.5} color="#F97316" />
+                <PlusSignIcon size={15} color="#F97316" />
                 <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#F97316" }}>+ Add Another Item</span>
               </button>
 

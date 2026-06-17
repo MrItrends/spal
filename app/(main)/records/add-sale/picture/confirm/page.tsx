@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RotateCcw, Plus, Clock } from "lucide-react";
+import { ArrowLeft01Icon, ArrowReloadHorizontalIcon, PlusSignIcon, Clock01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -119,7 +119,7 @@ export default function PictureConfirmPage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>
           Picture Upload Confirmation
@@ -139,7 +139,7 @@ export default function PictureConfirmPage() {
                 style={{ background: "rgba(0,0,0,0.45)" }}
                 aria-label="Retake photo"
               >
-                <RotateCcw size={16} strokeWidth={2} color="#fff" />
+                <ArrowReloadHorizontalIcon size={16} color="#fff" />
                 <span className="text-[12px] font-semibold text-white" style={{ fontFamily }}>Retake</span>
               </button>
               <button
@@ -148,7 +148,7 @@ export default function PictureConfirmPage() {
                 style={{ background: "rgba(34,197,94,0.6)" }}
                 aria-label="Add another photo"
               >
-                <Plus size={16} strokeWidth={2} color="#fff" />
+                <PlusSignIcon size={16} color="#fff" />
                 <span className="text-[12px] font-semibold text-white" style={{ fontFamily }}>Add Photo</span>
               </button>
             </div>
@@ -232,7 +232,7 @@ export default function PictureConfirmPage() {
                 className="mt-3 w-full h-11 rounded-xl bg-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
                 style={{ border: "1.5px dashed #E5E7EB" }}
               >
-                <Plus size={15} strokeWidth={2.5} color="#22C55E" />
+                <PlusSignIcon size={15} color="#22C55E" />
                 <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#22C55E" }}>+ Add Another Item</span>
               </button>
 
@@ -263,7 +263,7 @@ export default function PictureConfirmPage() {
                         fontFamily,
                       }}
                     >
-                      {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock size={13} strokeWidth={2.5} />{' '}Owes me</>}
+                      {s === 'paid' ? <><span>✓</span> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
                     </button>
                   ))}
                 </div>

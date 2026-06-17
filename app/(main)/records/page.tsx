@@ -10,7 +10,7 @@ import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { ExportSheet } from "@/components/records/ExportSheet";
 import { UndoToast } from "@/components/ui/UndoToast";
 import { useRouter } from "next/navigation";
-import { ArrowUp, ArrowDown, Download, CheckSquare, ScanLine, FolderInput, Package } from "lucide-react";
+import { ArrowUp01Icon, ArrowDown01Icon, Download01Icon, Tick01Icon, ScanIcon, Folder01Icon, Package01Icon } from "hugeicons-react";
 import type { BusinessRecord } from "@/lib/types";
 
 type Filter = "all" | "sale" | "expense" | "owing";
@@ -215,14 +215,14 @@ export default function RecordsPage() {
                       className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
                       aria-label="Export records"
                     >
-                      <Download size={15} strokeWidth={2.2} className="text-neutral-500" />
+                      <Download01Icon size={15} className="text-neutral-500" />
                     </button>
                     <button
                       onClick={() => setSelectMode(true)}
                       className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
                       aria-label="Select records"
                     >
-                      <CheckSquare size={15} strokeWidth={2.2} className="text-neutral-500" />
+                      <Tick01Icon size={15} className="text-neutral-500" />
                     </button>
                   </>
                 )}
@@ -438,7 +438,7 @@ function EmptyState({
     {
       label: "Add Sale",
       bg: "#F0FDF4",
-      icon: <ArrowUp size={20} strokeWidth={2} color="#22C55E" />,
+      icon: <ArrowUp01Icon size={20} color="#22C55E" />,
       labelColor: "#15803D",
       onClick: () => router.push("/records/add-sale"),
       cols: 3,
@@ -446,7 +446,7 @@ function EmptyState({
     {
       label: "Add Expense",
       bg: "#FFF7ED",
-      icon: <ArrowDown size={20} strokeWidth={2} color="#F97316" />,
+      icon: <ArrowDown01Icon size={20} color="#F97316" />,
       labelColor: "#C2410C",
       onClick: () => router.push("/records/add-expense"),
       cols: 3,
@@ -454,7 +454,7 @@ function EmptyState({
     {
       label: "Scan to Upload",
       bg: "#F8FAFC",
-      icon: <ScanLine size={20} strokeWidth={2} color="#0F172A" />,
+      icon: <ScanIcon size={20} color="#0F172A" />,
       labelColor: "#0F172A",
       onClick: () => router.push("/scan"),
       cols: 3,
@@ -462,7 +462,7 @@ function EmptyState({
     {
       label: "Import Record",
       bg: "#F8FAFC",
-      icon: <FolderInput size={20} strokeWidth={2} color="#0F172A" />,
+      icon: <Folder01Icon size={20} color="#0F172A" />,
       labelColor: "#0F172A",
       onClick: () => router.push("/records/import"),
       cols: 2,
@@ -470,7 +470,7 @@ function EmptyState({
     {
       label: "Manage Inventory",
       bg: "#F8FAFC",
-      icon: <Package size={20} strokeWidth={2} color="#0F172A" />,
+      icon: <Package01Icon size={20} color="#0F172A" />,
       labelColor: "#0F172A",
       onClick: () => router.push("/inventory"),
       cols: 2,
@@ -530,11 +530,11 @@ function EmptyState({
 }
 
 function RecordSaleIcon({ large = false }: { large?: boolean }) {
-  return <ArrowUp size={large ? 22 : 16} color="#22C55E" strokeWidth={2} />;
+  return <ArrowUp01Icon size={large ? 22 : 16} color="#22C55E" />;
 }
 
 function RecordExpenseIcon({ large = false }: { large?: boolean }) {
-  return <ArrowDown size={large ? 22 : 16} color="#F97316" strokeWidth={2} />;
+  return <ArrowDown01Icon size={large ? 22 : 16} color="#F97316" />;
 }
 
 function RecordsSkeleton() {

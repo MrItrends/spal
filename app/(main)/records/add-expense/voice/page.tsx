@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mic, Square } from "lucide-react";
+import { ArrowLeft01Icon, Mic01Icon, Cancel01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { DateTimePicker } from "@/components/shared/DateTimePicker";
@@ -174,7 +174,7 @@ export default function VoiceExpensePage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>Voice Entry</span>
       </div>
@@ -220,8 +220,8 @@ export default function VoiceExpensePage() {
               aria-label={status === "recording" ? "Stop recording" : "Start recording"}
             >
               {status === "recording"
-                ? <Square size={28} strokeWidth={2} color="#fff" fill="#fff" />
-                : <Mic size={28} strokeWidth={2} color="#fff" />}
+                ? <Cancel01Icon size={28} color="#fff" />
+                : <Mic01Icon size={28} color="#fff" />}
             </button>
           </div>
 

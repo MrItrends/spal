@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { X, FileText, Mic, Camera, Upload, ChevronRight } from "lucide-react";
+import { Cancel01Icon, Mic01Icon, Camera01Icon, Upload01Icon, ArrowRight01Icon } from "hugeicons-react";
+import { FileText } from "lucide-react";
 
 const BG = "#F7F9F5";
 const fontFamily = "var(--font-satoshi)";
@@ -19,21 +20,21 @@ const METHODS = [
     label: "Voice Entry",
     sub: "Just talk, Let SPAL handle the rest",
     href: "/records/add-sale/voice",
-    icon: <Mic size={22} strokeWidth={2} color="#F97316" />,
+    icon: <Mic01Icon size={22} color="#F97316" />,
     iconBg: "#FFF3E0",
   },
   {
     label: "Picture Upload",
     sub: "Snap a receipt or handwritten note",
     href: "/records/add-sale/picture",
-    icon: <Camera size={22} strokeWidth={2} color="#8B5CF6" />,
+    icon: <Camera01Icon size={22} color="#8B5CF6" />,
     iconBg: "#EDE9FE",
   },
   {
     label: "Import Entry",
     sub: "Upload a spreadsheet or file",
     href: "/records/add-sale/import",
-    icon: <Upload size={22} strokeWidth={2} color="#2563EB" />,
+    icon: <Upload01Icon size={22} color="#2563EB" />,
     iconBg: "#EFF6FF",
   },
 ];
@@ -51,7 +52,7 @@ export default function AddSalePage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Close"
         >
-          <X size={18} strokeWidth={2} />
+          <Cancel01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy" style={{ fontFamily }}>
           Add Sale
@@ -91,7 +92,7 @@ export default function AddSalePage() {
                   {m.sub}
                 </p>
               </div>
-              <ChevronRight size={18} strokeWidth={2} className="text-neutral-300 flex-shrink-0" />
+              <ArrowRight01Icon size={18} className="text-neutral-300 flex-shrink-0" />
             </motion.button>
           ))}
         </div>

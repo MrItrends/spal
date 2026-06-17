@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ImageIcon, Camera } from "lucide-react";
+import { ArrowLeft01Icon, Camera01Icon } from "hugeicons-react";
 
 const fontFamily = "var(--font-satoshi)";
 
@@ -94,7 +94,7 @@ export default function PictureSaleUploadPage() {
           style={{ background: "rgba(255,255,255,0.10)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} color="#fff" />
+          <ArrowLeft01Icon size={18} color="#fff" />
         </button>
         <span className="text-[16px] font-semibold text-white">Picture Upload</span>
       </div>
@@ -120,7 +120,7 @@ export default function PictureSaleUploadPage() {
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 {cameraBlocked ? (
                   <>
-                    <Camera size={32} color="rgba(255,255,255,0.3)" />
+                    <Camera01Icon size={32} color="rgba(255,255,255,0.3)" />
                     <p className="text-white/40 text-[13px] text-center px-6">
                       Camera access denied. Use the gallery button below.
                     </p>
@@ -167,7 +167,7 @@ export default function PictureSaleUploadPage() {
           style={{ background: "rgba(255,255,255,0.12)" }}
           aria-label="Open gallery"
         >
-          <ImageIcon size={22} strokeWidth={2} color="#fff" />
+          <Camera01Icon size={22} color="#fff" />
         </button>
 
         {/* Shutter / Retake */}
