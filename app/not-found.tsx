@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Home01Icon01Icon } from "hugeicons-react";
+import { Home01Icon } from "hugeicons-react";
 
 const COLS    = 4;
 const ROWS    = 3;
