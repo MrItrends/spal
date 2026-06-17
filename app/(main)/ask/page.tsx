@@ -175,7 +175,8 @@ export default function AskSPALPage() {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = (e) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (e: any) => {
       const transcript = e.results[0]?.[0]?.transcript ?? "";
       if (transcript.trim()) sendMessage(transcript.trim());
     };
