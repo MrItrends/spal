@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Cancel01Icon, Download01Icon, File01Icon } from "hugeicons-react";
+import { Cancel01Icon, Download01Icon, File01Icon, FileEditIcon } from "hugeicons-react";
 
 interface Props {
   open: boolean;
@@ -159,8 +159,8 @@ export function ExportSheet({ open, onClose }: Props) {
               <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">Format</p>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {([
-                  { id: "csv", icon: FileSpreadsheet, label: "CSV", sub: "Opens in Excel or Google Sheets" },
-                  { id: "pdf", icon: FileText,        label: "PDF", sub: "Print or share as document" },
+                  { id: "csv", icon: FileEditIcon, label: "CSV", sub: "Opens in Excel or Google Sheets" },
+                  { id: "pdf", icon: File01Icon,   label: "PDF", sub: "Print or share as document" },
                 ] as const).map(({ id, icon: Icon, label, sub }) => (
                   <button
                     key={id}
