@@ -244,8 +244,27 @@ export default function AskSPALPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startRecognition]);
 
+  // ── Reset everything for a brand-new conversation ─────────────────────────
+  function resetForNewChat() {
+    endedRef.current = false;
+    chatActiveRef.current = false;
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    startTimeRef.current = null;
+    pendingTranscript.current = null;
+    convIdRef.current = null;
+    messagesRef.current = [];
+    setMessages([]);
+    setConvId(null);
+    setFeedback(null);
+    setDuration(0);
+    setChatActive(false);
+    setSessionSync("idle");
+  }
+
   // ── Activate voice mode ───────────────────────────────────────────────────
   function activateVoice() {
+    if (endedRef.current) resetForNewChat();
     ensureAudioCtx(); // unlock audio on user gesture
     if (startTimeRef.current === null) {
       startTimeRef.current = Date.now();
@@ -276,7 +295,8 @@ export default function AskSPALPage() {
   // ── Text send ─────────────────────────────────────────────────────────────
   function handleTextSend() {
     const text = inputText.trim();
-    if (!text || endedRef.current) return;
+    if (!text) return;
+    if (endedRef.current) resetForNewChat();
     ensureAudioCtx();
     setInputText("");
     typingRef.current = false; // sendAndRespond will restart the mic when done
@@ -356,8 +376,13 @@ export default function AskSPALPage() {
         <AnimatePresence mode="wait">
           {isEnded ? (
             <motion.div key="ended" initial={{ opacity: 0, y: 10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="bg-white/75 backdrop-blur-sm rounded-2xl px-5 py-4 w-full max-w-[300px]"
+              className="relative bg-white/75 backdrop-blur-sm rounded-2xl px-5 py-4 w-full max-w-[300px]"
               style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
+              <button onClick={resetForNewChat} aria-label="Dismiss"
+                className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform"
+                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+                <Cancel01Icon size={13} color="#6B7280" />
+              </button>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
                   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
@@ -421,8 +446,8 @@ export default function AskSPALPage() {
         </AnimatePresence>
       </div>
 
-      {/* Input bar */}
-      {!isEnded && (
+      {/* Input bar — always present so a new chat can start right after one ends */}
+      {(
         <div className="absolute left-0 right-0 z-20 px-5" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}>
           <div
             className="flex items-center gap-3 px-4 h-[60px] rounded-full"
