@@ -125,7 +125,7 @@ export default function ConversationPage() {
                 {/* SPAL avatar */}
                 {msg.role === "assistant" && (
                   <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mb-1" style={{ background: "linear-gradient(135deg, #B57BFF, #8B3CFF)" }}>
-                    <Image src="/spal AI.png" alt="SPAL" width={28} height={28} className="w-full h-full object-contain" />
+                    <Image src="/spal-ai.webp" alt="SPAL" width={28} height={28} className="w-full h-full object-contain" />
                   </div>
                 )}
 

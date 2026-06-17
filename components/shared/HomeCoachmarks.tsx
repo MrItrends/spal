@@ -246,7 +246,7 @@ export function HomeCoachmarks() {
           {/* Avatar row */}
           <div className="flex items-center gap-2.5 mb-3">
             <Image
-              src="/spal AI.png"
+              src="/spal-ai.webp"
               alt="SPAL"
               width={isWelcome ? 52 : 26}
               height={isWelcome ? 52 : 26}

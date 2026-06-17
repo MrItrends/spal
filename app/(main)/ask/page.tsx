@@ -253,7 +253,7 @@ export default function AskSPALPage() {
           className="mb-6"
           style={{ filter: "drop-shadow(0 8px 24px rgba(139,60,255,0.35))" }}
         >
-          <Image src="/spal AI.png" alt="SPAL" width={160} height={160} className="w-40 h-40 object-contain" priority />
+          <Image src="/spal-ai.webp" alt="SPAL" width={160} height={160} className="w-40 h-40 object-contain" priority />
         </motion.div>
 
         <p className="text-[15px] text-white/80 font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>

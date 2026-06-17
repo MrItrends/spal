@@ -39,7 +39,7 @@ function SlideIntro() {
     <div className="flex flex-col items-center justify-center flex-1 text-center px-8 gap-6">
       <motion.div {...fadeUp}>
         <Image
-          src="/spal AI.png"
+          src="/spal-ai.webp"
           alt="SPAL"
           width={120}
           height={120}
@@ -204,7 +204,7 @@ function SlideAsk() {
   return (
     <div className="flex flex-col justify-center flex-1 px-6 gap-5">
       <motion.div {...fadeUp} className="flex items-center gap-3">
-        <Image src="/spal AI.png" alt="SPAL" width={40} height={40}
+        <Image src="/spal-ai.webp" alt="SPAL" width={40} height={40}
           style={{ objectFit: "contain",
                    filter: "drop-shadow(0 4px 12px rgba(34,197,94,0.45))" }} />
         <div>

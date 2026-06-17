@@ -49,7 +49,7 @@ export function SparkAvatar() {
       whileTap={{ scale: 0.88 }}
     >
       <Image
-        src="/spal AI.png"
+        src="/spal-ai.webp"
         alt="Ask SPAL"
         width={72}
         height={72}
