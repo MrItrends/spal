@@ -12,8 +12,8 @@ import { AchievementsSection } from "@/components/gamification/AchievementsSecti
 import { enablePushNotifications, disablePushNotifications } from "@/hooks/usePushNotifications";
 import {
   PencilEdit01Icon, Cancel01Icon, UserIcon, Mail01Icon, SmartPhone01Icon, ChatIcon, Notification01Icon, Notification02Icon,
-  Store01Icon, CoinsIcon, Receipt01Icon, ArrowRight01Icon, Camera01Icon, Fire01Icon, Tick01Icon, Alert01Icon,
-  BookOpenIcon, MessageIcon, GridViewIcon, FileTextIcon, Folder01Icon,
+  Store01Icon, Coins01Icon, ReceiptDollarIcon, ArrowRight01Icon, Camera01Icon, FireIcon, Tick01Icon, Alert01Icon,
+  BookOpen01Icon, MessageIcon, GridViewIcon, File01Icon, Folder01Icon,
   PlusSignIcon, Archive01Icon, Building04Icon,
 } from "hugeicons-react";
 import type { TrackingMethod } from "@/store";
@@ -323,7 +323,7 @@ export default function ProfilePage() {
               value={
                 <span className="inline-flex items-center gap-1">
                   {user?.streak_days ?? 0}
-                  <Fire01Icon size={16} color="#F97316" />
+                  <FireIcon size={16} color="#F97316" />
                 </span>
               }
               label="Day streak"
@@ -448,7 +448,7 @@ export default function ProfilePage() {
               sheet:   "business" as SheetType,
             },
             {
-              icon:    <CoinsIcon size={18} color="#16A34A" />,
+              icon:    <Coins01Icon size={18} color="#16A34A" />,
               label:   "Currency",
               hint:    user?.currency ?? "NGN",
               sheet:   "currency" as SheetType,
@@ -465,7 +465,7 @@ export default function ProfilePage() {
               sheet:   "tracking-methods" as SheetType,
             },
             {
-              icon:    <BookOpenIcon size={18} color="#8B5CF6" />,
+              icon:    <BookOpen01Icon size={18} color="#8B5CF6" />,
               label:   "Business goals",
               hint:    (() => {
                 const goals = activeBusiness?.business_goals ?? [];
@@ -504,7 +504,7 @@ export default function ProfilePage() {
             className="w-full flex items-center gap-3 px-4 py-4 active:bg-neutral-50 transition-colors"
           >
             <div className="w-9 h-9 rounded-full bg-spal-purple-50 flex items-center justify-center flex-shrink-0">
-              <Receipt01Icon size={18} color="#8B5CF6" />
+              <ReceiptDollarIcon size={18} color="#8B5CF6" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-spal-navy">Payment history</p>
@@ -1217,12 +1217,12 @@ const TRACKING_METHODS_LIST: Array<{
   icon:   React.ReactNode;
   accent: string;
 }> = [
-  { key: "notebook",      label: "Notebook",      sub: "You write in a physical notebook",         icon: <BookOpenIcon   size={20} />, accent: "#22C55E" },
+  { key: "notebook",      label: "Notebook",      sub: "You write in a physical notebook",         icon: <BookOpen01Icon   size={20} />, accent: "#22C55E" },
   { key: "whatsapp",      label: "WhatsApp",      sub: "You message yourself or save notes there", icon: <ChatIcon       size={20} />, accent: "#25D366" },
   { key: "excel",         label: "Excel",         sub: "You track in a spreadsheet",               icon: <GridViewIcon   size={20} />, accent: "#217346" },
   { key: "google_sheets", label: "Google Sheets", sub: "You use Google Sheets",                    icon: <GridViewIcon   size={20} />, accent: "#2563EB" },
-  { key: "notes_app",     label: "Notes App",     sub: "You use a phone notes app",                icon: <FileTextIcon   size={20} />, accent: "#F59E0B" },
-  { key: "receipts",      label: "Receipts",      sub: "You keep paper receipts or photos",        icon: <Receipt01Icon  size={20} />, accent: "#F97316" },
+  { key: "notes_app",     label: "Notes App",     sub: "You use a phone notes app",                icon: <File01Icon   size={20} />, accent: "#F59E0B" },
+  { key: "receipts",      label: "Receipts",      sub: "You keep paper receipts or photos",        icon: <ReceiptDollarIcon  size={20} />, accent: "#F97316" },
 ];
 
 function TrackingMethodsSheet({ open, currentMethods, onClose, onSave }: {

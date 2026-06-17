@@ -9,8 +9,8 @@ import {
 } from "recharts";
 import {
   ChartIncreaseIcon, ArrowRight01Icon, PencilEdit01Icon, Cancel01Icon, Tick01Icon,
-  Trophy01Icon, Alert01Icon, ChartDecreaseIcon, ShoppingBag01Icon, Tag01Icon,
-  HeartCheckIcon, Fire01Icon, Notification03Icon, User02Icon, Home01Icon,
+  Award01Icon, Alert01Icon, ChartDecreaseIcon, ShoppingBag01Icon, Tag01Icon,
+  HeartCheckIcon, FireIcon, Notification03Icon, User02Icon, Home01Icon,
   Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon,
 } from "hugeicons-react";
 import { SALE_CATEGORIES } from "@/lib/utils/category";
@@ -312,7 +312,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
     <div className="bg-white rounded-2xl p-4 space-y-5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#DCFCE7" }}>
-          <Fire01Icon size={14} color="#2D7A3A" />
+          <FireIcon size={14} color="#2D7A3A" />
         </div>
         <p className="text-[13.5px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
           What sold {periodLabel.toLowerCase()}
@@ -474,7 +474,7 @@ export default function InsightsPage() {
     if (records.length === 0) return cards;
     if (t.profit > 0) cards.push({ icon: <ChartIncreaseIcon size={16} color="#2D7A3A" />, tag: "Profit", title: `You made ${formatCurrency(t.profit)} profit`, body: `${periodLabel}, your sales covered your costs and left you with ${formatCurrency(t.profit)}.`, variant: "positive", askPrompt: `I made ${formatCurrency(t.profit)} profit ${periodLabel.toLowerCase()}. How can I increase this?` });
     else if (t.profit < 0) cards.push({ icon: <ChartDecreaseIcon size={16} color="#DF191C" />, tag: "Profit", title: `You spent ${formatCurrency(Math.abs(t.profit))} more than you made`, body: `${periodLabel} expenses were higher than your sales.`, variant: "alert", askPrompt: `I spent more than I made. Sales ${formatCurrency(t.sales)}, expenses ${formatCurrency(t.expenses)}. What should I do?` });
-    if (bestBucket && (bestBucket.profit + bestBucket.expenses) > 0) cards.push({ icon: <Trophy01Icon size={16} color="#2D7A3A" />, tag: "Sales", title: `${bestBucket.label} was your best ${bucketWord}`, body: `You made the most on ${bestBucket.label}${bestBucket.profit > 0 ? ` with ${formatCurrency(bestBucket.profit)} in profit` : ""}.`, variant: "positive", askPrompt: `${bestBucket.label} was my best ${bucketWord}. Why might that be?` });
+    if (bestBucket && (bestBucket.profit + bestBucket.expenses) > 0) cards.push({ icon: <Award01Icon size={16} color="#2D7A3A" />, tag: "Sales", title: `${bestBucket.label} was your best ${bucketWord}`, body: `You made the most on ${bestBucket.label}${bestBucket.profit > 0 ? ` with ${formatCurrency(bestBucket.profit)} in profit` : ""}.`, variant: "positive", askPrompt: `${bestBucket.label} was my best ${bucketWord}. Why might that be?` });
     if (expenseRatio !== null && t.expenses > 0) { const isHigh = expenseRatio > 70; cards.push({ icon: <Alert01Icon size={16} color={isHigh ? "#DF191C" : "#FF7A00"} />, tag: "Spending", title: `${expenseRatio}% of sales went to expenses`, body: isHigh ? `For every ₦100 you made, ₦${expenseRatio} went to costs. Worth reviewing.` : `Your expenses are ${expenseRatio}% of sales. ${expenseRatio < 50 ? "You're managing costs well." : "There's room to tighten."}`, variant: isHigh ? "alert" : "warning", askPrompt: `${expenseRatio}% of my sales went to expenses. Is this normal?` }); }
     if (topExpenseCat) cards.push({ icon: <ShoppingBag01Icon size={16} color="#FF7A00" />, tag: "Spending", title: `${topExpenseCat[0]} is your biggest cost`, body: `You spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]} ${periodLabel.toLowerCase()}.`, variant: "warning", askPrompt: `I spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]}. How can I reduce this?` });
     return cards;

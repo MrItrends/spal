@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight01Icon, PlusSignIcon, Cancel01Icon, SparklesIcon, Tick01Icon,
-  ChartIncreaseIcon, Trophy01Icon, Calendar01Icon, Target01Icon,
+  ChartIncreaseIcon, Award01Icon, Calendar01Icon, Target01Icon,
 } from "hugeicons-react";
 import { formatCurrency } from "@/lib/utils/currency";
 
@@ -51,7 +51,7 @@ const GOAL_META: Record<GoalType, GoalMeta> = {
   },
   yearly_revenue: {
     label: "Yearly revenue",period: "this year",  hint: "Big yearly revenue ambition?",
-    icon: <Trophy01Icon size={20} color="#8B5CF6" />,
+    icon: <Award01Icon size={20} color="#8B5CF6" />,
     accent: "#8B5CF6", tintBg: "#ECE5F9",
   },
 };

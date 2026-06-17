@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft01Icon, Notification01Icon, Trophy01Icon, ChartIncreaseIcon,
-  MegaphoneIcon, Fire01Icon, GraduationScrollIcon, StarIcon,
+  ArrowLeft01Icon, Notification01Icon, Award01Icon, ChartIncreaseIcon,
+  Megaphone01Icon, FireIcon, GraduationScrollIcon, StarIcon,
 } from "hugeicons-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -29,10 +29,10 @@ const TYPE_CONFIG: Record<string, {
   Icon:   React.ComponentType<{ size: number; color: string }>;
   label:  string;
 }> = {
-  badge_unlocked: { bg: "#FEF3C7", color: "#D97706", Icon: Trophy01Icon,          label: "Badge" },
+  badge_unlocked: { bg: "#FEF3C7", color: "#D97706", Icon: Award01Icon,          label: "Badge" },
   milestone:      { bg: "#F0FDF4", color: "#16A34A", Icon: ChartIncreaseIcon,     label: "Milestone" },
-  streak:         { bg: "#FFF7ED", color: "#EA580C", Icon: Fire01Icon,            label: "Streak" },
-  app_update:     { bg: "#EFF6FF", color: "#2563EB", Icon: MegaphoneIcon,         label: "Update" },
+  streak:         { bg: "#FFF7ED", color: "#EA580C", Icon: FireIcon,            label: "Streak" },
+  app_update:     { bg: "#EFF6FF", color: "#2563EB", Icon: Megaphone01Icon,         label: "Update" },
   coach:          { bg: "#F5F3FF", color: "#7C3AED", Icon: GraduationScrollIcon,  label: "Coach" },
 };
 

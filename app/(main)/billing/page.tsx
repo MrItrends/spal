@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft01Icon, Receipt01Icon, Clock01Icon, Alert01Icon, Mic01Icon, SparklesIcon, CheckmarkCircle02Icon,
+  ArrowLeft01Icon, ReceiptDollarIcon, Clock01Icon, Alert01Icon, Mic01Icon, SparklesIcon, CheckmarkCircle02Icon,
 } from "hugeicons-react";
 import { ADVISORS, type Advisor } from "@/lib/advisors/config";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -156,7 +156,7 @@ function BillingPageInner() {
       <Section title="Receipts">
         {payments.length === 0 ? (
           <EmptyState
-            icon={<Receipt01Icon size={26} className="text-neutral-300" />}
+            icon={<ReceiptDollarIcon size={26} className="text-neutral-300" />}
             title="No payments yet"
             sub="Receipts for every coach subscription you pay for will appear here."
           />
