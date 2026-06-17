@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Cancel01Icon, ClockIcon, ThumbsUpIcon, ThumbsDownIcon } from "hugeicons-react";
+import { Cancel01Icon, Clock05Icon, ThumbsUpIcon, ThumbsDownIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -241,7 +241,7 @@ export default function AskSPALPage() {
           aria-label="Chat history"
           className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center active:scale-95 transition-transform shadow-sm"
         >
-          <ClockIcon size={18} color="#0F172A" />
+          <Clock05Icon size={18} color="#0F172A" />
         </button>
       </div>
 
