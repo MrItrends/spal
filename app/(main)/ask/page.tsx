@@ -166,7 +166,8 @@ export default function AskSPALPage() {
   // ── Web Speech API — auto-stop on silence ─────────────────────────────────
   function startVoiceInput() {
     if (session !== "idle") return;
-    const SpeechRecognition = window.SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition: typeof window.SpeechRecognition }).webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
