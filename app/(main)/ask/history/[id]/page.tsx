@@ -42,7 +42,15 @@ export default function ConversationPage() {
     fetch(`/api/conversations/${id}`)
       .then(r => r.json())
       .then(d => {
-        if (d.success) setConv(d.data);
+        if (d.success && d.data) {
+          // Title column may not exist on the row yet — derive from first message.
+          const msgs = Array.isArray(d.data.messages) ? d.data.messages : [];
+          const firstUser = msgs.find((m: Message) => m.role === "user");
+          const title = d.data.title || (firstUser
+            ? firstUser.content.slice(0, 60) + (firstUser.content.length > 60 ? "…" : "")
+            : "Chat");
+          setConv({ ...d.data, title });
+        }
         else setError(true);
       })
       .catch(() => setError(true))

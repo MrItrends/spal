@@ -103,11 +103,11 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }).eq("id", conversationId);
     } else {
-      // Title from the first question so it's never blank in history
-      const title = message.trim().slice(0, 60) + (message.trim().length > 60 ? "…" : "");
+      // Live table has no `title` column (predates migration 018) — title is
+      // derived from the first message on read, so don't insert it here.
       const { data: newConv } = await admin
         .from("conversations")
-        .insert({ user_id: user.id, title, messages: updatedMessages })
+        .insert({ user_id: user.id, messages: updatedMessages })
         .select("id")
         .single();
       savedConvId = newConv?.id;

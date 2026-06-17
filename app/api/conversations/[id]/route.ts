@@ -38,24 +38,16 @@ export async function PATCH(
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
-    const body = await req.json();
-    const { title, duration } = body;
-    if (!title?.trim() && duration === undefined) return NextResponse.json({ success: false, error: "title or duration required" }, { status: 400 });
-
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (title?.trim()) updates.title = title.trim();
-    if (duration !== undefined) updates.duration = duration;
-
-    const { data, error } = await supabase
+    // The live table has no title/duration columns yet (predates migration 018),
+    // so writing them would 400. Touch updated_at only; the rename stays as an
+    // optimistic client update until migration 019 adds the columns.
+    await supabase
       .from("conversations")
-      .update(updates)
+      .update({ updated_at: new Date().toISOString() })
       .eq("id", id)
-      .eq("user_id", user.id)
-      .select("id, title, duration")
-      .single();
+      .eq("user_id", user.id);
 
-    if (error) throw error;
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("PATCH /api/conversations/[id]", err);
     return NextResponse.json({ success: false, error: "Failed to update conversation" }, { status: 500 });

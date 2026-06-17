@@ -9,15 +9,29 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
+    // NOTE: the live `conversations` table predates migration 018, so it only
+    // has id/user_id/messages/created_at/updated_at — no title/duration columns.
+    // Select only guaranteed columns and derive the title from the first message
+    // so history works regardless of whether 019 has been applied yet.
     const { data, error } = await supabase
       .from("conversations")
-      .select("id, title, messages, created_at, updated_at, duration")
+      .select("id, messages, created_at, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
       .limit(100);
 
     if (error) throw error;
-    return NextResponse.json({ success: true, data });
+
+    const withTitles = (data ?? []).map((c) => {
+      const msgs = Array.isArray(c.messages) ? c.messages : [];
+      const firstUser = msgs.find((m: { role: string; content: string }) => m.role === "user");
+      const title = firstUser
+        ? firstUser.content.slice(0, 60) + (firstUser.content.length > 60 ? "…" : "")
+        : "Chat";
+      return { ...c, title, duration: 0 };
+    });
+
+    return NextResponse.json({ success: true, data: withTitles });
   } catch (err) {
     console.error("GET /api/conversations", err);
     return NextResponse.json({ success: false, error: "Failed to fetch conversations" }, { status: 500 });
@@ -34,15 +48,12 @@ export async function POST(req: NextRequest) {
     const { messages, duration } = await req.json();
     if (!messages?.length) return NextResponse.json({ success: false, error: "messages required" }, { status: 400 });
 
-    const firstUserMsg = messages.find((m: { role: string; content: string }) => m.role === "user");
-    const title = firstUserMsg
-      ? firstUserMsg.content.slice(0, 60) + (firstUserMsg.content.length > 60 ? "…" : "")
-      : "Chat";
-
     const admin = createAdminClient();
+    // Live table has no title/duration columns yet — title is derived on read.
+    void duration;
     const { data, error } = await admin
       .from("conversations")
-      .insert({ user_id: user.id, title, messages, duration: duration ?? 0 })
+      .insert({ user_id: user.id, messages })
       .select("id")
       .single();
 
