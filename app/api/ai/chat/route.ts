@@ -103,9 +103,11 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }).eq("id", conversationId);
     } else {
+      // Title from the first question so it's never blank in history
+      const title = message.trim().slice(0, 60) + (message.trim().length > 60 ? "…" : "");
       const { data: newConv } = await admin
         .from("conversations")
-        .insert({ user_id: user.id, messages: updatedMessages })
+        .insert({ user_id: user.id, title, messages: updatedMessages })
         .select("id")
         .single();
       savedConvId = newConv?.id;

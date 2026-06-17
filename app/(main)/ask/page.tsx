@@ -110,10 +110,13 @@ export default function AskSPALPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
+    if (endedRef.current) return;          // ended while TTS was fetching
     if (!res.ok) throw new Error("TTS failed");
     const buf = await res.arrayBuffer();
+    if (endedRef.current) return;          // ended while reading body
     await ctx.resume();
     const decoded = await ctx.decodeAudioData(buf);
+    if (endedRef.current) return;          // ended while decoding — don't play
     return new Promise((resolve) => {
       const src = ctx.createBufferSource();
       src.buffer = decoded;
