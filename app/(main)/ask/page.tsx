@@ -66,6 +66,7 @@ export default function AskSPALPage() {
   const convIdRef         = useRef<string | null>(null);
   const recognitionRef    = useRef<any>(null);
   const pendingTranscript = useRef<string | null>(null);
+  const silenceTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef       = useRef<AudioContext | null>(null);
   const audioSourceRef    = useRef<AudioBufferSourceNode | null>(null);
   const startTimeRef      = useRef<number | null>(null);
@@ -123,8 +124,9 @@ export default function AskSPALPage() {
     });
   }
 
-  // ── Speech recognition (single utterance, auto-restarts in voice loop) ──────
-  // Declared before sendAndRespond so both can reference each other via closure
+  // ── Speech recognition (interim results + manual silence detection) ─────────
+  // We run a continuous recognizer and use our own 1.1s silence timer so SPAL
+  // replies fast — much quicker than the browser's built-in end-of-speech delay.
   const startRecognition = useCallback(() => {
     if (endedRef.current || !chatActiveRef.current) return;
     const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
@@ -132,27 +134,44 @@ export default function AskSPALPage() {
 
     const r = new SR();
     r.lang = "en-US";
-    r.interimResults = false;
+    r.interimResults = true;   // fire as the user speaks
     r.maxAlternatives = 1;
-    r.continuous = false;
+    r.continuous = true;       // keep one session; we decide when to submit
 
-    r.onresult = (e: any) => {
-      const t = e.results[0]?.[0]?.transcript ?? "";
-      if (t.trim()) pendingTranscript.current = t.trim();
+    const clearSilence = () => {
+      if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
     };
 
-    r.onerror = (e: any) => {
-      recognitionRef.current = null;
-      // no-speech = just silence, restart
-      if (!endedRef.current && chatActiveRef.current && e.error === "no-speech") {
-        setTimeout(startRecognition, 200);
-      } else if (!endedRef.current) {
-        setSessionSync("listening");
-        setTimeout(startRecognition, 500);
+    // Stop recognizer after a short pause → onend submits the transcript
+    const armSilence = () => {
+      clearSilence();
+      silenceTimerRef.current = setTimeout(() => {
+        try { r.stop(); } catch { /* already stopped */ }
+      }, 1100);
+    };
+
+    r.onresult = (e: any) => {
+      let full = "";
+      for (let i = 0; i < e.results.length; i++) {
+        full += e.results[i][0]?.transcript ?? "";
+      }
+      if (full.trim()) {
+        pendingTranscript.current = full.trim();
+        armSilence(); // reset the silence countdown on every new word
       }
     };
 
+    r.onerror = (e: any) => {
+      clearSilence();
+      recognitionRef.current = null;
+      if (endedRef.current) return;
+      // no-speech / aborted = just silence, keep listening
+      if (chatActiveRef.current) setTimeout(startRecognition, 200);
+      else setSessionSync("idle");
+    };
+
     r.onend = () => {
+      clearSilence();
       recognitionRef.current = null;
       if (endedRef.current) return;
 
@@ -160,11 +179,11 @@ export default function AskSPALPage() {
       pendingTranscript.current = null;
 
       if (transcript) {
-        // Got speech — send to SPAL (mic will restart after SPAL responds)
+        // Got speech — send to SPAL (mic restarts after SPAL responds)
         sendAndRespond(transcript);
       } else if (chatActiveRef.current) {
         // Pure silence, no words — restart mic to keep listening
-        setTimeout(startRecognition, 200);
+        setTimeout(startRecognition, 150);
       } else {
         setSessionSync("idle");
       }
@@ -251,6 +270,7 @@ export default function AskSPALPage() {
     chatActiveRef.current = false;
     setChatActive(false);
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
     stopAudio();
     if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
     const dur = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0;
