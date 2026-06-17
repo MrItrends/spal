@@ -312,19 +312,19 @@ export default function RecordsPage() {
 
           {/* Category dropdown — only show if there are categories */}
           {allCategories.length > 0 && (
-            <div className="relative flex-1" ref={catRef}>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {catFilter.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => setCatFilter(prev => prev.filter(x => x !== c))}
-                    className="flex items-center gap-1 h-9 px-3 rounded-full text-[12px] font-semibold"
-                    style={{ background: catStyle(c).bg, color: catStyle(c).color, fontFamily: "var(--font-satoshi)" }}
-                  >
-                    {c}
-                    <span className="ml-0.5 opacity-60 text-[10px]">✕</span>
-                  </button>
-                ))}
+            <div className="flex items-center gap-1.5 flex-wrap flex-1" ref={catRef}>
+              {catFilter.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCatFilter(prev => prev.filter(x => x !== c))}
+                  className="flex items-center gap-1 h-9 px-3 rounded-full text-[12px] font-semibold"
+                  style={{ background: catStyle(c).bg, color: catStyle(c).color, fontFamily: "var(--font-satoshi)" }}
+                >
+                  {c}
+                  <span className="ml-0.5 opacity-60 text-[10px]">✕</span>
+                </button>
+              ))}
+              <div className="relative">
                 <button
                   onClick={() => { setCatOpen(o => !o); setTypeOpen(false); }}
                   className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-white text-[13px] font-semibold text-spal-navy active:scale-95 transition-transform"
@@ -333,7 +333,6 @@ export default function RecordsPage() {
                   Category
                   <ArrowDown01Icon size={13} color="#6B7280" />
                 </button>
-              </div>
 
               <AnimatePresence>
                 {catOpen && (
@@ -342,8 +341,8 @@ export default function RecordsPage() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.97 }}
                     transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
-                    className="absolute top-[44px] right-0 bg-white rounded-2xl overflow-hidden z-30"
-                    style={{ boxShadow: "0 8px 28px rgba(0,0,0,0.12)", minWidth: "170px", border: "1px solid rgba(34,197,94,0.2)" }}
+                    className="absolute top-[44px] left-0 bg-white rounded-2xl overflow-hidden z-30"
+                    style={{ boxShadow: "0 8px 28px rgba(0,0,0,0.12)", minWidth: "200px", border: "1px solid rgba(34,197,94,0.2)" }}
                   >
                     {allCategories.map(cat => {
                       const { bg, color } = catStyle(cat);
@@ -375,6 +374,7 @@ export default function RecordsPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
             </div>
           )}
         </div>
