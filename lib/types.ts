@@ -2,6 +2,23 @@
  * SPAL shared TypeScript types
  */
 
+// ── SPAL Goals (voice-first coaching) ───────────────────────────────────────
+export interface CoachBreakdown {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface CoachGoal {
+  id: string;
+  title: string;
+  createdAt: string;          // ISO timestamp
+  dueDate?: string | null;    // ISO date, optional
+  status: "active" | "completed";
+  progress: number;           // 0–100, derived from breakdowns
+  breakdowns: CoachBreakdown[];
+}
+
 export type BusinessType =
   | "food_seller"
   | "bar_owner"

@@ -4,7 +4,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Badge } from "@/lib/gamification/badges";
-import type { Business } from "@/lib/types";
+import type { Business, CoachGoal } from "@/lib/types";
+
+function computeProgress(g: CoachGoal): CoachGoal {
+  const total = g.breakdowns.length;
+  const done = g.breakdowns.filter((b) => b.completed).length;
+  const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+  return { ...g, progress, status: progress === 100 ? "completed" : "active" };
+}
 
 export type BusinessType =
   | "food_seller"
@@ -105,6 +112,14 @@ interface SPALStore {
   // Paywall — computed from user.subscription_plan
   isPro: boolean;
 
+  // SPAL Goals (voice-first coaching) — persisted locally
+  coachGoals: CoachGoal[];
+  addCoachGoals: (goals: CoachGoal[]) => void;
+  toggleBreakdown: (goalId: string, breakdownId: string) => void;
+  markGoalAchieved: (goalId: string) => void;
+  setGoalDueDate: (goalId: string, dueDate: string | null) => void;
+  deleteCoachGoal: (goalId: string) => void;
+
   // Logout
   logout: () => void;
 }
@@ -150,6 +165,38 @@ export const useSPALStore = create<SPALStore>()(
       newBadge: null,
       setNewBadge: (badge) => set({ newBadge: badge }),
 
+      // SPAL Goals
+      coachGoals: [],
+      addCoachGoals: (goals) =>
+        set((state) => ({ coachGoals: [...goals.map(computeProgress), ...state.coachGoals] })),
+      toggleBreakdown: (goalId, breakdownId) =>
+        set((state) => ({
+          coachGoals: state.coachGoals.map((g) =>
+            g.id !== goalId
+              ? g
+              : computeProgress({
+                  ...g,
+                  breakdowns: g.breakdowns.map((b) =>
+                    b.id === breakdownId ? { ...b, completed: !b.completed } : b
+                  ),
+                })
+          ),
+        })),
+      markGoalAchieved: (goalId) =>
+        set((state) => ({
+          coachGoals: state.coachGoals.map((g) =>
+            g.id !== goalId
+              ? g
+              : computeProgress({ ...g, breakdowns: g.breakdowns.map((b) => ({ ...b, completed: true })) })
+          ),
+        })),
+      setGoalDueDate: (goalId, dueDate) =>
+        set((state) => ({
+          coachGoals: state.coachGoals.map((g) => (g.id === goalId ? { ...g, dueDate } : g)),
+        })),
+      deleteCoachGoal: (goalId) =>
+        set((state) => ({ coachGoals: state.coachGoals.filter((g) => g.id !== goalId) })),
+
       // Logout
       logout: () =>
         set({
@@ -161,6 +208,7 @@ export const useSPALStore = create<SPALStore>()(
           newBadge: null,
           activeBusiness: null,
           businesses: [],
+          coachGoals: [],
         }),
     }),
     {
@@ -170,6 +218,7 @@ export const useSPALStore = create<SPALStore>()(
         isAuthenticated: state.isAuthenticated,
         onboardingData: state.onboardingData,
         activeBusiness: state.activeBusiness,
+        coachGoals: state.coachGoals,
       }),
     }
   )

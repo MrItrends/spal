@@ -9,9 +9,10 @@ import {
   ChartDecreaseIcon,
   ChatIcon,
   Menu01Icon,
+  Target01Icon,
 } from "hugeicons-react";
 
-const HIDDEN_PATHS = ["/picture", "/confirm", "/voice", "/ask"];
+const HIDDEN_PATHS = ["/picture", "/confirm", "/voice", "/ask", "/set-goals"];
 
 export function QuickMenuFab() {
   const router   = useRouter();
@@ -73,13 +74,24 @@ export function QuickMenuFab() {
             </button>
             <button
               onClick={() => { setOpen(false); window.location.href = "/ask"; }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors border-b border-neutral-50"
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: "#F3EEFF" }}>
                 <Image src="/spal-ai.webp" alt="SPAL" width={28} height={28} className="w-7 h-7 object-contain" />
               </div>
               <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Chat with SPAL
+              </span>
+            </button>
+            <button
+              onClick={() => { setOpen(false); router.push("/set-goals"); }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#E0F4E9" }}>
+                <Target01Icon size={15} color="#16A34A" />
+              </div>
+              <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                Set your goals
               </span>
             </button>
           </motion.div>
