@@ -2,54 +2,116 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatTime } from "@/lib/utils/dates";
+import { getGreeting } from "@/lib/utils/dates";
 import { useSPALStore } from "@/store";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { ExportSheet } from "@/components/records/ExportSheet";
 import { UndoToast } from "@/components/ui/UndoToast";
-import { useRouter } from "next/navigation";
-import { ArrowUp01Icon, ArrowDown01Icon, Download01Icon, Tick01Icon, ScanIcon, Folder01Icon, Package01Icon } from "hugeicons-react";
+import {
+  Notification03Icon, User02Icon, Home01Icon, Menu01Icon, BarChartIcon,
+  ArrowDown01Icon, ChartIncreaseIcon, ChartDecreaseIcon,
+  Wallet01Icon, ArrowUp01Icon,
+} from "hugeicons-react";
 import type { BusinessRecord } from "@/lib/types";
 
-type Filter = "all" | "sale" | "expense" | "owing";
+// Avoid using strokeWidth — hugeicons doesn't support it
+const BG = "#EEF3E9";
+
+type Filter   = "all" | "sale" | "expense" | "owing";
 
 function dateLabel(recordDate: string): string {
   const today = new Date().toISOString().split("T")[0];
-  const yest  = new Date();
-  yest.setDate(yest.getDate() - 1);
+  const yest  = new Date(); yest.setDate(yest.getDate() - 1);
   const yesterday = yest.toISOString().split("T")[0];
   if (recordDate === today)     return "Today";
   if (recordDate === yesterday) return "Yesterday";
   const [y, m, d] = recordDate.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-NG", {
-    weekday: "short", day: "numeric", month: "short",
-  });
+  return new Date(y, m - 1, d).toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" });
 }
 
-interface UndoState {
-  ids:     string[];
-  records: BusinessRecord[];
-  label:   string;
+interface UndoState { ids: string[]; records: BusinessRecord[]; label: string; }
+
+// Category → color + icon
+const CAT_PALETTE: Record<string, { bg: string; color: string }> = {
+  Food:         { bg: "#FFF0E6", color: "#F97316" },
+  Drinks:       { bg: "#E6F4FF", color: "#2563EB" },
+  Breakfast:    { bg: "#E6FAF0", color: "#16A34A" },
+  Lunch:        { bg: "#FFF7E6", color: "#D97706" },
+  Dinner:       { bg: "#F3E8FF", color: "#9333EA" },
+  Snacks:       { bg: "#FEE2E2", color: "#DC2626" },
+  Desserts:     { bg: "#FDF4FF", color: "#C026D3" },
+  Groceries:    { bg: "#ECFDF5", color: "#059669" },
+  Transport:    { bg: "#EFF6FF", color: "#3B82F6" },
+  Utilities:    { bg: "#F5F3FF", color: "#7C3AED" },
+  Salary:       { bg: "#F0FDF4", color: "#22C55E" },
+  Rent:         { bg: "#FFF1F2", color: "#E11D48" },
+  Marketing:    { bg: "#FFF7ED", color: "#EA580C" },
+  Services:     { bg: "#EFF6FF", color: "#2563EB" },
+};
+
+function catStyle(cat: string | null): { bg: string; color: string } {
+  if (cat && CAT_PALETTE[cat]) return CAT_PALETTE[cat];
+  return { bg: "#F4F4F5", color: "#71717A" };
+}
+
+function RecordIcon({ record }: { record: BusinessRecord }) {
+  const { bg, color } = catStyle(record.category ?? null);
+  const isSale = record.type === "sale";
+  return (
+    <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
+      {isSale
+        ? <ChartIncreaseIcon size={20} color={color} />
+        : <ChartDecreaseIcon size={20} color={color} />}
+    </div>
+  );
 }
 
 export default function RecordsPage() {
-  const router = useRouter();
-  const { addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
-  const [filter,     setFilter]     = useState<Filter>("all");
-  const [records,    setRecords]    = useState<BusinessRecord[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [editRecord, setEditRecord] = useState<BusinessRecord | null>(null);
-  const [exportOpen, setExportOpen] = useState(false);
+  const router   = useRouter();
+  const { user, addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
+  const greeting = getGreeting();
+  const displayName = user?.full_name ?? user?.business_name ?? "there";
 
-  // Undo delete state
-  const [undoState,  setUndoState]  = useState<UndoState | null>(null);
-  const pendingIdsRef = useRef<string[]>([]);
+  const [filter,       setFilter]       = useState<Filter>("all");
+  const [catFilter,    setCatFilter]    = useState<string[]>([]);
+  const [records,      setRecords]      = useState<BusinessRecord[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [editRecord,   setEditRecord]   = useState<BusinessRecord | null>(null);
+  const [exportOpen,   setExportOpen]   = useState(false);
+  const [typeOpen,     setTypeOpen]     = useState(false);
+  const [catOpen,      setCatOpen]      = useState(false);
+  const [unreadCount,  setUnreadCount]  = useState(0);
 
-  // Multi-select state
+  const [undoState,    setUndoState]    = useState<UndoState | null>(null);
+  const pendingIdsRef  = useRef<string[]>([]);
+
   const [selectMode,   setSelectMode]   = useState(false);
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set());
+
+  const typeRef = useRef<HTMLDivElement>(null);
+  const catRef  = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (typeRef.current && !typeRef.current.contains(e.target as Node)) setTypeOpen(false);
+      if (catRef.current  && !catRef.current.contains(e.target as Node))  setCatOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then(r => r.json())
+      .then(d => { if (d.success) setUnreadCount((d.data as Array<{ read_at: string | null }>).filter(n => !n.read_at).length); })
+      .catch(() => {});
+  }, []);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -57,16 +119,13 @@ export default function RecordsPage() {
       const res  = await fetch("/api/records?limit=200");
       const data = await res.json();
       if (data.success) setRecords(data.data);
-    } catch { /* silent */ } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (recordSavedAt) fetchRecords(); }, [recordSavedAt]);
 
-  // Flush pending API deletes (e.g. when a new delete comes in before undo timer expires)
   const flushPending = useCallback(async () => {
     const ids = pendingIdsRef.current;
     if (!ids.length) return;
@@ -75,43 +134,27 @@ export default function RecordsPage() {
     await Promise.all(ids.map(id => fetch(`/api/records?id=${id}`, { method: "DELETE" })));
   }, []);
 
-  // Clean up on unmount
-  useEffect(() => () => { flushPending(); }, [flushPending]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => { flushPending(); }, []);
 
-  // ── Delete with 10-second undo ─────────────────────────────────────────────
   function scheduleDelete(toDelete: BusinessRecord[]) {
     if (!toDelete.length) return;
-
-    // If there's already a pending delete, flush it first (execute immediately)
     if (pendingIdsRef.current.length) {
       const prev = pendingIdsRef.current;
       pendingIdsRef.current = [];
       Promise.all(prev.map(id => fetch(`/api/records?id=${id}`, { method: "DELETE" })));
     }
-
     const ids = toDelete.map(r => r.id);
     pendingIdsRef.current = ids;
     setRecords(prev => prev.filter(r => !ids.includes(r.id)));
-    setUndoState({
-      ids,
-      records: toDelete,
-      label: toDelete.length === 1
-        ? "Record deleted"
-        : `${toDelete.length} records deleted`,
-    });
+    setUndoState({ ids, records: toDelete, label: toDelete.length === 1 ? "Record deleted" : `${toDelete.length} records deleted` });
   }
 
   function handleUndo() {
     if (!undoState) return;
     pendingIdsRef.current = [];
     setUndoState(null);
-    // Restore records — insert back sorted by created_at (newest first)
-    setRecords(prev => {
-      const combined = [...prev, ...undoState.records];
-      return combined.sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-    });
+    setRecords(prev => [...prev, ...undoState.records].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
   }
 
   function handleExpire() {
@@ -121,407 +164,377 @@ export default function RecordsPage() {
     Promise.all(ids.map(id => fetch(`/api/records?id=${id}`, { method: "DELETE" })));
   }
 
-  // ── Select mode helpers ───────────────────────────────────────────────────
-  function exitSelectMode() {
-    setSelectMode(false);
-    setSelectedIds(new Set());
-  }
-
+  function exitSelectMode() { setSelectMode(false); setSelectedIds(new Set()); }
   function toggleSelect(id: string) {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
-  function selectAll() {
-    setSelectedIds(new Set(filtered.map(r => r.id)));
-  }
+  // Derive all categories present
+  const allCategories = [...new Set(records.map(r => r.category).filter(Boolean))] as string[];
 
-  function deleteSelected() {
-    const toDelete = records.filter(r => selectedIds.has(r.id));
-    exitSelectMode();
-    scheduleDelete(toDelete);
-  }
-
-  function deleteAll() {
-    const toDelete = [...filtered];
-    exitSelectMode();
-    scheduleDelete(toDelete);
-  }
-
-  // ── Record edit ──────────────────────────────────────────────────────────
-  function handleRecordTap(record: BusinessRecord) {
-    if (selectMode) return;
-    setEditRecord(record);
-    setAddSheet(null);
-  }
-
-  function handleEditClose() { setEditRecord(null); }
-
-  const filtered = records.filter((r) => {
-    if (filter === "all")    return true;
-    if (filter === "owing")  return r.payment_status === "owing";
-    return r.type === filter;
+  const filtered = records.filter(r => {
+    const typeOk = filter === "all" ? true : filter === "owing" ? r.payment_status === "owing" : r.type === filter;
+    const catOk  = catFilter.length === 0 || (r.category && catFilter.includes(r.category));
+    return typeOk && catOk;
   });
-  const grouped  = filtered.reduce<Record<string, BusinessRecord[]>>((acc, r) => {
+
+  const grouped = filtered.reduce<Record<string, BusinessRecord[]>>((acc, r) => {
     const label = dateLabel(r.record_date);
     (acc[label] ??= []).push(r);
     return acc;
   }, {});
 
-  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const FILTER_OPTIONS: { key: Filter; label: string; icon: React.ReactNode }[] = [
+    { key: "all",     label: "All",      icon: <ChartIncreaseIcon size={18} color="#6B7280" /> },
+    { key: "sale",    label: "Sales",    icon: <ArrowUp01Icon     size={18} color="#22C55E" /> },
+    { key: "expense", label: "Expenses", icon: <ArrowDown01Icon   size={18} color="#F97316" /> },
+    { key: "owing",   label: "Owing",    icon: <Wallet01Icon      size={18} color="#EA580C" /> },
+  ];
+
+  const activeFilterLabel = FILTER_OPTIONS.find(o => o.key === filter)?.label ?? "All";
 
   return (
     <>
-      <div className="px-4 pt-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          {selectMode ? (
-            <>
-              <button
-                onClick={exitSelectMode}
-                className="text-[13px] font-semibold"
-                style={{ color: "#6B7280", fontFamily: "var(--font-satoshi)" }}
-              >
-                Cancel
-              </button>
-              <p className="text-[14px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select records"}
-              </p>
-              <button
-                onClick={deleteSelected}
-                disabled={selectedIds.size === 0}
-                className="text-[13px] font-bold disabled:opacity-30 transition-opacity"
-                style={{ color: "#EF4444", fontFamily: "var(--font-satoshi)" }}
-              >
-                Delete
-              </button>
-            </>
-          ) : (
-            <>
-              <h1 className="text-xl font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Records</h1>
-              <div className="flex items-center gap-3">
-                {records.length > 0 && (
-                  <span className="text-xs text-neutral-400">
-                    {filtered.length} {filter === "all" ? "total" : filter === "sale" ? "sales" : filter === "expense" ? "expenses" : "owing"}
+      <div className="min-h-full" style={{ background: BG }}>
+
+        {/* ── Header ── */}
+        <div className="px-5 pt-12 flex items-center justify-between">
+          <div>
+            <p className="text-[13px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>{greeting}</p>
+            <h1 className="text-[24px] font-bold text-spal-navy leading-tight mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {displayName}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => { setUnreadCount(0); router.push("/notifications"); }}
+              aria-label="Notifications"
+              className="w-11 h-11 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}
+            >
+              <Notification03Icon size={18} color="#0F172A" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => router.push("/profile")}
+              aria-label="Profile"
+              className="w-11 h-11 rounded-full overflow-hidden active:scale-95 transition-transform"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}
+            >
+              {user?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-spal-green flex items-center justify-center">
+                  <span className="text-white font-bold text-[15px]">
+                    {(user?.full_name ?? user?.business_name ?? "?")[0]?.toUpperCase() ?? <User02Icon size={18} color="#fff" />}
                   </span>
-                )}
-                {records.length > 0 && (
-                  <>
+                </div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Top nav pills ── */}
+        <div className="px-5 mt-5 flex gap-2">
+          {[
+            { href: "/home",     label: "Home",     icon: <Home01Icon   size={14} /> },
+            { href: "/records",  label: "Records",  icon: <Menu01Icon   size={14} /> },
+            { href: "/insights", label: "Insights", icon: <BarChartIcon size={14} /> },
+          ].map(tab => {
+            const isActive = tab.href === "/records";
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="flex items-center gap-1.5 px-4 h-10 rounded-full text-[13px] font-semibold transition-all active:scale-95 flex-shrink-0"
+                style={{
+                  background: isActive ? "#22C55E" : "#fff",
+                  color:      isActive ? "#fff" : "#6B7280",
+                  boxShadow:  isActive ? "0 2px 8px rgba(34,197,94,0.28)" : "0 1px 3px rgba(0,0,0,0.06)",
+                  fontFamily: "var(--font-satoshi)",
+                }}
+              >
+                {tab.icon}
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* ── Filter row ── */}
+        <div className="px-5 mt-5 flex items-center gap-2.5">
+
+          {/* Type dropdown */}
+          <div className="relative" ref={typeRef}>
+            <button
+              onClick={() => { setTypeOpen(o => !o); setCatOpen(false); }}
+              className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-white text-[13px] font-semibold text-spal-navy active:scale-95 transition-transform"
+              style={{ fontFamily: "var(--font-satoshi)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+            >
+              {activeFilterLabel}
+              <ArrowDown01Icon size={13} color="#6B7280" />
+            </button>
+
+            <AnimatePresence>
+              {typeOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                  transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
+                  className="absolute top-[44px] left-0 bg-white rounded-2xl overflow-hidden z-30"
+                  style={{ boxShadow: "0 8px 28px rgba(0,0,0,0.12)", minWidth: "160px", border: "1px solid rgba(34,197,94,0.2)" }}
+                >
+                  {FILTER_OPTIONS.map(opt => (
                     <button
-                      onClick={() => setExportOpen(true)}
-                      className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
-                      aria-label="Export records"
+                      key={opt.key}
+                      onClick={() => { setFilter(opt.key); setTypeOpen(false); exitSelectMode(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-neutral-50 transition-colors"
                     >
-                      <Download01Icon size={15} className="text-neutral-500" />
+                      <span className="flex-shrink-0">{opt.icon}</span>
+                      <span
+                        className="text-[14px] font-semibold text-spal-navy"
+                        style={{ fontFamily: "var(--font-satoshi)" }}
+                      >
+                        {opt.label}
+                      </span>
                     </button>
-                    <button
-                      onClick={() => setSelectMode(true)}
-                      className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
-                      aria-label="Select records"
-                    >
-                      <Tick01Icon size={15} className="text-neutral-500" />
-                    </button>
-                  </>
-                )}
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Category dropdown — only show if there are categories */}
+          {allCategories.length > 0 && (
+            <div className="relative flex-1" ref={catRef}>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {catFilter.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setCatFilter(prev => prev.filter(x => x !== c))}
+                    className="flex items-center gap-1 h-9 px-3 rounded-full text-[12px] font-semibold"
+                    style={{ background: catStyle(c).bg, color: catStyle(c).color, fontFamily: "var(--font-satoshi)" }}
+                  >
+                    {c}
+                    <span className="ml-0.5 opacity-60 text-[10px]">✕</span>
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setCatOpen(o => !o); setTypeOpen(false); }}
+                  className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-white text-[13px] font-semibold text-spal-navy active:scale-95 transition-transform"
+                  style={{ fontFamily: "var(--font-satoshi)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+                >
+                  Category
+                  <ArrowDown01Icon size={13} color="#6B7280" />
+                </button>
               </div>
-            </>
+
+              <AnimatePresence>
+                {catOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                    transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
+                    className="absolute top-[44px] right-0 bg-white rounded-2xl overflow-hidden z-30"
+                    style={{ boxShadow: "0 8px 28px rgba(0,0,0,0.12)", minWidth: "170px", border: "1px solid rgba(34,197,94,0.2)" }}
+                  >
+                    {allCategories.map(cat => {
+                      const { bg, color } = catStyle(cat);
+                      const selected = catFilter.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setCatFilter(prev => selected ? prev.filter(x => x !== cat) : [...prev, cat]);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-neutral-50 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
+                            <ChartIncreaseIcon size={16} color={color} />
+                          </div>
+                          <span className="flex-1 text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                            {cat}
+                          </span>
+                          {selected && (
+                            <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: "#22C55E" }}>
+                              <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+                                <path d="M4 8l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
 
-        {/* Debtors banner — shown when any records are owing */}
+        {/* ── Owing banner ── */}
         {(() => {
           const owingRecords = records.filter(r => r.payment_status === "owing");
           const owingTotal   = owingRecords.reduce((s, r) => s + r.amount, 0);
-          if (owingRecords.length === 0) return null;
+          if (owingRecords.length === 0 || filter === "owing") return null;
           const names = [...new Set(owingRecords.map(r => r.customer_name).filter(Boolean))];
           const subtitle = names.length > 0
-            ? `${names.slice(0, 2).join(", ")}${names.length > 2 ? ` +${names.length - 2} more` : ""} ${owingRecords.length === 1 ? "hasn't" : "haven't"} paid yet`
-            : `${owingRecords.length} ${owingRecords.length === 1 ? "sale" : "sales"} not yet paid`;
+            ? `${names.slice(0, 2).join(", ")}${names.length > 2 ? ` +${names.length - 2} more` : ""} hasn't paid yet`
+            : `${owingRecords.length} sale${owingRecords.length > 1 ? "s" : ""} not yet paid`;
           return (
             <button
               onClick={() => setFilter("owing")}
-              className="w-full mb-4 rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-80 transition-opacity text-left"
+              className="mx-5 mt-4 w-[calc(100%-40px)] rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-80 transition-opacity text-left"
               style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
             >
               <div>
                 <p className="text-[13px] font-bold" style={{ color: "#C2410C", fontFamily: "var(--font-satoshi)" }}>
                   💸 {formatCurrency(owingTotal)} owed to you
                 </p>
-                <p className="text-[11px] mt-0.5" style={{ color: "#EA580C", fontFamily: "var(--font-satoshi)" }}>
-                  {subtitle}
-                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: "#EA580C", fontFamily: "var(--font-satoshi)" }}>{subtitle}</p>
               </div>
               <span className="text-[11px] font-semibold" style={{ color: "#EA580C", fontFamily: "var(--font-satoshi)" }}>View →</span>
             </button>
           );
         })()}
 
-        {/* Filter tabs */}
-        <div className="flex gap-1.5 mb-4">
-          {(["all", "sale", "expense", "owing"] as Filter[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => { setFilter(f); exitSelectMode(); }}
-              className={`flex-1 h-10 rounded-full text-[12px] font-semibold transition-all duration-200 ${
-                filter === f
-                  ? f === "sale"    ? "bg-spal-green text-white"
-                  : f === "expense" ? "bg-spal-orange text-white"
-                  : f === "owing"   ? "bg-orange-500 text-white"
-                  : "bg-spal-navy text-white"
-                  : "bg-neutral-100 text-neutral-500"
-              }`}
-            >
-              {f === "all" ? "All" : f === "sale" ? "Sales" : f === "expense" ? "Expenses" : "Owing"}
-            </button>
-          ))}
-        </div>
-
-        {/* Select mode actions row */}
-        {selectMode && filtered.length > 0 && (
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={allSelected ? () => setSelectedIds(new Set()) : selectAll}
-              className="text-[12px] font-semibold"
-              style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
-            >
-              {allSelected ? "Deselect all" : `Select all ${filtered.length}`}
-            </button>
-            <button
-              onClick={deleteAll}
-              className="text-[12px] font-semibold"
-              style={{ color: "#EF4444", fontFamily: "var(--font-satoshi)" }}
-            >
-              Delete all {filtered.length}
-            </button>
-          </div>
-        )}
-
-        {/* Swipe hint — shown only in normal mode with records */}
-        {!loading && !selectMode && Object.keys(grouped).length > 0 && (
-          <p className="text-[11px] text-neutral-400 text-right mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
-            Swipe a record to edit or delete
-          </p>
-        )}
-
-        {loading ? (
-          <RecordsSkeleton />
-        ) : Object.keys(grouped).length === 0 ? (
-          <EmptyState filter={filter} router={router} setAddSheet={setAddSheet} />
-        ) : (
-          <div className="space-y-5">
-            {Object.entries(grouped).map(([date, dayRecords]) => (
-              <div key={date}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="spal-section-label">{date}</p>
-                  <p className="text-xs text-neutral-300">
-                    {dayRecords.filter(r => r.type === "sale").length > 0 &&
-                      `+${formatCurrency(dayRecords.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0))}`}
-                  </p>
-                </div>
-                <div className="space-y-1.5">
-                  {dayRecords.map((record, i) => (
-                    <motion.div
-                      key={record.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.035 }}
-                      className="rounded-[16px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]"
-                      style={{ border: record.payment_status === "owing" ? "1px solid #FED7AA" : "1px solid rgba(228,228,231,0.6)" }}
+        {/* ── Records list ── */}
+        <div className="px-5 mt-5 pb-32">
+          {loading ? (
+            <RecordsSkeleton />
+          ) : Object.keys(grouped).length === 0 ? (
+            <EmptyState filter={filter} router={router} />
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(grouped).map(([date, dayRecords]) => (
+                <div key={date}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p
+                      className="text-[15px] font-bold text-spal-navy"
+                      style={{ fontFamily: "var(--font-satoshi)" }}
                     >
-                      <SwipeableRow
-                        onEdit={() => handleRecordTap(record)}
-                        onDelete={() => scheduleDelete([record])}
-                        selectMode={selectMode}
-                        selected={selectedIds.has(record.id)}
-                        onSelect={() => toggleSelect(record.id)}
+                      {date}
+                    </p>
+                    <p className="text-[12px] font-semibold text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      {dayRecords.filter(r => r.type === "sale").length > 0 &&
+                        `+${formatCurrency(dayRecords.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0))}`}
+                    </p>
+                  </div>
+                  <div className="space-y-2.5">
+                    {dayRecords.map((record, i) => (
+                      <motion.div
+                        key={record.id}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="rounded-2xl overflow-hidden bg-white"
+                        style={{
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                          border: record.payment_status === "owing" ? "1px solid #FED7AA" : "1px solid rgba(228,228,231,0.5)",
+                        }}
                       >
-                        <div className="flex items-center gap-3 px-4 py-3.5">
-                          <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED" }}
-                          >
-                            {record.type === "sale" ? <RecordSaleIcon /> : <RecordExpenseIcon />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
-                              {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
-                            </p>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              {record.payment_status === "owing" && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                                  style={{ background: "#FFF7ED", color: "#C2410C" }}>
-                                  Owing
-                                </span>
-                              )}
-                              {record.category && (
-                                <>
-                                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                                    record.type === "sale" ? "bg-spal-green-50 text-spal-green-700" : "bg-spal-orange-50 text-spal-orange-600"
-                                  }`}>
+                        <SwipeableRow
+                          onEdit={() => { setEditRecord(record); setAddSheet(null); }}
+                          onDelete={() => scheduleDelete([record])}
+                          selectMode={selectMode}
+                          selected={selectedIds.has(record.id)}
+                          onSelect={() => toggleSelect(record.id)}
+                        >
+                          <div className="flex items-center gap-3 px-4 py-3.5">
+                            <RecordIcon record={record} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13.5px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                                {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                {record.payment_status === "owing" && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#C2410C" }}>
+                                    Owing
+                                  </span>
+                                )}
+                                {record.category && (
+                                  <span
+                                    className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold"
+                                    style={{ background: catStyle(record.category).bg, color: catStyle(record.category).color }}
+                                  >
                                     {record.category}
                                   </span>
-                                  <span className="text-xs text-neutral-300">·</span>
-                                </>
-                              )}
-                              {record.customer_name && (
-                                <span className="text-[11px] text-neutral-400 truncate max-w-[80px]">{record.customer_name}</span>
-                              )}
-                              {!record.customer_name && (
+                                )}
                                 <span className="text-[11px] text-neutral-400">{formatTime(record.created_at)}</span>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p
+                                className="text-[13.5px] font-bold"
+                                style={{ fontFamily: "var(--font-satoshi)", color: record.type === "sale" ? "#16A34A" : "#EA580C" }}
+                              >
+                                {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
+                              </p>
+                              {record.customer_name && (
+                                <p className="text-[10px] text-neutral-400 mt-0.5 truncate max-w-[72px]">{record.customer_name}</p>
                               )}
                             </div>
                           </div>
-                          <p
-                            className="text-[13px] font-bold flex-shrink-0"
-                            style={{ color: record.type === "sale" ? "#22C55E" : "#F97316", fontFamily: "var(--font-satoshi)" }}
-                          >
-                            {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
-                          </p>
-                        </div>
-                      </SwipeableRow>
-                    </motion.div>
-                  ))}
+                        </SwipeableRow>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-            <div className="h-4" />
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-
-      {/* Add sheets */}
+      {/* Sheets */}
       <AddRecordSheet type="sale"    open={addSheetOpen === "sale"}    onClose={() => setAddSheet(null)} onSuccess={fetchRecords} />
       <AddRecordSheet type="expense" open={addSheetOpen === "expense"} onClose={() => setAddSheet(null)} onSuccess={fetchRecords} />
       <ExportSheet open={exportOpen} onClose={() => setExportOpen(false)} />
-
-      {/* Edit sheet */}
       <AddRecordSheet
         type={editRecord?.type ?? "sale"}
         open={!!editRecord}
         record={editRecord}
-        onClose={handleEditClose}
-        onSuccess={() => { fetchRecords(); handleEditClose(); }}
+        onClose={() => setEditRecord(null)}
+        onSuccess={() => { fetchRecords(); setEditRecord(null); }}
       />
 
-      {/* Undo toast */}
       <AnimatePresence>
         {undoState && (
-          <UndoToast
-            key={undoState.ids.join(",")}
-            message={undoState.label}
-            onUndo={handleUndo}
-            onExpire={handleExpire}
-          />
+          <UndoToast key={undoState.ids.join(",")} message={undoState.label} onUndo={handleUndo} onExpire={handleExpire} />
         )}
       </AnimatePresence>
     </>
   );
 }
 
-function EmptyState({
-  filter,
-  router,
-  setAddSheet,
-}: {
-  filter: Filter;
-  router: ReturnType<typeof useRouter>;
-  setAddSheet: (v: "sale" | "expense" | null) => void;
-}) {
-  const label =
-    filter === "expense" ? "expenses" : filter === "sale" ? "sales" : "records";
-
-  const actions = [
-    {
-      label: "Add Sale",
-      bg: "#F0FDF4",
-      icon: <ArrowUp01Icon size={20} color="#22C55E" />,
-      labelColor: "#15803D",
-      onClick: () => router.push("/records/add-sale"),
-      cols: 3,
-    },
-    {
-      label: "Add Expense",
-      bg: "#FFF7ED",
-      icon: <ArrowDown01Icon size={20} color="#F97316" />,
-      labelColor: "#C2410C",
-      onClick: () => router.push("/records/add-expense"),
-      cols: 3,
-    },
-    {
-      label: "Scan to Upload",
-      bg: "#F8FAFC",
-      icon: <ScanIcon size={20} color="#0F172A" />,
-      labelColor: "#0F172A",
-      onClick: () => router.push("/scan"),
-      cols: 3,
-    },
-    {
-      label: "Import Record",
-      bg: "#F8FAFC",
-      icon: <Folder01Icon size={20} color="#0F172A" />,
-      labelColor: "#0F172A",
-      onClick: () => router.push("/records/import"),
-      cols: 2,
-    },
-    {
-      label: "Manage Inventory",
-      bg: "#F8FAFC",
-      icon: <Package01Icon size={20} color="#0F172A" />,
-      labelColor: "#0F172A",
-      onClick: () => router.push("/inventory"),
-      cols: 2,
-    },
-  ] as const;
-
+function EmptyState({ filter, router }: { filter: Filter; router: ReturnType<typeof useRouter> }) {
+  const label = filter === "expense" ? "expenses" : filter === "sale" ? "sales" : "records";
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-8 pb-4">
-      <p className="text-spal-navy font-bold text-[17px] mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>
-        No {label} yet
-      </p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-8">
+      <p className="text-spal-navy font-bold text-[17px] mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>No {label} yet</p>
       <p className="text-neutral-400 text-sm mb-6 leading-relaxed" style={{ fontFamily: "var(--font-satoshi)" }}>
         How would you like to add your first {filter === "expense" ? "expense" : "record"}?
       </p>
-
-      {/* Row 1: Add Sale, Add Expense, Scan — 3 cols */}
-      <div className="grid grid-cols-3 gap-2.5 mb-2.5">
-        {actions.slice(0, 3).map((a) => (
-          <button
-            key={a.label}
-            onClick={a.onClick}
-            className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
-            style={{ background: a.bg, minHeight: "76px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
-          >
-            {a.icon}
-            <span
-              className="text-[11px] font-semibold text-center leading-tight px-1"
-              style={{ fontFamily: "var(--font-satoshi)", color: a.labelColor }}
-            >
-              {a.label}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Row 2: Import Record, Manage Inventory — 2 cols */}
       <div className="grid grid-cols-2 gap-2.5">
-        {actions.slice(3).map((a) => (
+        {[
+          { label: "Add Sale",    bg: "#F0FDF4", icon: <ChartIncreaseIcon size={22} color="#22C55E" />, color: "#15803D", fn: () => router.push("/records/add-sale") },
+          { label: "Add Expense", bg: "#FFF7ED", icon: <ChartDecreaseIcon size={22} color="#F97316" />, color: "#C2410C", fn: () => router.push("/records/add-expense") },
+        ].map(a => (
           <button
             key={a.label}
-            onClick={a.onClick}
-            className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
-            style={{ background: a.bg, minHeight: "76px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+            onClick={a.fn}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 active:scale-[0.97] transition-transform"
+            style={{ background: a.bg, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
           >
             {a.icon}
-            <span
-              className="text-[11px] font-semibold text-spal-navy text-center leading-tight px-1"
-              style={{ fontFamily: "var(--font-satoshi)", color: a.labelColor }}
-            >
-              {a.label}
-            </span>
+            <span className="text-[12px] font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: a.color }}>{a.label}</span>
           </button>
         ))}
       </div>
@@ -529,29 +542,21 @@ function EmptyState({
   );
 }
 
-function RecordSaleIcon({ large = false }: { large?: boolean }) {
-  return <ArrowUp01Icon size={large ? 22 : 16} color="#22C55E" />;
-}
-
-function RecordExpenseIcon({ large = false }: { large?: boolean }) {
-  return <ArrowDown01Icon size={large ? 22 : 16} color="#F97316" />;
-}
-
 function RecordsSkeleton() {
   return (
-    <div className="space-y-5">
-      {["Today", "Yesterday"].map((label) => (
+    <div className="space-y-6">
+      {["Today", "Yesterday"].map(label => (
         <div key={label}>
-          <div className="h-3 skeleton rounded w-16 mb-2" />
-          <div className="bg-white rounded-[18px] border border-neutral-200/80 overflow-hidden">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-neutral-50">
-                <div className="w-9 h-9 rounded-xl skeleton" />
-                <div className="flex-1 space-y-1.5">
+          <div className="h-4 skeleton rounded w-16 mb-3" />
+          <div className="space-y-2.5">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <div className="w-11 h-11 rounded-full skeleton" />
+                <div className="flex-1 space-y-2">
                   <div className="h-3 skeleton rounded w-28" />
                   <div className="h-2.5 skeleton rounded w-16" />
                 </div>
-                <div className="h-3 skeleton rounded w-16" />
+                <div className="h-3 skeleton rounded w-14" />
               </div>
             ))}
           </div>
