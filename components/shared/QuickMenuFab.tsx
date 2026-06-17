@@ -84,7 +84,7 @@ export function QuickMenuFab() {
               </span>
             </button>
             <button
-              onClick={() => { setOpen(false); router.push("/set-goals"); }}
+              onClick={() => { setOpen(false); window.location.href = "/set-goals"; }}
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#E0F4E9" }}>
