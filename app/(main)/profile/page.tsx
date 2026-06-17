@@ -13,7 +13,7 @@ import { enablePushNotifications, disablePushNotifications } from "@/hooks/usePu
 import {
   PencilEdit01Icon, Cancel01Icon, UserIcon, Mail01Icon, SmartPhone01Icon, ChatIcon, Notification01Icon, Notification02Icon,
   Store01Icon, Coins01Icon, ReceiptDollarIcon, ArrowRight01Icon, Camera01Icon, FireIcon, Tick01Icon, Alert01Icon,
-  BookOpen01Icon, MessageIcon, GridViewIcon, File01Icon, Folder01Icon,
+  BookOpen01Icon, Message01Icon, GridViewIcon, File01Icon, Folder01Icon,
   PlusSignIcon, Archive01Icon, Building04Icon,
 } from "hugeicons-react";
 import type { TrackingMethod } from "@/store";
