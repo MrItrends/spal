@@ -577,30 +577,30 @@ export default function InsightsPage() {
         </AnimatePresence>
 
         {/* Sale + Expense row (blue + orange) */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 min-w-0">
           <motion.div
             key={`sales-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="rounded-[20px] px-4 py-4" style={{ background: "#2F63F5" }}>
+            className="rounded-[20px] px-4 py-4 min-w-0" style={{ background: "#2F63F5" }}>
             {loading ? (
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-10 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
               <>
                 <p className="text-white/70 text-[12px] font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>Sale</p>
-                <p className="text-white font-bold text-[22px]" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.01em" }}>{formatCurrency(t.sales)}</p>
+                <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.sales)}</p>
               </>
             )}
           </motion.div>
           <motion.div
             key={`expense-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}
-            className="rounded-[20px] px-4 py-4" style={{ background: "#ED712E" }}>
+            className="rounded-[20px] px-4 py-4 min-w-0" style={{ background: "#ED712E" }}>
             {loading ? (
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-16 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
               <>
                 <p className="text-white/70 text-[12px] font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>Expense</p>
-                <p className="text-white font-bold text-[22px]" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.01em" }}>{formatCurrency(t.expenses)}</p>
+                <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.expenses)}</p>
               </>
             )}
           </motion.div>

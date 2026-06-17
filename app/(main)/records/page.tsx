@@ -394,9 +394,10 @@ export default function RecordsPage() {
               className="mx-5 mt-4 w-[calc(100%-40px)] rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-80 transition-opacity text-left"
               style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
             >
-              <div>
-                <p className="text-[13px] font-bold" style={{ color: "#C2410C", fontFamily: "var(--font-satoshi)" }}>
-                  💸 {formatCurrency(owingTotal)} owed to you
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold flex items-center gap-1.5" style={{ color: "#C2410C", fontFamily: "var(--font-satoshi)" }}>
+                  <Wallet01Icon size={15} className="flex-shrink-0" />
+                  <span className="truncate">{formatCurrency(owingTotal)} owed to you</span>
                 </p>
                 <p className="text-[11px] mt-0.5" style={{ color: "#EA580C", fontFamily: "var(--font-satoshi)" }}>{subtitle}</p>
               </div>

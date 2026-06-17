@@ -270,12 +270,12 @@ function HomePageInner() {
           </motion.div>
 
           {/* Sale + Expense row */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5 min-w-0">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.06 }}
-              className="rounded-[20px] px-4 py-4"
+              className="rounded-[20px] px-4 py-4 min-w-0"
               style={{ background: "#2F63F5" }}
             >
               {loadingSummary ? (
@@ -288,7 +288,7 @@ function HomePageInner() {
                     </p>
                     {salesPct !== null && <PctBadge pct={salesPct} small />}
                   </div>
-                  <p className="text-white font-bold text-[22px]" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.01em" }}>
+                  <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>
                     {formatCurrency(todaySales)}
                   </p>
                 </>
@@ -299,7 +299,7 @@ function HomePageInner() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="rounded-[20px] px-4 py-4"
+              className="rounded-[20px] px-4 py-4 min-w-0"
               style={{ background: "#ED712E" }}
             >
               {loadingSummary ? (
@@ -312,7 +312,7 @@ function HomePageInner() {
                     </p>
                     {expensePct !== null && <PctBadge pct={expensePct} small />}
                   </div>
-                  <p className="text-white font-bold text-[22px]" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.01em" }}>
+                  <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>
                     {formatCurrency(todayExpenses)}
                   </p>
                 </>

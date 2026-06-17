@@ -109,6 +109,8 @@ Good: "You spent more money than you made today."
 
 DESIGN.md covers: brand identity, color philosophy, typography, icon system, symbol system, motion system, illustration direction, layout philosophy, component rules, and screen-level direction.
 
+→ **See `RESPONSIVE.md` for mandatory responsive requirements.** Consult it BEFORE designing or editing any screen/component, and verify the change holds across 320px → desktop. Responsiveness is non-negotiable and must never regress.
+
 **Quick reference (full detail in DESIGN.md):**
 - Primary font: **Satoshi** (headings) / Inter Tight (body) — NOT Poppins
 - Dominant tone: Midnight Navy `#0F172A`

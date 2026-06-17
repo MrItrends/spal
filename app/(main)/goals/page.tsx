@@ -288,11 +288,11 @@ function GoalCard({
       </div>
 
       {/* Amount + progress */}
-      <div className="flex items-baseline justify-between mb-2">
-        <p className="text-[22px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: meta.accent, letterSpacing: "-0.02em" }}>
+      <div className="flex items-baseline justify-between gap-2 mb-2 min-w-0">
+        <p className="font-bold truncate min-w-0" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(18px, 5.5vw, 22px)", color: meta.accent, letterSpacing: "-0.02em" }}>
           {formatCurrency(goal.current)}
         </p>
-        <p className="text-[12px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
+        <p className="text-[12px] text-neutral-400 flex-shrink-0 whitespace-nowrap" style={{ fontFamily: "var(--font-satoshi)" }}>
           of {formatCurrency(goal.target)}
         </p>
       </div>
