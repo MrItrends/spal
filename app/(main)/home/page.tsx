@@ -219,7 +219,7 @@ function HomePageInner() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex items-center gap-1.5 px-4 h-10 rounded-full text-[13px] font-semibold transition-all active:scale-95 flex-shrink-0"
+                className="flex flex-1 items-center justify-center gap-1.5 px-4 h-10 rounded-full text-[13px] font-semibold transition-all active:scale-95"
                 style={{
                   background: isActive ? "#22C55E" : "#fff",
                   color:      isActive ? "#fff" : "#6B7280",
