@@ -91,14 +91,13 @@ function ConvCard({
         drag="x"
         dragConstraints={{ left: -80, right: 0 }}
         dragElastic={0.1}
-        style={{ x }}
+        style={{ x, boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}
         onDragEnd={(_, info) => {
           if (info.offset.x < -40) setSwiped(true);
           else { x.set(0); setSwiped(false); }
         }}
         onClick={() => { if (!swiped) onClick(); else { x.set(0); setSwiped(false); } }}
         className="relative bg-white rounded-2xl px-4 py-4 cursor-pointer active:bg-neutral-50 transition-colors"
-        style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}
       >
         <div className="flex items-start gap-3">
           {/* Purple icon */}
