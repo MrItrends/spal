@@ -101,7 +101,7 @@ export default function AskSPALPage() {
 
   const startTimeRef  = useRef<number | null>(null);
   const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null);
   const inputRef      = useRef<HTMLInputElement>(null);
 
   // Pre-fill from insights "Ask SPAL" CTAs
