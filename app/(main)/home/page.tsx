@@ -10,12 +10,15 @@ import { getGreeting } from "@/lib/utils/dates";
 import { AddRecordSheet } from "@/components/records/AddRecordSheet";
 import { SwipeableRow } from "@/components/records/SwipeableRow";
 import { UndoToast } from "@/components/ui/UndoToast";
-import { HomeCoachmarks } from "@/components/shared/HomeCoachmarks";
 import type { BusinessRecord, DailySummary } from "@/lib/types";
 import {
-  TrendingUp, TrendingDown, User, Bell,
-  ArrowUp, ArrowDown, ScanLine, FolderInput, Package,
+  Bell, User, ArrowUp, ArrowDown, ExternalLink, LayoutGrid,
+  MessageSquare, TrendingUp, TrendingDown, ChevronUp, ChevronDown,
+  Home, AlignJustify, BarChart2,
 } from "lucide-react";
+import Link from "next/link";
+
+const BG = "#EEF3E9";
 
 function HomePageInner() {
   const router = useRouter();
@@ -23,22 +26,34 @@ function HomePageInner() {
   const { user, addSheetOpen, setAddSheet, recordSavedAt, activeBusiness, setActiveBusiness, setBusinesses } = useSPALStore();
   usePushNotifications(user?.id);
   const greeting = getGreeting();
-  const name = user?.full_name ?? user?.business_name ?? "there";
-  const businessName = activeBusiness?.business_name ?? user?.business_name ?? "";
+  const displayName = user?.full_name ?? user?.business_name ?? "there";
 
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [newBizToast, setNewBizToast] = useState<string | null>(null);
+  const [unreadCount,   setUnreadCount]   = useState(0);
+  const [newBizToast,   setNewBizToast]   = useState<string | null>(null);
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false);
+  const quickMenuRef = useRef<HTMLDivElement>(null);
 
-  // Show "welcome to [business]" toast when redirected from add-business flow
+  // Close quick menu on outside click
+  useEffect(() => {
+    if (!quickMenuOpen) return;
+    function handler(e: MouseEvent) {
+      if (quickMenuRef.current && !quickMenuRef.current.contains(e.target as Node)) {
+        setQuickMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [quickMenuOpen]);
+
   useEffect(() => {
     const nb = params.get("newBusiness");
     if (nb) {
       setNewBizToast(nb);
       setTimeout(() => setNewBizToast(null), 3000);
-      // Clean URL
       router.replace("/home");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     fetch("/api/notifications")
       .then(r => r.json())
@@ -48,18 +63,16 @@ function HomePageInner() {
       .catch(() => {});
   }, []);
 
-  const [summary, setSummary]           = useState<DailySummary | null>(null);
-  const [records, setRecords]           = useState<BusinessRecord[]>([]);
-  const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingRecords, setLoadingRecords] = useState(true);
-  const [editRecord, setEditRecord]     = useState<BusinessRecord | null>(null);
-
-  // Undo delete
-  const [undoState,  setUndoState]  = useState<{ id: string; record: BusinessRecord } | null>(null);
+  const [summary,          setSummary]          = useState<DailySummary | null>(null);
+  const [yesterdaySummary, setYesterdaySummary] = useState<DailySummary | null>(null);
+  const [records,          setRecords]          = useState<BusinessRecord[]>([]);
+  const [loadingSummary,   setLoadingSummary]   = useState(true);
+  const [loadingRecords,   setLoadingRecords]   = useState(true);
+  const [editRecord,       setEditRecord]       = useState<BusinessRecord | null>(null);
+  const [undoState,        setUndoState]        = useState<{ id: string; record: BusinessRecord } | null>(null);
   const pendingIdRef = useRef<string | null>(null);
-  const quickActionsRef = useRef<HTMLDivElement>(null);
 
-  // Bootstrap businesses once on mount
+  // Bootstrap businesses on mount
   useEffect(() => {
     if (!user) return;
     fetch("/api/businesses")
@@ -77,12 +90,23 @@ function HomePageInner() {
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = useCallback(async () => {
+    // Today
     try {
       const res  = await fetch("/api/ai/daily-insight");
       const data = await res.json();
       if (data.success) setSummary(data.data);
     } catch { /* silent */ } finally { setLoadingSummary(false); }
 
+    // Yesterday (for % comparison)
+    try {
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      const res  = await fetch(`/api/ai/daily-insight?date=${y.toISOString().slice(0, 10)}`);
+      const data = await res.json();
+      if (data.success) setYesterdaySummary(data.data);
+    } catch { /* silent */ }
+
+    // Recent records
     try {
       const res  = await fetch("/api/records?limit=6");
       const data = await res.json();
@@ -99,7 +123,6 @@ function HomePageInner() {
   function handleEditClose()   { setEditRecord(null); }
 
   function scheduleDelete(record: BusinessRecord) {
-    // Flush any previous pending delete immediately
     if (pendingIdRef.current) {
       const prev = pendingIdRef.current;
       pendingIdRef.current = null;
@@ -114,12 +137,11 @@ function HomePageInner() {
     if (!undoState) return;
     pendingIdRef.current = null;
     setUndoState(null);
-    setRecords(prev => {
-      const combined = [...prev, undoState.record];
-      return combined.sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ).slice(0, 6);
-    });
+    setRecords(prev =>
+      [...prev, undoState.record]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 6)
+    );
   }
 
   function handleExpire() {
@@ -129,265 +151,230 @@ function HomePageInner() {
     if (id) fetch(`/api/records?id=${id}`, { method: "DELETE" });
   }
 
-  const profit   = summary?.profit ?? 0;
-  const isProfit = profit >= 0;
+  const todayProfit   = summary?.profit         ?? 0;
+  const todaySales    = summary?.total_sales    ?? 0;
+  const todayExpenses = summary?.total_expenses ?? 0;
+  const yProfit   = yesterdaySummary?.profit         ?? 0;
+  const ySales    = yesterdaySummary?.total_sales    ?? 0;
+  const yExpenses = yesterdaySummary?.total_expenses ?? 0;
+
+  function pct(today: number, yesterday: number): number | null {
+    if (yesterday === 0) return null;
+    return Math.round(((today - yesterday) / Math.abs(yesterday)) * 100);
+  }
+
+  const profitPct  = pct(todayProfit,   yProfit);
+  const salesPct   = pct(todaySales,    ySales);
+  const expensePct = pct(todayExpenses, yExpenses);
 
   return (
     <>
-      {/* Coachmarks disabled */}
-      <div
-        className="relative min-h-full"
-        style={{
-          backgroundImage: "url(/home_screen.webp)",
-          backgroundSize: "cover",
-          backgroundPosition: "top center",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "#F8F7F4",
-        }}
-      >
-
-        {/* Foreground content */}
-        <div className="relative px-5 pt-7 space-y-5 animate-fade-in">
+      <div className="min-h-full" style={{ background: BG }}>
 
         {/* ── Header ── */}
-        <motion.div
-          data-coachmark="header"
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="flex items-center justify-between"
-        >
+        <div className="px-5 pt-12 flex items-center justify-between">
           <div>
-            <p className="text-white/85 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 3px rgba(0,0,0,0.10)" }}>
+            <p className="text-[13px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
               {greeting}
             </p>
-            <h1 className="text-white text-[22px] font-bold mt-0.5" style={{ fontFamily: "var(--font-satoshi)", textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>
-              {name}
+            <h1 className="text-[24px] font-bold text-spal-navy leading-tight mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
+              {displayName}
             </h1>
-            {businessName && (
-              <button
-                onClick={() => router.push("/profile")}
-                className="flex items-center gap-1 mt-0.5 active:opacity-70 transition-opacity"
-              >
-                <span className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
-                  {businessName}
-                </span>
-                <span className="text-white/50 text-[10px]">›</span>
-              </button>
-            )}
           </div>
 
           <div className="flex items-center gap-2.5">
-            <CircleButton onClick={() => { setUnreadCount(0); router.push("/notifications"); }} aria="Notifications">
-              <div className="relative">
-                <Bell size={18} strokeWidth={2} color="#fff" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </div>
-            </CircleButton>
+            <button
+              onClick={() => { setUnreadCount(0); router.push("/notifications"); }}
+              aria-label="Notifications"
+              className="w-11 h-11 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}
+            >
+              <Bell size={18} strokeWidth={2} color="#0F172A" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white leading-none">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => router.push("/profile")}
               aria-label="Profile"
-              className="w-[42px] h-[42px] rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform backdrop-blur-md"
-              style={{
-                background: "rgba(255,255,255,0.20)",
-                border: "1px solid rgba(255,255,255,0.30)",
-              }}
+              className="w-11 h-11 rounded-full overflow-hidden active:scale-95 transition-transform"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}
             >
               {user?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <User size={18} strokeWidth={2} color="#fff" />
+                <div className="w-full h-full bg-spal-green flex items-center justify-center">
+                  <span className="text-white font-bold text-[15px]">
+                    {(user?.full_name ?? user?.business_name ?? "?")[0]?.toUpperCase() ?? <User size={18} color="#fff" strokeWidth={2} />}
+                  </span>
+                </div>
               )}
             </button>
           </div>
-        </motion.div>
+        </div>
 
-        {/* ── Today's Snapshot section header ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="flex items-center justify-between"
-        >
-          <p className="text-[15px] font-bold text-white" style={{ fontFamily: "var(--font-satoshi)" }}>
-            Today&apos;s Snapshot
-          </p>
-          <p className="text-[12px] text-white/60" style={{ fontFamily: "var(--font-satoshi)" }}>
-            {new Date().toLocaleDateString("en-NG", { weekday: "short", day: "numeric", month: "short" })}
-          </p>
-        </motion.div>
+        {/* ── Top nav pills ── */}
+        <div className="px-5 mt-5 flex gap-2">
+          {[
+            { href: "/home",     label: "Home",     icon: <Home     size={14} strokeWidth={2.2} /> },
+            { href: "/records",  label: "Records",  icon: <AlignJustify size={14} strokeWidth={2.2} /> },
+            { href: "/insights", label: "Insights", icon: <BarChart2    size={14} strokeWidth={2.2} /> },
+          ].map(tab => {
+            const isActive = tab.href === "/home";
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="flex items-center gap-1.5 px-4 h-10 rounded-full text-[13px] font-semibold transition-all active:scale-95 flex-shrink-0"
+                style={{
+                  background: isActive ? "#22C55E" : "#fff",
+                  color:      isActive ? "#fff" : "#6B7280",
+                  boxShadow:  isActive ? "0 2px 8px rgba(34,197,94,0.28)" : "0 1px 3px rgba(0,0,0,0.06)",
+                  fontFamily: "var(--font-satoshi)",
+                }}
+              >
+                {tab.icon}
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
 
-        {/* ── Hero summary card ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div
-            data-coachmark="summary_card"
-            role="button"
-            onClick={() => router.push("/records")}
-            className="relative rounded-[24px] overflow-hidden active:scale-[0.99] transition-transform cursor-pointer"
-            style={{ background: "#F3EFE4" }}
+        {/* ── Your Sales Today ── */}
+        <div className="px-5 mt-7">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[16px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+              Your Sales Today
+            </p>
+            <button onClick={() => router.push("/records")} aria-label="View records">
+              <ExternalLink size={16} strokeWidth={2} color="#9CA3AF" />
+            </button>
+          </div>
+
+          {/* Profit card */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[20px] px-5 py-5 mb-2.5"
+            style={{ background: "#8B3CFF" }}
           >
-            {/* Glow circles clipped to card top */}
-            <div className="absolute pointer-events-none"
-              style={{ top: "-120px", left: "-100px", width: "280px", height: "280px", borderRadius: "50%", background: "#02D169", filter: "blur(70px)", opacity: 0.85 }} />
-            <div className="absolute pointer-events-none"
-              style={{ top: "-120px", right: "-100px", width: "280px", height: "280px", borderRadius: "50%", background: "#2E63F9", filter: "blur(70px)", opacity: 0.8 }} />
+            {loadingSummary ? (
+              <CardSkeleton />
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <p className="text-white/70 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+                    Profit
+                  </p>
+                  {profitPct !== null && <PctBadge pct={profitPct} />}
+                </div>
+                <p
+                  className="text-white font-bold"
+                  style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(32px, 9vw, 42px)", letterSpacing: "-0.02em" }}
+                >
+                  {todayProfit < 0 ? "-" : ""}{formatCurrency(Math.abs(todayProfit))}
+                </p>
+              </>
+            )}
+          </motion.div>
 
-            {/* Coloured glow band at top — 28px */}
-            <div className="relative h-7" />
-
-            {/* Dark inner card */}
-            <div
-              className="relative rounded-[20px] p-5"
-              style={{ background: "#0F172A", margin: "0 8px 8px 8px" }}
+          {/* Sale + Expense row */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.06 }}
+              className="rounded-[20px] px-4 py-4"
+              style={{ background: "#2F63F5" }}
             >
               {loadingSummary ? (
-                <PulseSkeleton />
-              ) : summary ? (
-                <>
-                  <p className="text-[12px] font-medium mb-1" style={{ fontFamily: "var(--font-satoshi)", color: "#A1A3AE" }}>
-                    Today&apos;s Record
-                  </p>
-                  <p className="text-[13px] font-semibold mb-2" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>
-                    {isProfit ? "Profit" : "Net Loss"}
-                  </p>
-
-                  {/* Big number */}
-                  <p
-                    className="font-bold leading-none"
-                    style={{
-                      fontFamily: "var(--font-satoshi)",
-                      fontSize: "clamp(34px, 10vw, 42px)",
-                      letterSpacing: "-0.02em",
-                      color: "#ffffff",
-                    }}
-                  >
-                    {!isProfit && profit < 0 ? "-" : ""}{formatCurrency(Math.abs(profit))}
-                  </p>
-
-                  <div className="h-px my-4" style={{ background: "#384666" }} />
-
-                  <div className="flex items-stretch">
-                    <div className="flex-1">
-                      <p className="text-[12px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Sales</p>
-                      <p className="text-[18px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#22C55E" }}>
-                        {formatCurrency(summary.total_sales ?? 0)}
-                      </p>
-                    </div>
-                    <div className="w-px mx-4" style={{ background: "#384666" }} />
-                    <div className="flex-1">
-                      <p className="text-[12px] mb-1.5" style={{ fontFamily: "var(--font-satoshi)", color: "#67738F" }}>Expenses</p>
-                      <p className="text-[18px] font-bold" style={{ fontFamily: "var(--font-satoshi)", color: "#ED712E" }}>
-                        {formatCurrency(summary.total_expenses ?? 0)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {summary.ai_message && (
-                    <p className="mt-4 pt-4 text-[12.5px] leading-relaxed text-white/55" style={{ fontFamily: "var(--font-satoshi)", borderTop: "1px solid #384666" }}>
-                      {summary.ai_message}
-                    </p>
-                  )}
-                </>
+                <SmallCardSkeleton />
               ) : (
-                <PulseEmpty onAdd={() => setAddSheet("sale")} />
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      Sale
+                    </p>
+                    {salesPct !== null && <PctBadge pct={salesPct} small />}
+                  </div>
+                  <p className="text-white font-bold text-[22px]" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.01em" }}>
+                    {formatCurrency(todaySales)}
+                  </p>
+                </>
               )}
-            </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-[20px] px-4 py-4"
+              style={{ background: "#ED712E" }}
+            >
+              {loadingSummary ? (
+                <SmallCardSkeleton />
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+                      Expense
+                    </p>
+                    {expensePct !== null && <PctBadge pct={expensePct} small />}
+                  </div>
+                  <p className="text-white font-bold text-[22px]" style={{ fontFamily: "var(--font-satoshi)", letterSpacing: "-0.01em" }}>
+                    {formatCurrency(todayExpenses)}
+                  </p>
+                </>
+              )}
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* ── Quick Actions ── */}
-        <motion.div
-          ref={quickActionsRef}
-          data-coachmark="quick_actions"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <p className="text-[15px] font-bold text-white mb-3" style={{ fontFamily: "var(--font-satoshi)" }}>
-            Quick Actions
-          </p>
-
-          {/* Row 1 — 3 tiles */}
-          <div className="grid grid-cols-3 gap-2.5 mb-2.5">
-            <Tile3
-              bg="#22C55E"
-              label="Add Sale"
-              icon={<TrendingUp size={20} strokeWidth={2} color="#fff" />}
-              labelColor="#fff"
-              onClick={() => router.push("/records/add-sale")}
-            />
-            <Tile3
-              bg="#F97316"
-              label="Add Expense"
-              icon={<TrendingDown size={20} strokeWidth={2} color="#fff" />}
-              labelColor="#fff"
-              onClick={() => router.push("/records/add-expense")}
-            />
-            <Tile3
-              bg="#fff"
-              label="Scan to Upload"
-              icon={<ScanLine size={20} strokeWidth={2} color="#0F172A" />}
-              labelColor="#0F172A"
-              onClick={() => router.push("/scan")}
-            />
-          </div>
-
-          {/* Row 2 — 2 tiles */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <Tile2
-              bg="#fff"
-              label="Import Record"
-              icon={<FolderInput size={20} strokeWidth={2} color="#0F172A" />}
-              onClick={() => router.push("/records/import")}
-            />
-            <Tile2
-              bg="#fff"
-              label="Manage Inventory"
-              icon={<Package size={20} strokeWidth={2} color="#0F172A" />}
-              onClick={() => router.push("/inventory")}
-            />
-          </div>
-        </motion.div>
-
-        {/* ── Recent activity ── */}
-        <motion.div
-          data-coachmark="recent_activity"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.24, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        >
+        {/* ── Recent Sales ── */}
+        <div className="px-5 mt-7 pb-32">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-              Recent activity
+            <p className="text-[16px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+              Recent Sales
             </p>
             {records.length > 0 && (
-              <button onClick={() => router.push("/records")} className="text-[12px] font-semibold" style={{ color: "#204948" }}>
-                View all
+              <button onClick={() => router.push("/records")} aria-label="View all">
+                <ExternalLink size={16} strokeWidth={2} color="#9CA3AF" />
               </button>
             )}
           </div>
 
           {loadingRecords ? (
             <RecordsSkeleton />
-          ) : records.length > 0 ? (
+          ) : records.length === 0 ? (
+            <div
+              className="bg-white rounded-2xl px-4 py-10 text-center"
+              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+            >
+              <TrendingUp size={24} className="mx-auto mb-3 text-neutral-200" strokeWidth={2} />
+              <p className="text-[13px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
+                No activity yet today.
+              </p>
+              <button
+                onClick={() => setQuickMenuOpen(true)}
+                className="mt-2 text-[13px] font-semibold"
+                style={{ color: "#22C55E", fontFamily: "var(--font-satoshi)" }}
+              >
+                Record your first sale
+              </button>
+            </div>
+          ) : (
             <div className="space-y-2.5">
               {records.map((record, i) => (
                 <motion.div
                   key={record.id}
                   initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.035, ease: [0.4, 0, 0.2, 1] }}
+                  transition={{ delay: i * 0.03, ease: [0.4, 0, 0.2, 1] }}
                   className="rounded-2xl overflow-hidden bg-white"
-                  style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}
+                  style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 >
                   <SwipeableRow
                     onEdit={() => { setEditRecord(record); setAddSheet(null); }}
@@ -399,15 +386,14 @@ function HomePageInner() {
                     >
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ background: record.type === "sale" ? "#EFFBF4" : "#FFF5EF" }}
+                        style={{ background: record.type === "sale" ? "#F0FDF4" : "#FFF5ED" }}
                       >
                         {record.type === "sale"
-                          ? <ArrowUp size={17} strokeWidth={2.2} color="#16A34A" />
-                          : <ArrowDown size={17} strokeWidth={2.2} color="#EA580C" />}
+                          ? <ArrowUp   size={16} strokeWidth={2.2} color="#16A34A" />
+                          : <ArrowDown size={16} strokeWidth={2.2} color="#EA580C" />}
                       </div>
-
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13.5px] text-spal-navy font-semibold truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                        <p className="text-[13.5px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
                           {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
                         </p>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -416,7 +402,7 @@ function HomePageInner() {
                               className="text-[10px] font-medium px-2 py-0.5 rounded-full"
                               style={{
                                 background: record.type === "sale" ? "#F0FDF4" : "#FFF7ED",
-                                color: record.type === "sale" ? "#16A34A" : "#EA580C",
+                                color:      record.type === "sale" ? "#16A34A" : "#EA580C",
                               }}
                             >
                               {record.category}
@@ -425,7 +411,6 @@ function HomePageInner() {
                           <span className="text-[11px] text-neutral-400">{formatRecordTime(record.created_at)}</span>
                         </div>
                       </div>
-
                       <p
                         className="text-[13.5px] font-bold flex-shrink-0"
                         style={{ fontFamily: "var(--font-satoshi)", color: record.type === "sale" ? "#16A34A" : "#EA580C" }}
@@ -437,30 +422,81 @@ function HomePageInner() {
                 </motion.div>
               ))}
             </div>
-          ) : (
-            <div className="bg-white rounded-2xl px-4 py-10 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
-              <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3">
-                <TrendingUp size={22} className="text-neutral-300" strokeWidth={2} />
-              </div>
-              <p className="text-[13px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
-                No activity yet today.
-              </p>
-              <button
-                onClick={() => quickActionsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
-                className="mt-2 text-[13px] font-semibold"
-                style={{ fontFamily: "var(--font-satoshi)", color: "#16A34A" }}
-              >
-                Record your first sale
-              </button>
-            </div>
           )}
-        </motion.div>
-
-        <div className="h-5" />
         </div>
       </div>
 
-      {/* Sheets */}
+      {/* ── Quick Menu ── */}
+      <div
+        ref={quickMenuRef}
+        className="fixed z-50"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", right: "16px" }}
+      >
+        {/* Popup */}
+        <AnimatePresence>
+          {quickMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.96 }}
+              transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+              className="absolute bottom-[60px] right-0 bg-white rounded-2xl overflow-hidden"
+              style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.14)", minWidth: "190px" }}
+            >
+              <button
+                onClick={() => { setQuickMenuOpen(false); router.push("/records/add-sale"); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors border-b border-neutral-50"
+              >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#F0FDF4" }}>
+                  <TrendingUp size={15} strokeWidth={2.2} color="#16A34A" />
+                </div>
+                <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Record Sale
+                </span>
+              </button>
+              <button
+                onClick={() => { setQuickMenuOpen(false); router.push("/records/add-expense"); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors border-b border-neutral-50"
+              >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FFF5ED" }}>
+                  <TrendingDown size={15} strokeWidth={2.2} color="#EA580C" />
+                </div>
+                <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Record Expense
+                </span>
+              </button>
+              <button
+                onClick={() => { setQuickMenuOpen(false); router.push("/ask"); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#F0FDF4" }}>
+                  <MessageSquare size={15} strokeWidth={2.2} color="#22C55E" />
+                </div>
+                <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  Chat with SPAL
+                </span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Button */}
+        <button
+          onClick={() => setQuickMenuOpen(o => !o)}
+          aria-label="Quick Menu"
+          className="flex items-center gap-2 px-5 h-12 rounded-full font-bold text-[13px] text-white active:scale-95 transition-transform"
+          style={{
+            background: "#22C55E",
+            boxShadow: "0 4px 16px rgba(34,197,94,0.38)",
+            fontFamily: "var(--font-satoshi)",
+          }}
+        >
+          <LayoutGrid size={17} strokeWidth={2.2} color="#fff" />
+          Quick Menu
+        </button>
+      </div>
+
+      {/* ── Sheets ── */}
       <AddRecordSheet type="sale"    open={addSheetOpen === "sale"}    onClose={() => setAddSheet(null)} onSuccess={handleRecordAdded} />
       <AddRecordSheet type="expense" open={addSheetOpen === "expense"} onClose={() => setAddSheet(null)} onSuccess={handleRecordAdded} />
       <AddRecordSheet
@@ -471,19 +507,12 @@ function HomePageInner() {
         onSuccess={() => { handleRecordAdded(); handleEditClose(); }}
       />
 
-      {/* Undo toast */}
       <AnimatePresence>
         {undoState && (
-          <UndoToast
-            key={undoState.id}
-            message="Record deleted"
-            onUndo={handleUndo}
-            onExpire={handleExpire}
-          />
+          <UndoToast key={undoState.id} message="Record deleted" onUndo={handleUndo} onExpire={handleExpire} />
         )}
       </AnimatePresence>
 
-      {/* New business welcome toast */}
       <AnimatePresence>
         {newBizToast && (
           <motion.div
@@ -520,82 +549,40 @@ function formatRecordTime(iso: string) {
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function CircleButton({ children, onClick, aria }: { children: React.ReactNode; onClick: () => void; aria: string }) {
+function PctBadge({ pct, small }: { pct: number; small?: boolean }) {
+  const isUp = pct >= 0;
   return (
-    <button
-      onClick={onClick}
-      aria-label={aria}
-      className="w-[42px] h-[42px] rounded-full flex items-center justify-center active:scale-95 transition-transform backdrop-blur-md"
+    <div
+      className="flex items-center gap-0.5 rounded-full font-bold"
       style={{
-        background: "rgba(255,255,255,0.20)",
-        border: "1px solid rgba(255,255,255,0.30)",
+        padding:    small ? "3px 7px" : "4px 9px",
+        fontSize:   small ? "10px" : "11px",
+        background: isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)",
+        color:      isUp ? "#fff" : "#FFBBBB",
       }}
     >
-      {children}
-    </button>
-  );
-}
-
-function Tile3({ bg, label, icon, labelColor, onClick }: {
-  bg: string; label: string; icon: React.ReactNode; labelColor: string; onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
-      style={{ background: bg, boxShadow: bg === "#fff" ? "0 1px 4px rgba(0,0,0,0.06)" : undefined, minHeight: "76px" }}
-    >
-      {icon}
-      <span className="text-[11px] font-semibold text-center leading-tight px-1" style={{ fontFamily: "var(--font-satoshi)", color: labelColor }}>
-        {label}
-      </span>
-    </button>
-  );
-}
-
-function Tile2({ bg, label, icon, onClick }: {
-  bg: string; label: string; icon: React.ReactNode; onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 active:scale-[0.97] transition-transform"
-      style={{ background: bg, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", minHeight: "76px" }}
-    >
-      {icon}
-      <span className="text-[11px] font-semibold text-spal-navy text-center leading-tight px-1" style={{ fontFamily: "var(--font-satoshi)" }}>
-        {label}
-      </span>
-    </button>
-  );
-}
-
-function PulseEmpty({ onAdd }: { onAdd: () => void }) {
-  return (
-    <div className="py-2">
-      <p className="text-[14px] leading-relaxed text-white/45" style={{ fontFamily: "var(--font-satoshi)" }}>
-        Nothing recorded yet today.
-      </p>
-      <button
-        onClick={onAdd}
-        className="mt-3 font-semibold text-[14px] text-spal-green"
-        style={{ fontFamily: "var(--font-satoshi)" }}
-      >
-        Record your first sale
-      </button>
+      {isUp
+        ? <ChevronUp   size={small ? 10 : 11} strokeWidth={3} />
+        : <ChevronDown size={small ? 10 : 11} strokeWidth={3} />}
+      {Math.abs(pct)}%
     </div>
   );
 }
 
-function PulseSkeleton() {
+function CardSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="h-11 rounded-xl w-44 bg-white/10" />
-      <div className="h-px bg-white/10" />
-      <div className="flex gap-4">
-        <div className="h-12 flex-1 rounded-xl bg-white/8" />
-        <div className="h-12 flex-1 rounded-xl bg-white/8" />
-      </div>
+      <div className="h-4 w-16 rounded-full bg-white/20" />
+      <div className="h-10 w-36 rounded-xl bg-white/20" />
+    </div>
+  );
+}
+
+function SmallCardSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-3 w-10 rounded-full bg-white/20" />
+      <div className="h-7 w-20 rounded-lg bg-white/20" />
     </div>
   );
 }
@@ -605,12 +592,12 @@ function RecordsSkeleton() {
     <div className="space-y-2.5">
       {[1, 2, 3].map(i => (
         <div key={i} className="flex items-center gap-3 bg-white rounded-2xl px-3.5 py-3 animate-pulse">
-          <div className="w-10 h-10 rounded-full bg-neutral-100" />
+          <div className="w-10 h-10 rounded-full bg-neutral-100 flex-shrink-0" />
           <div className="flex-1 space-y-1.5">
             <div className="h-3 bg-neutral-100 rounded w-32" />
             <div className="h-2.5 bg-neutral-100 rounded w-16" />
           </div>
-          <div className="h-3 bg-neutral-100 rounded w-16" />
+          <div className="h-3 bg-neutral-100 rounded w-14" />
         </div>
       ))}
     </div>

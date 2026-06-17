@@ -8,7 +8,7 @@ export function SparkAvatar() {
   const router   = useRouter();
   const pathname = usePathname();
 
-  if (pathname.includes("/picture")) return null;
+  if (pathname.includes("/picture") || pathname === "/home") return null;
 
   return (
     <motion.button
