@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/Button";
 import { AchievementsSection } from "@/components/gamification/AchievementsSection";
 import { enablePushNotifications, disablePushNotifications } from "@/hooks/usePushNotifications";
 import {
-  Pencil, X, User as UserIcon, Mail, Phone, MessageSquare, Bell, BellOff,
-  Store, Coins, Receipt, ChevronRight, Camera, Flame, Check, AlertCircle,
-  BookOpen, MessageCircle, Table2, LayoutGrid, FileText, FolderInput,
-  Plus, Archive, Building2,
-} from "lucide-react";
+  PencilEdit01Icon, Cancel01Icon, UserIcon, Mail01Icon, SmartPhone01Icon, ChatIcon, Notification01Icon, Notification02Icon,
+  Store01Icon, CoinsIcon, Receipt01Icon, ArrowRight01Icon, Camera01Icon, Fire01Icon, Tick01Icon, Alert01Icon,
+  BookOpenIcon, MessageIcon, GridViewIcon, FileTextIcon, Folder01Icon,
+  PlusSignIcon, Archive01Icon, Building04Icon,
+} from "hugeicons-react";
 import type { TrackingMethod } from "@/store";
 
 const GOAL_LABELS: Record<string, string> = {
@@ -276,7 +276,7 @@ export default function ProfilePage() {
                   ) : (
                     user?.full_name?.[0]?.toUpperCase() ??
                     user?.business_name?.[0]?.toUpperCase() ??
-                    <UserIcon size={22} strokeWidth={2} color="#fff" />
+                    <UserIcon size={22} color="#fff" />
                   )
                 )}
               </div>
@@ -284,7 +284,7 @@ export default function ProfilePage() {
               <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
                 {avatarLoading
                   ? <span className="text-white text-xs animate-pulse">…</span>
-                  : <Camera size={16} strokeWidth={2} color="#fff" />
+                  : <Camera01Icon size={16} color="#fff" />
                 }
               </div>
             </label>
@@ -323,7 +323,7 @@ export default function ProfilePage() {
               value={
                 <span className="inline-flex items-center gap-1">
                   {user?.streak_days ?? 0}
-                  <Flame size={16} strokeWidth={2} color="#F97316" />
+                  <Fire01Icon size={16} color="#F97316" />
                 </span>
               }
               label="Day streak"
@@ -343,7 +343,7 @@ export default function ProfilePage() {
               onClick={() => router.push("/add-business")}
               className="flex items-center gap-1 active:opacity-70 transition-opacity"
             >
-              <Plus size={14} strokeWidth={2.5} color="#22C55E" />
+              <PlusSignIcon size={14} color="#22C55E" />
               <span className="text-[13px] font-semibold" style={{ color: "#22C55E" }}>Add business</span>
             </button>
           </div>
@@ -374,7 +374,7 @@ export default function ProfilePage() {
                     </div>
                     {isActive && (
                       <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#22C55E" }}>
-                        <Check size={11} strokeWidth={3} color="#fff" />
+                        <Tick01Icon size={11} color="#fff" />
                       </div>
                     )}
                     {switchingBiz === biz.id && (
@@ -387,14 +387,14 @@ export default function ProfilePage() {
                     className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 flex-shrink-0 active:bg-neutral-200 transition-colors ml-1"
                     aria-label="Business options"
                   >
-                    <ChevronRight size={15} strokeWidth={2} className="text-neutral-400" />
+                    <ArrowRight01Icon size={15} className="text-neutral-400" />
                   </button>
                 </div>
               );
             })}
             {businesses.length === 0 && (
               <div className="px-4 py-3 flex items-center gap-2 text-neutral-400">
-                <Building2 size={16} strokeWidth={1.5} />
+                <Building04Icon size={16} />
                 <span className="text-[13px]">No businesses yet</span>
               </div>
             )}
@@ -407,54 +407,54 @@ export default function ProfilePage() {
         <Card padding="none">
           {([
             {
-              icon:    <UserIcon size={18} strokeWidth={2} color="#0F172A" />,
+              icon:    <UserIcon size={18} color="#0F172A" />,
               label:   "Your name",
               hint:    user?.full_name ? user.full_name : "Tap to set your name",
               sheet:   "name" as SheetType,
             },
             ...(!user?.email ? [{
-              icon:    <Mail size={18} strokeWidth={2} color="#2563EB" />,
+              icon:    <Mail01Icon size={18} color="#2563EB" />,
               label:   "Add email address",
               hint:    "Sign in with email too",
               sheet:   "add-email" as SheetType,
             }] : []),
             ...(!user?.phone_number ? [{
-              icon:    <Phone size={18} strokeWidth={2} color="#2563EB" />,
+              icon:    <SmartPhone01Icon size={18} color="#2563EB" />,
               label:   "Business phone",
               hint:    "Add your business contact number",
               sheet:   "add-phone" as SheetType,
             }] : [{
-              icon:    <Phone size={18} strokeWidth={2} color="#0F172A" />,
+              icon:    <SmartPhone01Icon size={18} color="#0F172A" />,
               label:   "Business phone",
               hint:    user.phone_number!,
               sheet:   "add-phone" as SheetType,
             }]),
             {
-              icon:    <MessageSquare size={18} strokeWidth={2} color="#16A34A" />,
+              icon:    <ChatIcon size={18} color="#16A34A" />,
               label:   "WhatsApp reports",
               hint:    user?.whatsapp_number ? `Sending to ${user.whatsapp_number}` : "Set up weekly reports",
               sheet:   "whatsapp" as SheetType,
             },
             {
-              icon:    <Bell size={18} strokeWidth={2} color="#8B5CF6" />,
+              icon:    <Notification01Icon size={18} color="#8B5CF6" />,
               label:   "Notifications",
               hint:    "Daily reminders to track",
               sheet:   "notifications" as SheetType,
             },
             {
-              icon:    <Store size={18} strokeWidth={2} color="#F97316" />,
+              icon:    <Store01Icon size={18} color="#F97316" />,
               label:   "Business details",
               hint:    user?.business_name ?? "Add your business name",
               sheet:   "business" as SheetType,
             },
             {
-              icon:    <Coins size={18} strokeWidth={2} color="#16A34A" />,
+              icon:    <CoinsIcon size={18} color="#16A34A" />,
               label:   "Currency",
               hint:    user?.currency ?? "NGN",
               sheet:   "currency" as SheetType,
             },
             {
-              icon:    <FolderInput size={18} strokeWidth={2} color="#2563EB" />,
+              icon:    <Folder01Icon size={18} color="#2563EB" />,
               label:   "Record tracking methods",
               hint:    (() => {
                 const methods = (activeBusiness?.tracking_methods ?? []).filter(m => m !== "nothing") as TrackingMethod[];
@@ -465,7 +465,7 @@ export default function ProfilePage() {
               sheet:   "tracking-methods" as SheetType,
             },
             {
-              icon:    <BookOpen size={18} strokeWidth={2} color="#8B5CF6" />,
+              icon:    <BookOpenIcon size={18} color="#8B5CF6" />,
               label:   "Business goals",
               hint:    (() => {
                 const goals = activeBusiness?.business_goals ?? [];
@@ -490,7 +490,7 @@ export default function ProfilePage() {
                 <p className="text-sm font-semibold text-spal-navy">{item.label}</p>
                 <p className="text-xs text-neutral-400 mt-0.5">{item.hint}</p>
               </div>
-              <ChevronRight size={18} strokeWidth={2} className="text-neutral-300" />
+              <ArrowRight01Icon size={18} className="text-neutral-300" />
             </button>
           ))}
         </Card>
@@ -504,7 +504,7 @@ export default function ProfilePage() {
             className="w-full flex items-center gap-3 px-4 py-4 active:bg-neutral-50 transition-colors"
           >
             <div className="w-9 h-9 rounded-full bg-spal-purple-50 flex items-center justify-center flex-shrink-0">
-              <Receipt size={18} strokeWidth={2} color="#8B5CF6" />
+              <Receipt01Icon size={18} color="#8B5CF6" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-spal-navy">Payment history</p>
@@ -512,7 +512,7 @@ export default function ProfilePage() {
                 Coach subscriptions, receipts and renewals
               </p>
             </div>
-            <ChevronRight size={18} strokeWidth={2} className="text-neutral-300" />
+            <ArrowRight01Icon size={18} className="text-neutral-300" />
           </button>
         </Card>
       </motion.div>
@@ -590,7 +590,7 @@ export default function ProfilePage() {
               }}
               className="w-full flex items-center gap-3 px-4 py-4 bg-neutral-50 rounded-xl text-left active:bg-neutral-100 transition-colors"
             >
-              <Pencil size={18} strokeWidth={2} color="#0F172A" />
+              <PencilEdit01Icon size={18} color="#0F172A" />
               <span className="text-[14px] font-semibold text-spal-navy">Rename business</span>
             </button>
             {businesses.length > 1 && (
@@ -599,7 +599,7 @@ export default function ProfilePage() {
                 className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-left active:bg-red-50 transition-colors"
                 style={{ border: "1.5px solid #FEE2E2" }}
               >
-                <Archive size={18} strokeWidth={2} color="#EF4444" />
+                <Archive01Icon size={18} color="#EF4444" />
                 <div>
                   <p className="text-[14px] font-semibold" style={{ color: "#EF4444" }}>Archive business</p>
                   <p className="text-[12px] text-neutral-400 mt-0.5">Your data is kept — you can restore it later</p>
@@ -696,7 +696,7 @@ export default function ProfilePage() {
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function PencilMiniIcon() {
-  return <Pencil size={13} strokeWidth={2.2} color="#A1A1AA" />;
+  return <PencilEdit01Icon size={13} color="#A1A1AA" />;
 }
 
 function StatItem({ value, label }: { value: React.ReactNode; label: string }) {
@@ -749,7 +749,7 @@ function VerifiedStatItem({ verified, onFix }: { verified: boolean; onFix: () =>
           animate={{ scale: 1,   opacity: 1 }}
           className="flex justify-center mb-0.5"
         >
-          <Check size={22} strokeWidth={2.5} color="#22C55E" />
+          <Tick01Icon size={22} color="#22C55E" />
         </motion.div>
       ) : (
         <button onClick={onFix} className="flex justify-center w-full mb-0.5" aria-label="Complete profile">
@@ -757,7 +757,7 @@ function VerifiedStatItem({ verified, onFix }: { verified: boolean; onFix: () =>
             animate={{ rotate: [0, -8, 8, 0] }}
             transition={{ delay: 1, duration: 0.5, repeat: Infinity, repeatDelay: 4 }}
           >
-            <AlertCircle size={20} strokeWidth={2} color="#F59E0B" />
+            <Alert01Icon size={20} color="#F59E0B" />
           </motion.div>
         </button>
       )}
@@ -813,7 +813,7 @@ function Sheet({ open, onClose, title, children }: {
                   onClick={onClose}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 text-neutral-500 flex-shrink-0"
                 >
-                  <X size={15} strokeWidth={2} />
+                  <Cancel01Icon size={15} />
                 </button>
               </div>
               {children}
@@ -1217,12 +1217,12 @@ const TRACKING_METHODS_LIST: Array<{
   icon:   React.ReactNode;
   accent: string;
 }> = [
-  { key: "notebook",      label: "Notebook",      sub: "You write in a physical notebook",         icon: <BookOpen       size={20} strokeWidth={2} />, accent: "#22C55E" },
-  { key: "whatsapp",      label: "WhatsApp",      sub: "You message yourself or save notes there", icon: <MessageCircle  size={20} strokeWidth={2} />, accent: "#25D366" },
-  { key: "excel",         label: "Excel",         sub: "You track in a spreadsheet",               icon: <Table2         size={20} strokeWidth={2} />, accent: "#217346" },
-  { key: "google_sheets", label: "Google Sheets", sub: "You use Google Sheets",                    icon: <LayoutGrid     size={20} strokeWidth={2} />, accent: "#2563EB" },
-  { key: "notes_app",     label: "Notes App",     sub: "You use a phone notes app",                icon: <FileText       size={20} strokeWidth={2} />, accent: "#F59E0B" },
-  { key: "receipts",      label: "Receipts",      sub: "You keep paper receipts or photos",        icon: <Receipt        size={20} strokeWidth={2} />, accent: "#F97316" },
+  { key: "notebook",      label: "Notebook",      sub: "You write in a physical notebook",         icon: <BookOpenIcon   size={20} />, accent: "#22C55E" },
+  { key: "whatsapp",      label: "WhatsApp",      sub: "You message yourself or save notes there", icon: <ChatIcon       size={20} />, accent: "#25D366" },
+  { key: "excel",         label: "Excel",         sub: "You track in a spreadsheet",               icon: <GridViewIcon   size={20} />, accent: "#217346" },
+  { key: "google_sheets", label: "Google Sheets", sub: "You use Google Sheets",                    icon: <GridViewIcon   size={20} />, accent: "#2563EB" },
+  { key: "notes_app",     label: "Notes App",     sub: "You use a phone notes app",                icon: <FileTextIcon   size={20} />, accent: "#F59E0B" },
+  { key: "receipts",      label: "Receipts",      sub: "You keep paper receipts or photos",        icon: <Receipt01Icon  size={20} />, accent: "#F97316" },
 ];
 
 function TrackingMethodsSheet({ open, currentMethods, onClose, onSave }: {
@@ -1370,7 +1370,7 @@ function BusinessGoalsSheet({ open, currentGoals, onClose, onSave }: {
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[15px] font-bold"
                 style={{ background: `${color}18`, color }}
               >
-                {isOn ? <Check size={18} strokeWidth={2.5} /> : null}
+                {isOn ? <Tick01Icon size={18} /> : null}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13.5px] font-semibold text-spal-navy">{GOAL_LABELS[g]}</p>
@@ -1441,7 +1441,7 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
       <div className="space-y-4">
         {isDenied ? (
           <div className="bg-red-50 rounded-2xl p-4 flex items-start gap-3">
-            <BellOff size={20} strokeWidth={2} color="#DC2626" className="mt-0.5 flex-shrink-0" />
+            <Notification02Icon size={20} color="#DC2626" className="mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-red-600">Notifications blocked</p>
               <p className="text-sm text-neutral-500 mt-1 leading-relaxed">
@@ -1453,7 +1453,7 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
           </div>
         ) : unsupported ? (
           <div className="bg-neutral-50 rounded-2xl p-4 flex items-start gap-3">
-            <BellOff size={20} strokeWidth={2} color="#A1A1AA" className="mt-0.5 flex-shrink-0" />
+            <Notification02Icon size={20} color="#A1A1AA" className="mt-0.5 flex-shrink-0" />
             <p className="text-sm text-neutral-500 leading-relaxed">
               Push notifications aren&apos;t supported on this browser. Try installing
               SPAL on your home screen for the best experience.

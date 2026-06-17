@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
@@ -38,7 +38,7 @@ export default function AddBusinessDetailsPage() {
             style={{ background: "rgba(15,23,42,0.06)" }}
             aria-label="Back"
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft01Icon size={18} />
           </button>
           <Step step={2} total={3} />
         </div>

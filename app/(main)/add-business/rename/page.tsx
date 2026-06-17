@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft01Icon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
@@ -57,7 +57,7 @@ function RenameContent() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy">Rename Business</span>
       </div>

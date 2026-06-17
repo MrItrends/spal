@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Store, Plus } from "lucide-react";
+import { ArrowLeft01Icon, Store01Icon, PlusSignIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 
 const fontFamily = "var(--font-satoshi)";
@@ -54,7 +54,7 @@ export default function AddBusinessEntryPage() {
           style={{ background: "rgba(15,23,42,0.06)" }}
           aria-label="Back"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft01Icon size={18} />
         </button>
         <span className="text-[16px] font-semibold text-spal-navy">Add Business</span>
       </div>
@@ -69,7 +69,7 @@ export default function AddBusinessEntryPage() {
             className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: "#E8F5E9" }}
           >
-            <Store size={26} strokeWidth={1.8} color="#22C55E" />
+            <Store01Icon size={26} color="#22C55E" />
           </div>
 
           <h1 className="text-[26px] font-bold text-spal-navy leading-tight">
@@ -98,7 +98,7 @@ export default function AddBusinessEntryPage() {
               style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)", border: "1.5px solid transparent" }}
             >
               <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#E8F5E9" }}>
-                <Store size={20} strokeWidth={1.8} color="#22C55E" />
+                <Store01Icon size={20} color="#22C55E" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-spal-navy">Same type — {existingTypeLabel}</p>
@@ -114,7 +114,7 @@ export default function AddBusinessEntryPage() {
               style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)", border: "1.5px solid transparent" }}
             >
               <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#EFF6FF" }}>
-                <Plus size={20} strokeWidth={1.8} color="#2563EB" />
+                <PlusSignIcon size={20} color="#2563EB" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-spal-navy">Different type of business</p>
