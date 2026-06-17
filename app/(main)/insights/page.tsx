@@ -327,7 +327,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                 <div className="flex items-center justify-between mb-1">
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className="text-[12.5px] font-medium text-spal-navy truncate">{item.name}</span>
-                    {i === 0 && <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#15803D" }}>Best</span>}
+                    {i === 0 && <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2F63F5" }}>Best</span>}
                   </span>
                   <span className="text-[12px] font-semibold text-spal-navy flex-shrink-0 ml-2">{formatCurrency(item.amount)}</span>
                 </div>
@@ -335,7 +335,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                   <motion.div className="h-full rounded-full" initial={{ width: "0%" }}
                     animate={{ width: `${(item.amount / maxItem) * 100}%` }}
                     transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
-                    style={{ background: (["#22C55E","#2F63F5","#8B3CFF","#ED712E"])[i] ?? "#22C55E" }} />
+                    style={{ background: "#2F63F5" }} />
                 </div>
               </div>
             ))}
@@ -361,7 +361,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                 <div className="flex items-center justify-between mb-1">
                   <button onClick={() => { setRenamingCat(cat.name); setNewName(cat.name); }}
                     className="flex items-center gap-1.5 active:opacity-70 transition-opacity">
-                    <Tag01Icon size={11} color={(["#8B3CFF","#2F63F5","#22C55E","#ED712E"])[i] ?? "#8B3CFF"} className="flex-shrink-0" />
+                    <Tag01Icon size={11} color="#8B3CFF" className="flex-shrink-0" />
                     <span className="text-[12.5px] font-medium text-spal-navy underline decoration-dotted underline-offset-2 decoration-neutral-300">{cat.name}</span>
                     <PencilEdit01Icon size={10} className="text-neutral-300" />
                   </button>
@@ -374,7 +374,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                   <motion.div className="h-full rounded-full" initial={{ width: "0%" }}
                     animate={{ width: `${(cat.amount / maxCat) * 100}%` }}
                     transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
-                    style={{ background: (["#8B3CFF","#2F63F5","#22C55E","#ED712E"])[i] ?? "#8B3CFF" }} />
+                    style={{ background: "#8B3CFF" }} />
                 </div>
               </div>
             ))}
