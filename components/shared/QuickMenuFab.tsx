@@ -10,6 +10,7 @@ import {
   ChatIcon,
   Menu01Icon,
   Target01Icon,
+  PackageIcon,
 } from "hugeicons-react";
 
 const HIDDEN_PATHS = ["/picture", "/confirm", "/voice", "/ask", "/set-goals"];
@@ -85,13 +86,24 @@ export function QuickMenuFab() {
             </button>
             <button
               onClick={() => { setOpen(false); window.location.href = "/set-goals"; }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors border-b border-neutral-50"
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#E0F4E9" }}>
                 <Target01Icon size={15} color="#16A34A" />
               </div>
               <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Set your goals
+              </span>
+            </button>
+            <button
+              onClick={() => { setOpen(false); router.push("/inventory"); }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-neutral-50 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#EFF6FF" }}>
+                <PackageIcon size={15} color="#2563EB" />
+              </div>
+              <span className="text-[14px] font-semibold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+                Manage inventory
               </span>
             </button>
           </motion.div>
