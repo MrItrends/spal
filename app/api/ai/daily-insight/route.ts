@@ -29,9 +29,10 @@ export async function GET(req: NextRequest) {
                            .reduce((s, r) => s + Number(r.amount), 0);
     const totalExpenses = (records ?? []).filter(r => r.type === "expense")
                            .reduce((s, r) => s + Number(r.amount), 0);
-    const profit        = totalSales - totalExpenses;
     const owed          = (records ?? []).filter(r => r.type === "sale" && r.payment_status === "owing")
                            .reduce((s, r) => s + Number(r.amount), 0);
+    // Cash-basis profit: money still owed isn't profit until it's actually paid
+    const profit        = totalSales - totalExpenses - owed;
 
     // ── Reuse cached AI text if the numbers haven't changed ───────────────────
     const admin = createAdminClient();

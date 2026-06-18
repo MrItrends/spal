@@ -489,9 +489,13 @@ export default function InsightsPage() {
   const t             = useMemo(() => totals(curRecords), [curRecords]);
   const prevT         = useMemo(() => totals(prevRecords), [prevRecords]);
   const owed          = useMemo(() => curRecords.filter(r => r.type === "sale" && r.payment_status === "owing").reduce((s, r) => s + r.amount, 0), [curRecords]);
+  const prevOwed      = useMemo(() => prevRecords.filter(r => r.type === "sale" && r.payment_status === "owing").reduce((s, r) => s + r.amount, 0), [prevRecords]);
+  // Cash-basis profit: exclude money still owed (not yet received)
+  const cashProfit    = t.profit - owed;
+  const prevCashProfit = prevT.profit - prevOwed;
   const salesPct      = useMemo(() => pctChange(t.sales, prevT.sales), [t.sales, prevT.sales]);
   const expensePct    = useMemo(() => pctChange(t.expenses, prevT.expenses), [t.expenses, prevT.expenses]);
-  const profitPct     = useMemo(() => pctChange(t.profit, prevT.profit), [t.profit, prevT.profit]);
+  const profitPct     = useMemo(() => pctChange(cashProfit, prevCashProfit), [cashProfit, prevCashProfit]);
   const health        = useMemo(() => healthFromTotals(t.sales, t.expenses), [t.sales, t.expenses]);
   const dateRange     = useMemo(() => periodRange(period), [period]);
 
@@ -512,13 +516,13 @@ export default function InsightsPage() {
   const diagnosisCards: DiagnosisCardProps[] = useMemo(() => {
     const cards: DiagnosisCardProps[] = [];
     if (curRecords.length === 0) return cards;
-    if (t.profit > 0) cards.push({ icon: <ChartIncreaseIcon size={16} color="#2D7A3A" />, tag: "Profit", title: `You made ${formatCurrency(t.profit)} profit`, body: `${periodLabel}, your sales covered your costs and left you with ${formatCurrency(t.profit)}.`, variant: "positive", askPrompt: `I made ${formatCurrency(t.profit)} profit ${periodLabel.toLowerCase()}. How can I increase this?` });
-    else if (t.profit < 0) cards.push({ icon: <ChartDecreaseIcon size={16} color="#DF191C" />, tag: "Profit", title: `You spent ${formatCurrency(Math.abs(t.profit))} more than you made`, body: `${periodLabel} expenses were higher than your sales.`, variant: "alert", askPrompt: `I spent more than I made. Sales ${formatCurrency(t.sales)}, expenses ${formatCurrency(t.expenses)}. What should I do?` });
+    if (cashProfit > 0) cards.push({ icon: <ChartIncreaseIcon size={16} color="#2D7A3A" />, tag: "Profit", title: `You made ${formatCurrency(cashProfit)} profit`, body: `${periodLabel}, your sales covered your costs and left you with ${formatCurrency(cashProfit)}${owed > 0 ? ` (${formatCurrency(owed)} still owed isn't counted yet)` : ""}.`, variant: "positive", askPrompt: `I made ${formatCurrency(cashProfit)} profit ${periodLabel.toLowerCase()}. How can I increase this?` });
+    else if (cashProfit < 0) cards.push({ icon: <ChartDecreaseIcon size={16} color="#DF191C" />, tag: "Profit", title: `You spent ${formatCurrency(Math.abs(cashProfit))} more than you made`, body: `${periodLabel} expenses were higher than the money you actually received.`, variant: "alert", askPrompt: `I spent more than I made. Sales ${formatCurrency(t.sales)}, expenses ${formatCurrency(t.expenses)}. What should I do?` });
     if (bestBucket && (bestBucket.profit + bestBucket.expenses) > 0) cards.push({ icon: <Award01Icon size={16} color="#2D7A3A" />, tag: "Sales", title: `${bestBucket.label} was your best ${bucketWord}`, body: `You made the most on ${bestBucket.label}${bestBucket.profit > 0 ? ` with ${formatCurrency(bestBucket.profit)} in profit` : ""}.`, variant: "positive", askPrompt: `${bestBucket.label} was my best ${bucketWord}. Why might that be?` });
     if (expenseRatio !== null && t.expenses > 0) { const isHigh = expenseRatio > 70; cards.push({ icon: <Alert01Icon size={16} color={isHigh ? "#DF191C" : "#FF7A00"} />, tag: "Spending", title: `${expenseRatio}% of sales went to expenses`, body: isHigh ? `For every ₦100 you made, ₦${expenseRatio} went to costs. Worth reviewing.` : `Your expenses are ${expenseRatio}% of sales. ${expenseRatio < 50 ? "You're managing costs well." : "There's room to tighten."}`, variant: isHigh ? "alert" : "warning", askPrompt: `${expenseRatio}% of my sales went to expenses. Is this normal?` }); }
     if (topExpenseCat) cards.push({ icon: <ShoppingBag01Icon size={16} color="#FF7A00" />, tag: "Spending", title: `${topExpenseCat[0]} is your biggest cost`, body: `You spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]} ${periodLabel.toLowerCase()}.`, variant: "warning", askPrompt: `I spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]}. How can I reduce this?` });
     return cards;
-  }, [curRecords, t, bestBucket, expenseRatio, topExpenseCat, periodLabel, bucketWord]);
+  }, [curRecords, t, cashProfit, owed, bestBucket, expenseRatio, topExpenseCat, periodLabel, bucketWord]);
 
   return (
     <div className="min-h-full" style={{ background: BG }}>
@@ -609,7 +613,7 @@ export default function InsightsPage() {
                   <PctBadge pct={profitPct} />
                 </div>
                 <p className="text-white font-bold" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(28px, 8vw, 38px)", letterSpacing: "-0.02em" }}>
-                  {t.profit < 0 ? "–" : ""}{formatCurrency(Math.abs(t.profit))}
+                  {cashProfit < 0 ? "–" : ""}{formatCurrency(Math.abs(cashProfit))}
                 </p>
               </>
             )}
