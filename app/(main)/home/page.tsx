@@ -491,7 +491,7 @@ function PctBadge({ pct, small }: { pct: number | null; small?: boolean }) {
         : isUp
           ? <ArrowUp01Icon   size={small ? 10 : 11} />
           : <ArrowDown01Icon size={small ? 10 : 11} />}
-      {noData ? 0 : Math.abs(pct)}%
+      {noData ? 0 : Math.min(100, Math.abs(pct))}%
     </div>
   );
 }
