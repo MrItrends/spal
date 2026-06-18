@@ -7,7 +7,7 @@ import { PillChip } from "@/components/ui/PillChip";
 import { useSPALStore } from "@/store";
 import type { BusinessRecord } from "@/lib/types";
 import type { Badge } from "@/lib/gamification/badges";
-import { Camera01Icon, Cancel01Icon, MinusSignIcon, PlusSignIcon, ZapIcon, Clock01Icon } from "hugeicons-react";
+import { Camera01Icon, Cancel01Icon, MinusSignIcon, PlusSignIcon, ZapIcon, Clock01Icon, ChartIncreaseIcon, ChartDecreaseIcon, Tick01Icon } from "hugeicons-react";
 import { SALE_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants/categories";
 
 interface AddRecordSheetProps {
@@ -75,7 +75,6 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
   const categories = type === "sale" ? SALE_CATEGORIES : EXPENSE_CATEGORIES;
   const isValid    = amount && parseFloat(amount) > 0;
   const label      = type === "sale" ? "Sale" : "Expense";
-  const emoji      = type === "sale" ? "💰" : "🧾";
 
   // Type-ahead suggestions filtered by current description text
   const suggestions = useMemo(() => {
@@ -311,8 +310,13 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
-                    {emoji} {isEdit ? `Edit ${label}` : `Add ${label}`}
+                  <h2 className="text-lg font-bold text-spal-navy flex items-center gap-2" style={{ fontFamily: "var(--font-satoshi)" }}>
+                    <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: type === "sale" ? "#F0FDF4" : "#FFF7ED" }}>
+                      {type === "sale"
+                        ? <ChartIncreaseIcon size={16} color="#22C55E" />
+                        : <ChartDecreaseIcon size={16} color="#F97316" />}
+                    </span>
+                    {isEdit ? `Edit ${label}` : `Add ${label}`}
                   </h2>
                   <div className="flex items-center gap-2">
                     {!isEdit && (
@@ -533,7 +537,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                             color: paymentStatus === status ? '#fff' : '#71717A',
                           }}
                         >
-                          {status === 'paid' ? <><span>✓</span> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
+                          {status === 'paid' ? <><Tick01Icon size={13} /> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
                         </button>
                       ))}
                     </div>
@@ -580,7 +584,7 @@ export function AddRecordSheet({ type, open, onClose, onSuccess, record }: AddRe
                       className="w-full h-12 rounded-full font-bold text-[14px] text-white mb-3 flex items-center justify-center gap-2"
                       style={{ background: '#22C55E' }}
                     >
-                      ✓ Mark as Paid
+                      <Tick01Icon size={15} color="#fff" /> Mark as Paid
                     </motion.button>
                   )}
 
