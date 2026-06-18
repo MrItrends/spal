@@ -15,7 +15,7 @@ import { UndoToast } from "@/components/ui/UndoToast";
 import {
   Notification03Icon, User02Icon, Home01Icon, Menu01Icon, BarChartIcon,
   ArrowDown01Icon, ChartIncreaseIcon, ChartDecreaseIcon,
-  Wallet01Icon, ArrowUp01Icon, Cancel01Icon,
+  Wallet01Icon, ArrowUp01Icon, Cancel01Icon, Tick01Icon,
 } from "hugeicons-react";
 import type { BusinessRecord } from "@/lib/types";
 
@@ -73,7 +73,7 @@ function RecordIcon({ record }: { record: BusinessRecord }) {
 
 export default function RecordsPage() {
   const router   = useRouter();
-  const { user, addSheetOpen, setAddSheet, recordSavedAt } = useSPALStore();
+  const { user, addSheetOpen, setAddSheet, recordSavedAt, bumpRecordSaved } = useSPALStore();
   const greeting = getGreeting();
   const displayName = user?.full_name ?? user?.business_name ?? "there";
 
@@ -125,6 +125,18 @@ export default function RecordsPage() {
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (recordSavedAt) fetchRecords(); }, [recordSavedAt]);
+
+  // Mark an owing sale as paid — counts as a sale/profit on the payment day (today)
+  async function markPaid(record: BusinessRecord) {
+    const today = new Date().toISOString().slice(0, 10);
+    setRecords(prev => prev.map(r => r.id === record.id ? { ...r, payment_status: "paid", record_date: today } : r));
+    await fetch("/api/records", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: record.id, payment_status: "paid", record_date: today }),
+    });
+    bumpRecordSaved(); // refresh home/insights summaries
+  }
 
   const flushPending = useCallback(async () => {
     const ids = pendingIdsRef.current;
@@ -462,9 +474,19 @@ export default function RecordsPage() {
                               </p>
                               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                 {record.payment_status === "owing" && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#C2410C" }}>
-                                    Owing
-                                  </span>
+                                  <>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#C2410C" }}>
+                                      Owing
+                                    </span>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); markPaid(record); }}
+                                      className="text-[10px] font-bold px-2 py-0.5 rounded-full active:scale-95 transition-transform flex items-center gap-1"
+                                      style={{ background: "#DCFCE7", color: "#16A34A" }}
+                                    >
+                                      <Tick01Icon size={10} color="#16A34A" />
+                                      Mark paid
+                                    </button>
+                                  </>
                                 )}
                                 {record.category && (
                                   <span
