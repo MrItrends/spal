@@ -41,7 +41,7 @@ export default function SetGoalsWelcomePage() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="mb-8"
         >
-          <Image src="/spal-ai.webp" alt="SPAL Goals" width={180} height={180} className="w-40 h-40 object-contain" priority />
+          <Image src="/spal-goals.webp" alt="SPAL Goals" width={180} height={180} className="w-40 h-40 object-contain" priority />
         </motion.div>
 
         <motion.p
