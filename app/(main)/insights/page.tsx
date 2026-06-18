@@ -488,6 +488,7 @@ export default function InsightsPage() {
   const chartData     = useMemo(() => aggregate(curRecords, period), [curRecords, period]);
   const t             = useMemo(() => totals(curRecords), [curRecords]);
   const prevT         = useMemo(() => totals(prevRecords), [prevRecords]);
+  const owed          = useMemo(() => curRecords.filter(r => r.type === "sale" && r.payment_status === "owing").reduce((s, r) => s + r.amount, 0), [curRecords]);
   const salesPct      = useMemo(() => pctChange(t.sales, prevT.sales), [t.sales, prevT.sales]);
   const expensePct    = useMemo(() => pctChange(t.expenses, prevT.expenses), [t.expenses, prevT.expenses]);
   const profitPct     = useMemo(() => pctChange(t.profit, prevT.profit), [t.profit, prevT.profit]);
@@ -650,6 +651,25 @@ export default function InsightsPage() {
             )}
           </motion.div>
         </div>
+
+        {/* Owed card — money still owed to you this period */}
+        {!loading && owed > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+            className="rounded-[20px] px-4 py-4 mt-2.5 flex items-center justify-between gap-3"
+            style={{ background: "#D8CFAF" }}
+          >
+            <div className="min-w-0">
+              <p className="text-[12px] font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: "#6B5E3C" }}>Owed to you</p>
+              <p className="font-bold truncate mt-0.5" style={{ fontFamily: "var(--font-satoshi)", color: "#3F3A26", fontSize: "clamp(18px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>
+                {formatCurrency(owed)}
+              </p>
+            </div>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0" style={{ fontFamily: "var(--font-satoshi)", background: "rgba(63,58,38,0.12)", color: "#3F3A26" }}>
+              Not yet paid
+            </span>
+          </motion.div>
+        )}
       </div>
 
       {/* ── Daily breakdown chart ── */}

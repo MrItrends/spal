@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     // ── Always fetch live records for fresh totals ─────────────────────────────
     let recordsQuery = supabase
       .from("records")
-      .select("type, amount, description, category")
+      .select("type, amount, description, category, payment_status")
       .eq("user_id", user.id)
       .eq("record_date", date);
     if (bizId) recordsQuery = recordsQuery.eq("business_id", bizId);
@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
     const totalExpenses = (records ?? []).filter(r => r.type === "expense")
                            .reduce((s, r) => s + Number(r.amount), 0);
     const profit        = totalSales - totalExpenses;
+    const owed          = (records ?? []).filter(r => r.type === "sale" && r.payment_status === "owing")
+                           .reduce((s, r) => s + Number(r.amount), 0);
 
     // ── Reuse cached AI text if the numbers haven't changed ───────────────────
     const admin = createAdminClient();
@@ -108,7 +110,8 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data: summary });
+    // `owed` is computed live (no column) — merge it into the response
+    return NextResponse.json({ success: true, data: { ...summary, owed } });
   } catch (err) {
     console.error("GET /api/ai/daily-insight", err);
     return NextResponse.json({ success: false, error: "Failed to generate insight" }, { status: 500 });

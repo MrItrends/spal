@@ -101,6 +101,7 @@ export interface DailySummary {
   total_sales: number;
   total_expenses: number;
   profit: number;
+  owed?: number;
   ai_insight?: string;
   ai_message?: string;
 }

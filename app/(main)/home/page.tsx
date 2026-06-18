@@ -145,6 +145,7 @@ function HomePageInner() {
   const todayProfit   = summary?.profit         ?? 0;
   const todaySales    = summary?.total_sales    ?? 0;
   const todayExpenses = summary?.total_expenses ?? 0;
+  const todayOwed     = summary?.owed           ?? 0;
   const yProfit   = yesterdaySummary?.profit         ?? 0;
   const ySales    = yesterdaySummary?.total_sales    ?? 0;
   const yExpenses = yesterdaySummary?.total_expenses ?? 0;
@@ -319,6 +320,27 @@ function HomePageInner() {
               )}
             </motion.div>
           </div>
+
+          {/* Owed card — money people still owe you */}
+          {!loadingSummary && todayOwed > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.14 }}
+              className="rounded-[20px] px-4 py-4 mt-2.5 flex items-center justify-between gap-3"
+              style={{ background: "#D8CFAF" }}
+            >
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: "#6B5E3C" }}>Owed to you</p>
+                <p className="font-bold truncate mt-0.5" style={{ fontFamily: "var(--font-satoshi)", color: "#3F3A26", fontSize: "clamp(18px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>
+                  {formatCurrency(todayOwed)}
+                </p>
+              </div>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0" style={{ fontFamily: "var(--font-satoshi)", background: "rgba(63,58,38,0.12)", color: "#3F3A26" }}>
+                Not yet paid
+              </span>
+            </motion.div>
+          )}
         </div>
 
         {/* ── Recent Sales ── */}
