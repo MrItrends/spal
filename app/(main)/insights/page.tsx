@@ -11,7 +11,7 @@ import {
   ChartIncreaseIcon, ArrowRight01Icon, PencilEdit01Icon, Cancel01Icon, Tick01Icon,
   Award01Icon, Alert01Icon, ChartDecreaseIcon, ShoppingBag01Icon, Tag01Icon,
   HeartCheckIcon, FireIcon, Notification03Icon, User02Icon, Home01Icon,
-  Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon,
+  Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon, MinusSignIcon,
 } from "hugeicons-react";
 import { SALE_CATEGORIES } from "@/lib/utils/category";
 import { getGreeting } from "@/lib/utils/dates";
@@ -42,6 +42,34 @@ function periodStart(period: Period): string {
   const now = new Date();
   if (period === "month") return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   return `${now.getFullYear()}-01-01`;
+}
+// Start of the period immediately BEFORE the current one (for comparison).
+function prevPeriodStart(period: Period): string {
+  if (period === "today") return isoDate(offsetDate(1));   // yesterday
+  if (period === "week")  return isoDate(offsetDate(13));  // 7 days before the last 7
+  const now = new Date();
+  if (period === "month") {
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return isoDate(d);
+  }
+  return `${now.getFullYear() - 1}-01-01`;
+}
+// Split records into the current period and the previous one.
+function splitByPeriod(records: BusinessRecord[], period: Period) {
+  const currentStart = periodStart(period);
+  const current: BusinessRecord[] = [];
+  const previous: BusinessRecord[] = [];
+  for (const r of records) {
+    if (!r.record_date) continue;
+    if (r.record_date >= currentStart) current.push(r);
+    else previous.push(r);
+  }
+  return { current, previous };
+}
+// Percentage change vs previous period. null = nothing to compare against.
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return Math.round(((current - previous) / Math.abs(previous)) * 100);
 }
 function periodRange(period: Period): string {
   const fmt = (d: Date) => `${MON_SHORT[d.getMonth()]} ${d.getDate()}`;
@@ -188,22 +216,29 @@ function PeriodDropdown({ period, onChange }: { period: Period; onChange: (p: Pe
 }
 
 // ── Pct badge (matching home page) ───────────────────────────────────────────
-function PctBadge({ pct, small, dark }: { pct: number; small?: boolean; dark?: boolean }) {
-  const isUp = pct >= 0;
+function PctBadge({ pct, small, dark }: { pct: number | null; small?: boolean; dark?: boolean }) {
+  const noData = pct === null;
+  const isUp   = !noData && pct >= 0;
   return (
     <div
       className="flex items-center gap-0.5 rounded-full font-bold"
       style={{
         padding:    small ? "3px 7px" : "4px 9px",
         fontSize:   small ? "10px" : "11px",
-        background: dark
-          ? (isUp ? "rgba(255,255,255,0.15)" : "rgba(255,80,80,0.22)")
-          : (isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)"),
-        color: isUp ? "#fff" : "#FFBBBB",
+        background: noData
+          ? "rgba(255,255,255,0.16)"
+          : dark
+            ? (isUp ? "rgba(255,255,255,0.15)" : "rgba(255,80,80,0.22)")
+            : (isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)"),
+        color: noData ? "rgba(255,255,255,0.75)" : isUp ? "#fff" : "#FFBBBB",
       }}
     >
-      {isUp ? <ArrowUp01Icon size={small ? 10 : 11} /> : <ArrowDown01Icon size={small ? 10 : 11} />}
-      {Math.abs(pct)}%
+      {noData
+        ? <MinusSignIcon size={small ? 10 : 11} />
+        : isUp
+          ? <ArrowUp01Icon size={small ? 10 : 11} />
+          : <ArrowDown01Icon size={small ? 10 : 11} />}
+      {noData ? 0 : Math.abs(pct)}%
     </div>
   );
 }
@@ -442,7 +477,8 @@ export default function InsightsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`/api/records?start_date=${periodStart(period)}&limit=2000`);
+      // Fetch from the previous period start so we can compare current vs previous
+      const res  = await fetch(`/api/records?start_date=${prevPeriodStart(period)}&limit=4000`);
       const data = await res.json();
       if (data.success) setRecords(data.data);
     } catch { /* silent */ } finally { setLoading(false); }
@@ -450,8 +486,13 @@ export default function InsightsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const chartData     = useMemo(() => aggregate(records, period), [records, period]);
-  const t             = useMemo(() => totals(records), [records]);
+  const { current: curRecords, previous: prevRecords } = useMemo(() => splitByPeriod(records, period), [records, period]);
+  const chartData     = useMemo(() => aggregate(curRecords, period), [curRecords, period]);
+  const t             = useMemo(() => totals(curRecords), [curRecords]);
+  const prevT         = useMemo(() => totals(prevRecords), [prevRecords]);
+  const salesPct      = useMemo(() => pctChange(t.sales, prevT.sales), [t.sales, prevT.sales]);
+  const expensePct    = useMemo(() => pctChange(t.expenses, prevT.expenses), [t.expenses, prevT.expenses]);
+  const profitPct     = useMemo(() => pctChange(t.profit, prevT.profit), [t.profit, prevT.profit]);
   const health        = useMemo(() => healthFromTotals(t.sales, t.expenses), [t.sales, t.expenses]);
   const dateRange     = useMemo(() => periodRange(period), [period]);
 
@@ -461,9 +502,9 @@ export default function InsightsPage() {
 
   const topExpenseCat = useMemo(() => {
     const acc: Record<string, number> = {};
-    for (const r of records) { if (r.type !== "expense" || !r.category) continue; acc[r.category] = (acc[r.category] ?? 0) + r.amount; }
+    for (const r of curRecords) { if (r.type !== "expense" || !r.category) continue; acc[r.category] = (acc[r.category] ?? 0) + r.amount; }
     return Object.entries(acc).sort((a, b) => b[1] - a[1])[0];
-  }, [records]);
+  }, [curRecords]);
 
   const expenseRatio = t.sales > 0 ? Math.round((t.expenses / t.sales) * 100) : null;
   const periodLabel  = period === "today" ? "Today" : period === "week" ? "Last 7 days" : period === "month" ? "This month" : "This year";
@@ -471,14 +512,14 @@ export default function InsightsPage() {
 
   const diagnosisCards: DiagnosisCardProps[] = useMemo(() => {
     const cards: DiagnosisCardProps[] = [];
-    if (records.length === 0) return cards;
+    if (curRecords.length === 0) return cards;
     if (t.profit > 0) cards.push({ icon: <ChartIncreaseIcon size={16} color="#2D7A3A" />, tag: "Profit", title: `You made ${formatCurrency(t.profit)} profit`, body: `${periodLabel}, your sales covered your costs and left you with ${formatCurrency(t.profit)}.`, variant: "positive", askPrompt: `I made ${formatCurrency(t.profit)} profit ${periodLabel.toLowerCase()}. How can I increase this?` });
     else if (t.profit < 0) cards.push({ icon: <ChartDecreaseIcon size={16} color="#DF191C" />, tag: "Profit", title: `You spent ${formatCurrency(Math.abs(t.profit))} more than you made`, body: `${periodLabel} expenses were higher than your sales.`, variant: "alert", askPrompt: `I spent more than I made. Sales ${formatCurrency(t.sales)}, expenses ${formatCurrency(t.expenses)}. What should I do?` });
     if (bestBucket && (bestBucket.profit + bestBucket.expenses) > 0) cards.push({ icon: <Award01Icon size={16} color="#2D7A3A" />, tag: "Sales", title: `${bestBucket.label} was your best ${bucketWord}`, body: `You made the most on ${bestBucket.label}${bestBucket.profit > 0 ? ` with ${formatCurrency(bestBucket.profit)} in profit` : ""}.`, variant: "positive", askPrompt: `${bestBucket.label} was my best ${bucketWord}. Why might that be?` });
     if (expenseRatio !== null && t.expenses > 0) { const isHigh = expenseRatio > 70; cards.push({ icon: <Alert01Icon size={16} color={isHigh ? "#DF191C" : "#FF7A00"} />, tag: "Spending", title: `${expenseRatio}% of sales went to expenses`, body: isHigh ? `For every ₦100 you made, ₦${expenseRatio} went to costs. Worth reviewing.` : `Your expenses are ${expenseRatio}% of sales. ${expenseRatio < 50 ? "You're managing costs well." : "There's room to tighten."}`, variant: isHigh ? "alert" : "warning", askPrompt: `${expenseRatio}% of my sales went to expenses. Is this normal?` }); }
     if (topExpenseCat) cards.push({ icon: <ShoppingBag01Icon size={16} color="#FF7A00" />, tag: "Spending", title: `${topExpenseCat[0]} is your biggest cost`, body: `You spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]} ${periodLabel.toLowerCase()}.`, variant: "warning", askPrompt: `I spent ${formatCurrency(topExpenseCat[1])} on ${topExpenseCat[0]}. How can I reduce this?` });
     return cards;
-  }, [records, t, bestBucket, expenseRatio, topExpenseCat, periodLabel, bucketWord]);
+  }, [curRecords, t, bestBucket, expenseRatio, topExpenseCat, periodLabel, bucketWord]);
 
   return (
     <div className="min-h-full" style={{ background: BG }}>
@@ -566,7 +607,7 @@ export default function InsightsPage() {
                   <p className="text-white/70 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
                     {periodLabel} · Profit
                   </p>
-                  {t.sales > 0 && <PctBadge pct={t.profit >= 0 ? Math.round((t.profit / t.sales) * 100) : -100} />}
+                  <PctBadge pct={profitPct} />
                 </div>
                 <p className="text-white font-bold" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(28px, 8vw, 38px)", letterSpacing: "-0.02em" }}>
                   {t.profit < 0 ? "–" : ""}{formatCurrency(Math.abs(t.profit))}
@@ -586,7 +627,10 @@ export default function InsightsPage() {
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-10 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
               <>
-                <p className="text-white/70 text-[12px] font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>Sale</p>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>Sale</p>
+                  <PctBadge pct={salesPct} small />
+                </div>
                 <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.sales)}</p>
               </>
             )}
@@ -599,7 +643,10 @@ export default function InsightsPage() {
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-16 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
               <>
-                <p className="text-white/70 text-[12px] font-medium mb-2" style={{ fontFamily: "var(--font-satoshi)" }}>Expense</p>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>Expense</p>
+                  <PctBadge pct={expensePct} small />
+                </div>
                 <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.expenses)}</p>
               </>
             )}
@@ -646,7 +693,7 @@ export default function InsightsPage() {
       </div>
 
       {/* ── Business health ── */}
-      {!loading && records.length > 0 && (
+      {!loading && curRecords.length > 0 && (
         <div className="px-5 mt-4">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
             <div className="bg-white rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
@@ -678,10 +725,10 @@ export default function InsightsPage() {
       )}
 
       {/* ── Top sellers ── */}
-      {!loading && records.length > 0 && (
+      {!loading && curRecords.length > 0 && (
         <div className="px-5 mt-4">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-            <TopSellersCard records={records} periodLabel={periodLabel} onCategoryRenamed={fetchData} />
+            <TopSellersCard records={curRecords} periodLabel={periodLabel} onCategoryRenamed={fetchData} />
           </motion.div>
         </div>
       )}
@@ -698,7 +745,7 @@ export default function InsightsPage() {
       )}
 
       {/* ── Empty state ── */}
-      {!loading && records.length === 0 && (
+      {!loading && curRecords.length === 0 && (
         <div className="px-5 mt-8 text-center">
           <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
             <ChartIncreaseIcon size={26} className="text-neutral-300" />

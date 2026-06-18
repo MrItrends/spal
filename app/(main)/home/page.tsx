@@ -16,6 +16,7 @@ import {
   User02Icon,
   ArrowUp01Icon,
   ArrowDown01Icon,
+  MinusSignIcon,
   ChartIncreaseIcon,
   Home01Icon,
   Menu01Icon,
@@ -257,7 +258,7 @@ function HomePageInner() {
                   <p className="text-white/70 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
                     Profit
                   </p>
-                  {profitPct !== null && <PctBadge pct={profitPct} />}
+                  <PctBadge pct={profitPct} />
                 </div>
                 <p
                   className="text-white font-bold"
@@ -286,7 +287,7 @@ function HomePageInner() {
                     <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
                       Sale
                     </p>
-                    {salesPct !== null && <PctBadge pct={salesPct} small />}
+                    <PctBadge pct={salesPct} small />
                   </div>
                   <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>
                     {formatCurrency(todaySales)}
@@ -310,7 +311,7 @@ function HomePageInner() {
                     <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
                       Expense
                     </p>
-                    {expensePct !== null && <PctBadge pct={expensePct} small />}
+                    <PctBadge pct={expensePct} small />
                   </div>
                   <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>
                     {formatCurrency(todayExpenses)}
@@ -472,22 +473,25 @@ function formatRecordTime(iso: string) {
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function PctBadge({ pct, small }: { pct: number; small?: boolean }) {
-  const isUp = pct >= 0;
+function PctBadge({ pct, small }: { pct: number | null; small?: boolean }) {
+  const noData = pct === null;
+  const isUp   = !noData && pct >= 0;
   return (
     <div
       className="flex items-center gap-0.5 rounded-full font-bold"
       style={{
         padding:    small ? "3px 7px" : "4px 9px",
         fontSize:   small ? "10px" : "11px",
-        background: isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)",
-        color:      isUp ? "#fff" : "#FFBBBB",
+        background: noData ? "rgba(255,255,255,0.16)" : isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)",
+        color:      noData ? "rgba(255,255,255,0.75)" : isUp ? "#fff" : "#FFBBBB",
       }}
     >
-      {isUp
-        ? <ArrowUp01Icon   size={small ? 10 : 11} />
-        : <ArrowDown01Icon size={small ? 10 : 11} />}
-      {Math.abs(pct)}%
+      {noData
+        ? <MinusSignIcon   size={small ? 10 : 11} />
+        : isUp
+          ? <ArrowUp01Icon   size={small ? 10 : 11} />
+          : <ArrowDown01Icon size={small ? 10 : 11} />}
+      {noData ? 0 : Math.abs(pct)}%
     </div>
   );
 }
