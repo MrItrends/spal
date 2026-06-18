@@ -73,7 +73,7 @@ export default function AddExpensePage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              onClick={() => router.push(m.href)}
+              onClick={() => { window.location.href = m.href; }}
               className="w-full flex items-center gap-4 bg-white rounded-2xl px-4 py-4 active:scale-[0.98] transition-transform text-left"
               style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)", minHeight: "72px" }}
             >
