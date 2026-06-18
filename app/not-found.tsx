@@ -1,418 +1,50 @@
-"use client";
-
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Home01Icon } from "hugeicons-react";
+import Image from "next/image";
 
-const COLS    = 4;
-const ROWS    = 3;
-const TOTAL   = COLS * ROWS;          // 12 tiles
-const INFO    = 5;                    // original index of the "PAGE NOT FOUND" cell
-const FF      = "var(--font-satoshi), system-ui, sans-serif";
+const FF = "var(--font-satoshi), system-ui, sans-serif";
+const GRADIENT = "linear-gradient(180deg, #EAA978 0%, #EFD5BA 42%, #ECEAD9 100%)";
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-function shuffleArr(arr: number[]): number[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function solved(cells: number[]) {
-  return cells.every((v, i) => v === i);
-}
-
-function makeShuffle(): number[] {
-  let a: number[];
-  do { a = shuffleArr(Array.from({ length: TOTAL }, (_, i) => i)); }
-  while (solved(a));
-  return a;
-}
-
-// ── Canvas confetti ──────────────────────────────────────────────────────────
-const CONFETTI_COLORS = ["#22C55E","#2563EB","#F97316","#8B5CF6","#FCD34D","#F472B6","#38BDF8","#FFFFFF"];
-type Shape = "rect" | "circle" | "ribbon";
-
-function Confetti({ active }: { active: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    if (!active) return;
-    const c = ref.current; if (!c) return;
-    c.width  = window.innerWidth;
-    c.height = window.innerHeight;
-    const ctx = c.getContext("2d")!;
-    const cx  = c.width / 2;
-    const cy  = c.height * 0.45;
-
-    // Two burst waves from center
-    const makeParticle = (delayed: boolean) => {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 6 + Math.random() * 14;
-      const shapes: Shape[] = ["rect", "rect", "circle", "ribbon"];
-      return {
-        x: cx, y: cy,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (4 + Math.random() * 4),
-        col: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-        w: 7 + Math.random() * 8,
-        h: 4 + Math.random() * 5,
-        rot: Math.random() * 360,
-        rv: (Math.random() - 0.5) * 14,
-        opacity: 1,
-        shape: shapes[Math.floor(Math.random() * shapes.length)] as Shape,
-        delay: delayed ? 18 + Math.floor(Math.random() * 12) : 0,
-      };
-    };
-
-    const ps = [
-      ...Array.from({ length: 160 }, () => makeParticle(false)),
-      ...Array.from({ length: 80  }, () => makeParticle(true)),
-    ];
-
-    let raf: number; let f = 0;
-    const TOTAL_FRAMES = 260;
-
-    const draw = () => {
-      ctx.clearRect(0, 0, c.width, c.height);
-      const progress = f / TOTAL_FRAMES;
-
-      for (const p of ps) {
-        if (f < p.delay) continue;
-        p.x  += p.vx; p.y += p.vy;
-        p.vx *= 0.985; p.vy += 0.38;
-        p.rot += p.rv; p.rv *= 0.98;
-        p.opacity = Math.max(0, 1 - Math.max(0, progress - 0.55) / 0.45);
-
-        ctx.save();
-        ctx.globalAlpha = p.opacity;
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rot * Math.PI) / 180);
-        ctx.fillStyle = p.col;
-
-        if (p.shape === "circle") {
-          ctx.beginPath();
-          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (p.shape === "ribbon") {
-          ctx.fillRect(-p.w * 0.5, -p.h * 0.25, p.w, p.h * 0.5);
-        } else {
-          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        }
-        ctx.restore();
-      }
-
-      if (++f < TOTAL_FRAMES) {
-        raf = requestAnimationFrame(draw);
-      } else {
-        ctx.clearRect(0, 0, c.width, c.height);
-      }
-    };
-    raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
-  }, [active]);
-  return <canvas ref={ref} className="fixed inset-0 pointer-events-none z-[60]" />;
-}
-
-// ── Single grid cell ─────────────────────────────────────────────────────────
-interface CellProps {
-  tileIdx:   number;   // which original tile occupies this position
-  cellW:     number;
-  cellH:     number;
-  gridW:     number;
-  gridH:     number;
-  fontSize:  number;
-  selected:  boolean;
-  flash:     boolean;
-  onClick:   () => void;
-}
-
-function Cell({ tileIdx, cellW, cellH, gridW, gridH, fontSize, selected, flash, onClick }: CellProps) {
-  const col    = tileIdx % COLS;
-  const row    = Math.floor(tileIdx / COLS);
-  const isInfo = tileIdx === INFO;
-
-  return (
-    <motion.div
-      onClick={onClick}
-      animate={{ scale: selected ? 0.96 : 1 }}
-      transition={{ duration: 0.12 }}
-      style={{
-        width:    cellW,
-        height:   cellH,
-        position: "relative",
-        overflow: "hidden",
-        cursor:   "pointer",
-        boxSizing: "border-box",
-        // Grid line between cells: right + bottom border except last col/row
-        border: "1px solid rgba(255,255,255,0.07)",
-        outline: selected
-          ? "2px solid #22C55E"
-          : "none",
-        outlineOffset: "-2px",
-        background: selected ? "rgba(34,197,94,0.06)" : "transparent",
-        transition: "background 0.15s",
-        zIndex: selected ? 2 : 1,
-      }}
-    >
-      {/* 404 text — positioned so this cell shows the right slice */}
-      <div
-        style={{
-          position:       "absolute",
-          left:           -col * cellW,
-          top:            -row * cellH + (gridH - fontSize * 0.72) / 2,
-          width:          gridW,
-          pointerEvents:  "none",
-          userSelect:     "none",
-        }}
-      >
-        <span
-          style={{
-            display:     "block",
-            fontSize:    fontSize,
-            fontWeight:  900,
-            color:       "#FFFFFF",
-            fontFamily:  FF,
-            letterSpacing: "-0.03em",
-            lineHeight:  0.72,
-            textAlign:   "center",
-            whiteSpace:  "nowrap",
-          }}
-        >
-          404
-        </span>
-      </div>
-
-      {/* Green flash when correctly placed */}
-      <AnimatePresence>
-        {flash && (
-          <motion.div
-            key="flash"
-            initial={{ opacity: 0.5 }}
-            animate={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.9 }}
-            style={{ position: "absolute", inset: 0,
-                     background: "rgba(34,197,94,0.28)", pointerEvents: "none" }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Selected glow overlay */}
-      {selected && (
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none",
-                      boxShadow: "inset 0 0 20px rgba(34,197,94,0.25)" }} />
-      )}
-
-      {/* Info overlay — "PAGE NOT FOUND" cell */}
-      {isInfo && (
-        <div
-          style={{
-            position:      "absolute", inset: 0,
-            background:    "rgba(9,14,27,0.91)",
-            backdropFilter: "blur(3px)",
-            WebkitBackdropFilter: "blur(3px)",
-            display:       "flex",
-            flexDirection: "column",
-            alignItems:    "flex-start",
-            justifyContent:"center",
-            padding:       "0 16px",
-            pointerEvents: "none",
-          }}
-        >
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em",
-                      color: "#22C55E", fontFamily: FF, marginBottom: 8,
-                      textTransform: "uppercase" }}>
-            Error 404
-          </p>
-          <p style={{ fontSize: 15, fontWeight: 800, color: "#fff",
-                      fontFamily: FF, lineHeight: 1.25, margin: 0 }}>
-            PAGE<br />NOT FOUND
-          </p>
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// ── Main page ────────────────────────────────────────────────────────────────
 export default function NotFound() {
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [dims,     setDims]     = useState({ w: 0, h: 0 });
-  const [cells,    setCells]    = useState<number[]>(() => makeShuffle());
-  const [selected, setSelected] = useState<number | null>(null);
-  const [isSolved, setIsSolved] = useState(false);
-  const [confetti, setConfetti] = useState(false);
-  const [flashSet, setFlashSet] = useState<Set<number>>(new Set());
-
-  const measure = useCallback(() => {
-    if (!gridRef.current) return;
-    const r = gridRef.current.getBoundingClientRect();
-    setDims({ w: r.width, h: r.height });
-  }, []);
-
-  useEffect(() => {
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [measure]);
-
-  const cellW    = dims.w / COLS;
-  const cellH    = dims.h / ROWS;
-  // Make "404" wide enough to span the grid; clamp so it doesn't dwarf the grid height
-  const fontSize = dims.w > 0 ? Math.min(dims.w * 0.58, dims.h * 0.62) : 200;
-
-  function handleTap(posIdx: number) {
-    if (isSolved) return;
-
-    if (selected === null) {
-      setSelected(posIdx);
-      return;
-    }
-
-    if (selected === posIdx) {
-      setSelected(null);
-      return;
-    }
-
-    // Swap
-    const next = [...cells];
-    [next[selected], next[posIdx]] = [next[posIdx], next[selected]];
-    setCells(next);
-    setSelected(null);
-
-    if (solved(next)) {
-      const all = new Set<number>(Array.from({ length: TOTAL }, (_, i) => i));
-      setFlashSet(all);
-      setTimeout(() => setFlashSet(new Set()), 1200);
-      setIsSolved(true);
-      setTimeout(() => setConfetti(true), 350);
-    }
-  }
-
   return (
-    <div className="fixed inset-0 flex flex-col" style={{ background: "#0A0F1C" }}>
-      <Confetti active={confetti} />
+    <div
+      className="min-h-full flex flex-col items-center px-8"
+      style={{ background: GRADIENT }}
+    >
+      {/* Avatar + label centred in the upper space */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center w-full">
+        <Image
+          src="/spal-404.webp"
+          alt="SPAL on 404 Street"
+          width={320}
+          height={420}
+          priority
+          className="w-[260px] max-w-[80%] h-auto object-contain"
+        />
 
-      {/* SPAL wordmark */}
-      <div className="absolute top-5 left-5 z-10 pointer-events-none">
-        <span style={{ fontFamily: FF, fontSize: 12, fontWeight: 800,
-                       letterSpacing: "0.18em", color: "rgba(255,255,255,0.18)" }}>
-          SPAL
-        </span>
+        <p className="text-[18px] font-medium text-spal-navy mt-6" style={{ fontFamily: FF }}>
+          You Found the
+        </p>
+        <h1
+          className="font-black text-spal-navy leading-tight mt-1"
+          style={{ fontFamily: FF, fontSize: "clamp(34px, 11vw, 52px)", letterSpacing: "-0.01em" }}
+        >
+          404 STREET
+        </h1>
       </div>
 
-      {/* Persistent home button */}
-      <div className="absolute top-4 right-4 z-20">
-        <Link href="/home">
-          <motion.div
-            whileTap={{ scale: 0.93 }}
-            style={{
-              display:      "flex",
-              alignItems:   "center",
-              gap:          6,
-              padding:      "8px 14px",
-              borderRadius: 999,
-              background:   "rgba(255,255,255,0.07)",
-              border:       "1px solid rgba(255,255,255,0.12)",
-              cursor:       "pointer",
-            }}
-          >
-            <Home01Icon size={14} strokeWidth={2.2} color="rgba(255,255,255,0.7)" />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)", fontFamily: FF }}>
-              Home01Icon
-            </span>
-          </motion.div>
-        </Link>
-      </div>
-
-      {/* Hint pill */}
-      <AnimatePresence>
-        {!isSolved && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.35 }}
-            className="absolute top-5 left-1/2 -translate-x-1/2 z-10 pointer-events-none whitespace-nowrap"
-          >
-            <div style={{ padding: "5px 14px", borderRadius: 999,
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", fontFamily: FF }}>
-                Tap two tiles to swap
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Puzzle grid */}
-      <div
-        ref={gridRef}
-        className="flex-1"
+      {/* Back home */}
+      <Link
+        href="/home"
+        className="w-full max-w-[340px] h-14 rounded-2xl flex items-center justify-center text-white font-bold text-[16px] active:scale-[0.98] transition-transform"
         style={{
-          display:             "grid",
-          gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-          gridTemplateRows:    `repeat(${ROWS}, 1fr)`,
-          // Outer border
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: "#22C55E",
+          boxShadow: "0 8px 24px rgba(34,197,94,0.38)",
+          fontFamily: FF,
+          marginBottom: "calc(env(safe-area-inset-bottom, 0px) + 40px)",
         }}
       >
-        {dims.w > 0 && cells.map((tileIdx, posIdx) => (
-          <Cell
-            key={posIdx}
-            tileIdx={tileIdx}
-            cellW={cellW}
-            cellH={cellH}
-            gridW={dims.w}
-            gridH={dims.h}
-            fontSize={fontSize}
-            selected={selected === posIdx}
-            flash={flashSet.has(posIdx)}
-            onClick={() => handleTap(posIdx)}
-          />
-        ))}
-      </div>
-
-      {/* Success panel */}
-      <AnimatePresence>
-        {isSolved && (
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
-            className="absolute bottom-0 left-0 right-0 z-20"
-          >
-            {/* Gradient scrim */}
-            <div style={{ height: 64, background: "linear-gradient(to bottom, transparent, #0A0F1C)" }} />
-            <div style={{ background: "#0A0F1C", padding: "0 20px 40px" }}>
-              <div className="max-w-[480px] mx-auto text-center">
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.38)", fontFamily: FF, marginBottom: 14 }}>
-                  You solved it. Let&apos;s get you home.
-                </p>
-                <Link href="/home">
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="w-full h-14 rounded-2xl text-[15px] font-semibold text-white flex items-center justify-center gap-2.5"
-                    style={{
-                      fontFamily: FF,
-                      background: "linear-gradient(135deg, #22C55E 0%, #2563EB 100%)",
-                      boxShadow:  "0 4px 28px rgba(34,197,94,0.35)",
-                    }}
-                  >
-                    <Home01Icon size={18} strokeWidth={2.2} />
-                    Take me home
-                  </motion.button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        Please Head Back Home
+      </Link>
     </div>
   );
 }
