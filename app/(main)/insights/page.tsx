@@ -11,7 +11,7 @@ import {
   ChartIncreaseIcon, ArrowRight01Icon, PencilEdit01Icon, Cancel01Icon, Tick01Icon,
   Award01Icon, Alert01Icon, ChartDecreaseIcon, ShoppingBag01Icon, Tag01Icon,
   HeartCheckIcon, FireIcon, Notification03Icon, User02Icon, Home01Icon,
-  Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon, MinusSignIcon,
+  Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon,
 } from "hugeicons-react";
 import { SALE_CATEGORIES } from "@/lib/utils/category";
 import { getGreeting } from "@/lib/utils/dates";
@@ -233,11 +233,9 @@ function PctBadge({ pct, small, dark }: { pct: number | null; small?: boolean; d
         color: noData ? "rgba(255,255,255,0.75)" : isUp ? "#fff" : "#FFBBBB",
       }}
     >
-      {noData
-        ? <MinusSignIcon size={small ? 10 : 11} />
-        : isUp
-          ? <ArrowUp01Icon size={small ? 10 : 11} />
-          : <ArrowDown01Icon size={small ? 10 : 11} />}
+      {!noData && (isUp
+        ? <ArrowUp01Icon size={small ? 10 : 11} />
+        : <ArrowDown01Icon size={small ? 10 : 11} />)}
       {noData ? 0 : Math.max(-100, Math.min(100, pct))}%
     </div>
   );

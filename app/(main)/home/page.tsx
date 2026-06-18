@@ -16,7 +16,6 @@ import {
   User02Icon,
   ArrowUp01Icon,
   ArrowDown01Icon,
-  MinusSignIcon,
   ChartIncreaseIcon,
   Home01Icon,
   Menu01Icon,
@@ -486,11 +485,9 @@ function PctBadge({ pct, small }: { pct: number | null; small?: boolean }) {
         color:      noData ? "rgba(255,255,255,0.75)" : isUp ? "#fff" : "#FFBBBB",
       }}
     >
-      {noData
-        ? <MinusSignIcon   size={small ? 10 : 11} />
-        : isUp
-          ? <ArrowUp01Icon   size={small ? 10 : 11} />
-          : <ArrowDown01Icon size={small ? 10 : 11} />}
+      {!noData && (isUp
+        ? <ArrowUp01Icon   size={small ? 10 : 11} />
+        : <ArrowDown01Icon size={small ? 10 : 11} />)}
       {noData ? 0 : Math.max(-100, Math.min(100, pct))}%
     </div>
   );
