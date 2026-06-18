@@ -1,5 +1,7 @@
 "use client";
 
+import { Calendar03Icon, Clock01Icon } from "hugeicons-react";
+
 const FF = "var(--font-satoshi)";
 
 interface Props {
@@ -31,7 +33,7 @@ export function DateTimePicker({
         className="rounded-2xl px-3.5 py-3 flex items-center gap-2.5"
         style={{ background: bg, boxShadow: shadow }}
       >
-        <span className="text-base flex-shrink-0">📅</span>
+        <Calendar03Icon size={17} color={variant === "dark" ? "#fff" : "#6B7280"} className="flex-shrink-0" />
         <input
           type="date"
           value={date}
@@ -48,7 +50,7 @@ export function DateTimePicker({
           className="rounded-2xl px-3.5 py-3 flex items-center gap-2.5"
           style={{ background: bg, boxShadow: shadow }}
         >
-          <span className="text-base flex-shrink-0">🕐</span>
+          <Clock01Icon size={17} color={variant === "dark" ? "#fff" : "#6B7280"} className="flex-shrink-0" />
           <input
             type="time"
             value={time}
