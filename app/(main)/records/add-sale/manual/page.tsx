@@ -14,7 +14,12 @@ interface Item {
   name: string;
   qty: string;
   unitPrice: string;
+  payment: "paid" | "owing";
+  customerName: string;
+  partPaid: string; // amount paid now on an owing item (optional partial payment)
 }
+
+const emptyItem = (): Item => ({ name: "", qty: "", unitPrice: "", payment: "paid", customerName: "", partPaid: "" });
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -31,44 +36,63 @@ export default function ManualEntryPage() {
 
   const [date, setDate] = useState(today());
   const [time, setTime] = useState(nowTime());
-  const [items, setItems] = useState<Item[]>([{ name: "", qty: "", unitPrice: "" }]);
+  const [items, setItems] = useState<Item[]>([emptyItem()]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'owing'>('paid');
-  const [customerName, setCustomerName] = useState('');
 
   const updateItem = useCallback((idx: number, field: keyof Item, val: string) => {
     setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: val } : it));
   }, []);
 
-  const addItem = () => setItems((prev) => [...prev, { name: "", qty: "", unitPrice: "" }]);
+  const addItem = () => setItems((prev) => [...prev, emptyItem()]);
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
   const validItems = items.filter((it) => it.name.trim() && parseFloat(it.qty) > 0 && parseFloat(it.unitPrice) > 0);
   const totalUnits = validItems.reduce((s, it) => s + parseFloat(it.qty), 0);
   const totalAmount = validItems.reduce((s, it) => s + parseFloat(it.qty) * parseFloat(it.unitPrice), 0);
 
+  // How much of this batch is still owed (owing total minus any part paid now)
+  const owedAmount = validItems.reduce((s, it) => {
+    if (it.payment !== "owing") return s;
+    const itemTotal = parseFloat(it.qty) * parseFloat(it.unitPrice);
+    const part = Math.min(itemTotal, Math.max(0, parseFloat(it.partPaid) || 0));
+    return s + (itemTotal - part);
+  }, 0);
+
   async function handleSave() {
     if (validItems.length === 0 || saving) return;
     setSaving(true);
     setSaveError(null);
     try {
+      // Build one or two records per item. An owing item with a part paid now
+      // splits into a paid record (received today) + an owing record (the rest).
+      type Payload = { type: string; amount: number; description: string; category: string; input_method: string; record_date: string; payment_status: string; customer_name?: string };
+      const payloads: Payload[] = [];
+      for (const it of validItems) {
+        const itemTotal = parseFloat(it.qty) * parseFloat(it.unitPrice);
+        const base = { type: "sale", description: it.name.trim(), category: "Other", input_method: "manual", record_date: date };
+        if (it.payment === "paid") {
+          payloads.push({ ...base, amount: itemTotal, payment_status: "paid" });
+        } else {
+          const customer = it.customerName.trim() || undefined;
+          const part = Math.min(itemTotal, Math.max(0, parseFloat(it.partPaid) || 0));
+          if (part > 0) {
+            payloads.push({ ...base, amount: part, payment_status: "paid", customer_name: customer });
+          }
+          const owed = itemTotal - part;
+          if (owed > 0) {
+            payloads.push({ ...base, amount: owed, payment_status: "owing", customer_name: customer });
+          }
+        }
+      }
+
       const responses = await Promise.all(
-        validItems.map((it) =>
+        payloads.map((p) =>
           fetch("/api/records", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "sale",
-              amount: parseFloat(it.qty) * parseFloat(it.unitPrice),
-              description: it.name.trim(),
-              category: "Other",
-              input_method: "manual",
-              record_date: date,
-              payment_status: paymentStatus,
-              customer_name: paymentStatus === 'owing' ? (customerName.trim() || undefined) : undefined,
-            }),
+            body: JSON.stringify(p),
           })
         )
       );
@@ -149,67 +173,148 @@ export default function ManualEntryPage() {
         </div>
 
         {/* Item rows */}
-        <div className="mt-1.5 space-y-2">
-          {items.map((item, idx) => (
-            <div key={idx} className="grid gap-2 items-center" style={{ gridTemplateColumns: "1fr 64px 96px 24px" }}>
-              {/* Name */}
-              <input
-                type="text"
-                value={item.name}
-                onChange={(e) => updateItem(idx, "name", e.target.value)}
-                placeholder="Item name"
-                className="h-11 rounded-xl px-3 text-[13px] text-spal-navy bg-white outline-none transition-all"
-                style={{
-                  fontFamily,
-                  border: item.name ? "1.5px solid #22C55E" : "1.5px solid #E5E7EB",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                }}
-              />
-              {/* Qty */}
-              <input
-                type="number"
-                value={item.qty}
-                onChange={(e) => updateItem(idx, "qty", e.target.value)}
-                placeholder="1"
-                min="0"
-                className="h-11 rounded-xl px-2 text-[13px] text-spal-navy bg-white outline-none text-center"
-                style={{
-                  fontFamily,
-                  border: "1.5px solid #E5E7EB",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                }}
-              />
-              {/* Unit price */}
-              <div
-                className="h-11 rounded-xl bg-white flex items-center overflow-hidden"
-                style={{ border: "1.5px solid #E5E7EB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-              >
-                <span className="pl-2 text-[11px] text-neutral-400 font-medium" style={{ fontFamily }}>₦</span>
+        <div className="mt-1.5 space-y-2.5">
+          {items.map((item, idx) => {
+            const itemTotal = (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0);
+            const owing = item.payment === "owing";
+            return (
+            <div key={idx} className="space-y-2">
+              <div className="grid gap-2 items-center" style={{ gridTemplateColumns: "1fr 64px 96px 24px" }}>
+                {/* Name */}
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => updateItem(idx, "name", e.target.value)}
+                  placeholder="Item name"
+                  className="h-11 rounded-xl px-3 text-[13px] text-spal-navy bg-white outline-none transition-all"
+                  style={{
+                    fontFamily,
+                    border: item.name ? "1.5px solid #22C55E" : "1.5px solid #E5E7EB",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                  }}
+                />
+                {/* Qty */}
                 <input
                   type="number"
-                  value={item.unitPrice}
-                  onChange={(e) => updateItem(idx, "unitPrice", e.target.value)}
-                  placeholder="0"
+                  value={item.qty}
+                  onChange={(e) => updateItem(idx, "qty", e.target.value)}
+                  placeholder="1"
                   min="0"
-                  className="flex-1 h-full px-1 text-[12.5px] text-spal-navy bg-transparent outline-none"
-                  style={{ fontFamily }}
+                  className="h-11 rounded-xl px-2 text-[13px] text-spal-navy bg-white outline-none text-center"
+                  style={{ fontFamily, border: "1.5px solid #E5E7EB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 />
-              </div>
-              {/* Delete */}
-              {idx >= 1 ? (
-                <button
-                  onClick={() => removeItem(idx)}
-                  className="w-6 h-6 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                  style={{ background: "#FEE2E2" }}
-                  aria-label="Remove item"
+                {/* Unit price */}
+                <div
+                  className="h-11 rounded-xl bg-white flex items-center overflow-hidden"
+                  style={{ border: "1.5px solid #E5E7EB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 >
-                  <MinusSignIcon size={12} color="#EF4444" />
-                </button>
-              ) : (
-                <div />
-              )}
+                  <span className="pl-2 text-[11px] text-neutral-400 font-medium" style={{ fontFamily }}>₦</span>
+                  <input
+                    type="number"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(idx, "unitPrice", e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    className="flex-1 h-full px-1 text-[12.5px] text-spal-navy bg-transparent outline-none"
+                    style={{ fontFamily }}
+                  />
+                </div>
+                {/* Delete */}
+                {idx >= 1 ? (
+                  <button
+                    onClick={() => removeItem(idx)}
+                    className="w-6 h-6 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                    style={{ background: "#FEE2E2" }}
+                    aria-label="Remove item"
+                  >
+                    <MinusSignIcon size={12} color="#EF4444" />
+                  </button>
+                ) : (
+                  <div />
+                )}
+              </div>
+
+              {/* Per-item payment — only shown once the item has a name */}
+              <AnimatePresence>
+                {item.name.trim() && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex items-center gap-1.5 pl-0.5">
+                      <span className="text-[11px] text-neutral-400 font-medium mr-0.5" style={{ fontFamily }}>Payment:</span>
+                      {(["paid", "owing"] as const).map((s) => {
+                        const active = item.payment === s;
+                        const activeBg = s === "paid" ? "#22C55E" : "#F97316";
+                        return (
+                          <button
+                            key={s}
+                            onClick={() => updateItem(idx, "payment", s)}
+                            className="h-7 px-3 rounded-full text-[11.5px] font-bold flex items-center gap-1 active:scale-95 transition-all"
+                            style={{
+                              background: active ? activeBg : "#fff",
+                              color: active ? "#fff" : "#6B7280",
+                              border: active ? "none" : "1.5px solid #E5E7EB",
+                            }}
+                          >
+                            {s === "paid" ? <Tick01Icon size={11} /> : <Clock01Icon size={11} />}
+                            {s === "paid" ? "Paid" : "Owes me"}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Owing details: who owes + optional part paid now */}
+                    <AnimatePresence>
+                      {owing && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="flex gap-2 mt-2">
+                            <input
+                              type="text"
+                              value={item.customerName}
+                              onChange={(e) => updateItem(idx, "customerName", e.target.value)}
+                              placeholder="Who owes? (optional)"
+                              className="flex-1 h-10 px-3 rounded-xl text-[12.5px] text-spal-navy outline-none"
+                              style={{ background: "#FFF7ED", border: "1.5px solid #FED7AA", fontFamily }}
+                            />
+                            <div className="h-10 rounded-xl flex items-center overflow-hidden" style={{ background: "#FFF7ED", border: "1.5px solid #FED7AA", width: 122 }}>
+                              <span className="pl-2.5 text-[11px] font-medium" style={{ color: "#C2410C", fontFamily }}>₦</span>
+                              <input
+                                type="number"
+                                value={item.partPaid}
+                                onChange={(e) => updateItem(idx, "partPaid", e.target.value)}
+                                placeholder="Paid part"
+                                min="0"
+                                max={itemTotal || undefined}
+                                className="flex-1 w-full h-full px-1.5 text-[12px] text-spal-navy bg-transparent outline-none"
+                                style={{ fontFamily }}
+                              />
+                            </div>
+                          </div>
+                          {parseFloat(item.partPaid) > 0 && itemTotal > 0 && (
+                            <p className="text-[11px] mt-1.5 pl-0.5" style={{ fontFamily, color: "#C2410C" }}>
+                              {formatCurrency(Math.min(itemTotal, parseFloat(item.partPaid)))} paid now ·{" "}
+                              {formatCurrency(Math.max(0, itemTotal - parseFloat(item.partPaid)))} still owed
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Add another item */}
@@ -266,45 +371,19 @@ export default function ManualEntryPage() {
       {/* Fixed CTA */}
       <div
         className="fixed cta-bottom left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 pb-4 pt-3"
-        style={{ background: "linear-gradient(to top, #F7F9F5 80%, transparent)" }}
+        style={{ background: "linear-gradient(to top, #EEF3E9 80%, transparent)" }}
       >
-        {/* Payment toggle */}
-        <div className="mb-3">
-          <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-2" style={{ fontFamily }}>
-            Did they pay?
-          </p>
-          <div className="flex gap-2 mb-2">
-            {(['paid', 'owing'] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setPaymentStatus(s)}
-                className="flex-1 h-10 rounded-full text-[13px] font-bold transition-all duration-150 flex items-center justify-center gap-1.5"
-                style={{
-                  background: paymentStatus === s ? (s === 'paid' ? '#22C55E' : '#F97316') : '#E5E7EB',
-                  color: paymentStatus === s ? '#fff' : '#6B7280',
-                  fontFamily,
-                }}
-              >
-                {s === 'paid' ? <><Tick01Icon size={13} /> Paid now</> : <><Clock01Icon size={13} />{' '}Owes me</>}
-              </button>
-            ))}
-          </div>
-          <AnimatePresence>
-            {paymentStatus === 'owing' && (
-              <motion.input
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 44 }}
-                exit={{ opacity: 0, height: 0 }}
-                type="text"
-                value={customerName}
-                onChange={e => setCustomerName(e.target.value)}
-                placeholder="Customer name (optional)"
-                className="w-full px-4 rounded-xl text-[13px] text-spal-navy outline-none"
-                style={{ background: '#FFF7ED', border: '1.5px solid #FED7AA', fontFamily }}
-              />
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Owed summary — payment is set per item above */}
+        <AnimatePresence>
+          {owedAmount > 0 && (
+            <motion.p
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="text-[12px] font-semibold text-center mb-2.5" style={{ fontFamily, color: "#C2410C" }}
+            >
+              {formatCurrency(owedAmount)} will be owed to you
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         {saveError && (
           <p className="text-[12px] text-red-600 font-medium text-center mb-2" style={{ fontFamily }}>
