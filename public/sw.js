@@ -14,11 +14,13 @@
  * Bump CACHE_VERSION to force all clients to drop old caches.
  */
 
-const CACHE_VERSION = "spal-v3";
+const CACHE_VERSION = "spal-v4";
 const OFFLINE_URL   = "/offline";
+const OFFLINE_IMG   = "/spal-internet-outage.webp";
 
 const PRECACHE = [
   OFFLINE_URL,
+  OFFLINE_IMG,
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
@@ -57,8 +59,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Icons / manifest → cache-first (safe; rarely change, not build-hashed)
-  if (url.pathname.startsWith("/icons/") || url.pathname === "/manifest.json") {
+  // Icons / manifest / offline image → cache-first (safe; rarely change, not build-hashed)
+  if (url.pathname.startsWith("/icons/") || url.pathname === "/manifest.json" || url.pathname === OFFLINE_IMG) {
     event.respondWith(
       caches.match(request).then((cached) =>
         cached ??
