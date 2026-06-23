@@ -99,6 +99,32 @@ export default function AskSPALPage() {
     return audioCtxRef.current;
   }
 
+  // Short UI tones for tactile feedback: a rising "open" cue, a softer "close" cue.
+  function playCue(kind: "start" | "stop") {
+    try {
+      const ctx = ensureAudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      if (kind === "start") {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(660, now + 0.12);
+      } else {
+        osc.frequency.setValueAtTime(560, now);
+        osc.frequency.exponentialRampToValueAtTime(360, now + 0.14);
+      }
+      // gentle attack + decay so it never clicks or feels harsh
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    } catch { /* audio not available — ignore */ }
+  }
+
   function stopAudio() {
     try { audioSourceRef.current?.stop(); } catch { /* already ended */ }
     audioSourceRef.current = null;
@@ -266,6 +292,7 @@ export default function AskSPALPage() {
   function activateVoice() {
     if (endedRef.current) resetForNewChat();
     ensureAudioCtx(); // unlock audio on user gesture
+    playCue("start");
     if (startTimeRef.current === null) {
       startTimeRef.current = Date.now();
       timerRef.current = setInterval(() => {
@@ -307,6 +334,7 @@ export default function AskSPALPage() {
 
   // ── End session ───────────────────────────────────────────────────────────
   async function endSession() {
+    playCue("stop");
     endedRef.current = true;
     chatActiveRef.current = false;
     setChatActive(false);
