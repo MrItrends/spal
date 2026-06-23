@@ -212,6 +212,7 @@ export async function askSPAL(data: {
   dailyBreakdown?: Array<{ date: string; sales: number; expenses: number; profit: number }>;
   recentRecords?: Array<{ type: string; amount: number; description: string; date: string }>;
   currency: string;
+  brief?: boolean; // voice mode — keep the reply short so speech is fast & consistent
 }): Promise<string> {
   // Prefer live records-based breakdown; fall back to summaries if no records
   const breakdown = (data.dailyBreakdown && data.dailyBreakdown.length > 0)
@@ -253,15 +254,21 @@ export async function askSPAL(data: {
     content: m.content,
   }));
 
+  // Voice replies are spoken aloud, so keep them short — this is the biggest
+  // lever for fast, consistent TTS (shorter reply = quicker, steadier playback).
+  const voiceSuffix = data.brief
+    ? "\n\nIMPORTANT: This answer will be spoken out loud. Reply in 1–2 short sentences, straight to the point. No lists, no markdown, no long explanations."
+    : "";
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: systemPrompt + voiceSuffix },
       ...historyMessages,
       { role: "user",   content: data.message },
     ],
     temperature: 0.7,
-    max_tokens: 300,
+    max_tokens: data.brief ? 130 : 300,
   });
 
   return response.choices[0]?.message?.content ?? "Sorry, I could not answer that. Please try again.";

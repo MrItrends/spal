@@ -14,23 +14,47 @@ export async function POST(req: NextRequest) {
     const { message, conversationId } = await req.json();
     if (!message?.trim()) return NextResponse.json({ success: false, error: "Message required" }, { status: 400 });
 
-    // Get user context
-    const { data: userData } = await supabase
-      .from("users")
-      .select("full_name, business_type, business_name, currency")
-      .eq("id", user.id)
-      .single();
-
-    // Fetch actual records for the last 8 days — source of truth, always up to date
     const eightDaysAgo = new Date();
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
-    const { data: recentRecords } = await supabase
-      .from("records")
-      .select("type, amount, description, category, created_at")
-      .eq("user_id", user.id)
-      .gte("created_at", eightDaysAgo.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(100);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const admin = createAdminClient();
+
+    // Fetch all context in parallel — these are independent, so don't await
+    // them one after another (that was adding round-trips to every voice reply).
+    const [
+      { data: userData },
+      { data: recentRecords },
+      { data: summaries },
+      conversationRes,
+    ] = await Promise.all([
+      supabase
+        .from("users")
+        .select("full_name, business_type, business_name, currency")
+        .eq("id", user.id)
+        .single(),
+      // Actual records for the last 8 days — source of truth, always up to date
+      supabase
+        .from("records")
+        .select("type, amount, description, category, created_at")
+        .eq("user_id", user.id)
+        .gte("created_at", eightDaysAgo.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(100),
+      // Summaries as a fallback for days not covered by the records window
+      supabase
+        .from("daily_summaries")
+        .select("summary_date, total_sales, total_expenses, profit")
+        .eq("user_id", user.id)
+        .gte("summary_date", weekAgo.toISOString().split("T")[0])
+        .order("summary_date", { ascending: true }),
+      // Load conversation (if continuing one)
+      conversationId
+        ? admin.from("conversations").select("*").eq("id", conversationId).eq("user_id", user.id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const conversation = conversationRes?.data ?? null;
 
     // Compute per-day totals from records
     const dailyMap: Record<string, { sales: number; expenses: number; profit: number }> = {};
@@ -50,29 +74,6 @@ export async function POST(req: NextRequest) {
       .sort(([a], [b]) => a.localeCompare(b)) // oldest first
       .map(([date, totals]) => ({ date, ...totals }));
 
-    // Keep fetching summaries as a fallback for days not covered by records window
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const { data: summaries } = await supabase
-      .from("daily_summaries")
-      .select("summary_date, total_sales, total_expenses, profit")
-      .eq("user_id", user.id)
-      .gte("summary_date", weekAgo.toISOString().split("T")[0])
-      .order("summary_date", { ascending: true });
-
-    // Load or create conversation
-    const admin = createAdminClient();
-    let conversation = null;
-    if (conversationId) {
-      const { data } = await admin
-        .from("conversations")
-        .select("*")
-        .eq("id", conversationId)
-        .eq("user_id", user.id)
-        .single();
-      conversation = data;
-    }
-
     const history = conversation?.messages ?? [];
     const newUserMsg = { role: "user" as const, content: message, timestamp: new Date().toISOString() };
 
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
         date:        r.created_at.split("T")[0],
       })),
       currency: userData?.currency ?? "NGN",
+      brief: true, // this endpoint feeds the voice chat — keep replies short
     });
 
     const newAssistantMsg = { role: "assistant" as const, content: reply, timestamp: new Date().toISOString() };
