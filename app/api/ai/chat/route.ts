@@ -11,8 +11,10 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const { message, conversationId } = await req.json();
+    const { message, conversationId, dryRun, precomputedReply } = await req.json();
     if (!message?.trim()) return NextResponse.json({ success: false, error: "Message required" }, { status: 400 });
+    // dryRun   = compute the reply but don't save (speculative prefetch while the user is still talking)
+    // precomputedReply = skip the AI call, just persist a reply we already computed during prefetch
 
     const eightDaysAgo = new Date();
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
@@ -77,8 +79,8 @@ export async function POST(req: NextRequest) {
     const history = conversation?.messages ?? [];
     const newUserMsg = { role: "user" as const, content: message, timestamp: new Date().toISOString() };
 
-    // Call OpenAI
-    const reply = await askSPAL({
+    // Call OpenAI — unless we already computed the reply during prefetch
+    const reply = precomputedReply?.trim() ? precomputedReply.trim() : await askSPAL({
       message,
       history,
       user: userData ?? {},
@@ -93,6 +95,11 @@ export async function POST(req: NextRequest) {
       currency: userData?.currency ?? "NGN",
       brief: true, // this endpoint feeds the voice chat — keep replies short
     });
+
+    // Speculative prefetch: return the reply without saving anything.
+    if (dryRun) {
+      return NextResponse.json({ success: true, data: { reply } });
+    }
 
     const newAssistantMsg = { role: "assistant" as const, content: reply, timestamp: new Date().toISOString() };
     const updatedMessages = [...history, newUserMsg, newAssistantMsg];

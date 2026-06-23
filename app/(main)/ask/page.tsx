@@ -67,6 +67,9 @@ export default function AskSPALPage() {
   const recognitionRef    = useRef<any>(null);
   const pendingTranscript = useRef<string | null>(null);
   const silenceTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prefetchTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Speculative reply computed while the user is still talking, keyed by transcript
+  const prefetchRef       = useRef<{ transcript: string; promise: Promise<string | null>; ctrl: AbortController } | null>(null);
   const typingRef         = useRef(false); // user is typing → pause the mic loop
   const audioCtxRef       = useRef<AudioContext | null>(null);
   const audioSourceRef    = useRef<AudioBufferSourceNode | null>(null);
@@ -154,9 +157,38 @@ export default function AskSPALPage() {
     });
   }
 
+  // How long a silence means the user is done (forgiving, so we never cut off
+  // mid-sentence) vs. how soon we START computing the answer during a pause.
+  const END_OF_TURN_MS   = 2200;
+  const PREFETCH_AFTER_MS = 1000;
+
+  function clearPrefetch() {
+    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
+  }
+
+  // Start computing a reply for the transcript-so-far while the user pauses.
+  // If they keep talking, the next pause aborts this and prefetches the longer text.
+  function startPrefetch(text: string) {
+    if (!text || endedRef.current) return;
+    if (prefetchRef.current?.transcript === text) return; // already prefetching this exact text
+    prefetchRef.current?.ctrl.abort();
+    const ctrl = new AbortController();
+    const promise = fetch("/api/ai/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, conversationId: convIdRef.current, dryRun: true }),
+      signal: ctrl.signal,
+    })
+      .then((r) => r.json())
+      .then((d) => (d?.success ? (d.data.reply as string) : null))
+      .catch(() => null);
+    prefetchRef.current = { transcript: text, promise, ctrl };
+  }
+
   // ── Speech recognition (interim results + manual silence detection) ─────────
-  // We run a continuous recognizer and use our own 1.1s silence timer so SPAL
-  // replies fast — much quicker than the browser's built-in end-of-speech delay.
+  // Continuous recognizer. We start computing the answer during brief pauses
+  // (prefetch) and only submit after a longer silence, so SPAL has the reply
+  // ready the moment the user stops — without ever cutting them off.
   const startRecognition = useCallback(() => {
     if (endedRef.current || !chatActiveRef.current || typingRef.current) return;
     if (recognitionRef.current) return; // one recognizer at a time
@@ -173,12 +205,20 @@ export default function AskSPALPage() {
       if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
     };
 
-    // Stop recognizer after a short pause → onend submits the transcript
+    // Stop recognizer after the end-of-turn silence → onend submits the transcript
     const armSilence = () => {
       clearSilence();
       silenceTimerRef.current = setTimeout(() => {
         try { r.stop(); } catch { /* already stopped */ }
-      }, 850);
+      }, END_OF_TURN_MS);
+    };
+
+    // After a brief pause, start computing the reply in the background.
+    const armPrefetch = () => {
+      clearPrefetch();
+      prefetchTimerRef.current = setTimeout(() => {
+        if (pendingTranscript.current) startPrefetch(pendingTranscript.current);
+      }, PREFETCH_AFTER_MS);
     };
 
     r.onresult = (e: any) => {
@@ -188,12 +228,14 @@ export default function AskSPALPage() {
       }
       if (full.trim()) {
         pendingTranscript.current = full.trim();
-        armSilence(); // reset the silence countdown on every new word
+        armSilence();  // reset the end-of-turn countdown on every new word
+        armPrefetch(); // and re-schedule the speculative reply for the latest text
       }
     };
 
     r.onerror = (e: any) => {
       clearSilence();
+      clearPrefetch();
       recognitionRef.current = null;
       if (endedRef.current) return;
       // no-speech / aborted = just silence, keep listening
@@ -203,6 +245,7 @@ export default function AskSPALPage() {
 
     r.onend = () => {
       clearSilence();
+      clearPrefetch();
       recognitionRef.current = null;
       if (endedRef.current) return;
 
@@ -236,23 +279,47 @@ export default function AskSPALPage() {
     setSessionSync("thinking");
 
     try {
-      const res = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, conversationId: convIdRef.current }),
-      });
-      const data = await res.json();
-      if (endedRef.current) return;
-      if (!data.success) { setSessionSync("listening"); if (chatActiveRef.current) startRecognition(); return; }
+      // Use the reply we already started computing while the user paused, if it's
+      // for this exact transcript. Otherwise compute it now (still no save).
+      let reply: string | null = null;
+      if (prefetchRef.current?.transcript === text) {
+        reply = await prefetchRef.current.promise;
+      }
+      prefetchRef.current?.ctrl.abort();
+      prefetchRef.current = null;
 
-      const aiMsg: Message = { role: "assistant", content: data.data.reply, timestamp: new Date().toISOString() };
+      if (reply == null) {
+        const res = await fetch("/api/ai/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, conversationId: convIdRef.current, dryRun: true }),
+        });
+        const data = await res.json();
+        reply = data?.success ? (data.data.reply as string) : null;
+      }
+      if (endedRef.current) return;
+      if (!reply) { setSessionSync("listening"); if (chatActiveRef.current) startRecognition(); return; }
+
+      const aiMsg: Message = { role: "assistant", content: reply, timestamp: new Date().toISOString() };
       const all = [...updated, aiMsg];
       setMessages(all); messagesRef.current = all;
-      if (data.data.conversationId) { setConvId(data.data.conversationId); convIdRef.current = data.data.conversationId; }
 
       if (endedRef.current) return;
       setSessionSync("spal-speaking");
-      await speakText(data.data.reply);
+
+      // Persist the turn in the background (cheap — no AI call) while SPAL speaks.
+      const persist = fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, conversationId: convIdRef.current, precomputedReply: reply }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d?.success && d.data.conversationId) { setConvId(d.data.conversationId); convIdRef.current = d.data.conversationId; }
+        })
+        .catch(() => {});
+
+      await Promise.all([speakText(reply), persist]);
 
       if (endedRef.current) return;
       // After SPAL speaks, restart mic for seamless loop
@@ -276,6 +343,8 @@ export default function AskSPALPage() {
     chatActiveRef.current = false;
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
+    prefetchRef.current?.ctrl.abort(); prefetchRef.current = null;
     startTimeRef.current = null;
     pendingTranscript.current = null;
     convIdRef.current = null;
@@ -308,6 +377,8 @@ export default function AskSPALPage() {
   function pauseForTyping() {
     typingRef.current = true;
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
+    prefetchRef.current?.ctrl.abort(); prefetchRef.current = null;
     pendingTranscript.current = null;
     if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
     if (sessionRef.current === "listening") setSessionSync("idle");
@@ -340,6 +411,8 @@ export default function AskSPALPage() {
     setChatActive(false);
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
+    prefetchRef.current?.ctrl.abort(); prefetchRef.current = null;
     stopAudio();
     if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
     const dur = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0;
