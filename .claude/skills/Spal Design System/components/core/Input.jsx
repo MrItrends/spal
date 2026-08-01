@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-/** Text field — label, hint/error, prefix (currency symbol), suffix slot, `large` mode for hero numeric entry. */
+/** Text field, label, hint/error, prefix (currency symbol), suffix slot, `large` mode for hero numeric entry. */
 export function Input({ label, hint, error, prefix, suffix, large = false, style, ...props }) {
   const [focused, setFocused] = useState(false);
   return (

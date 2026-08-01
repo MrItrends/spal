@@ -1,6 +1,6 @@
 import * as React from "react";
 /**
- * Intentional addition — DESIGN.md defines a full "proprietary geometric symbol system" (the brand's
+ * Intentional addition, DESIGN.md defines a full "proprietary geometric symbol system" (the brand's
  * recognizable signature) but ships no code for it yet. This component operationalizes that spec.
  */
 export interface SpalSymbolProps {

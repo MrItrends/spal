@@ -6,7 +6,7 @@ const tabs = [
   { key: "insights", label: "Insights" },
 ];
 
-/** Top segmented pill row — the primary navigation on Home/Records/Insights (intentional addition: factored from a pattern repeated inline on 3 screens). */
+/** Top segmented pill row, the primary navigation on Home/Records/Insights (intentional addition: factored from a pattern repeated inline on 3 screens). */
 export function TopNavPills({ active = "home", onChange }) {
   return (
     <div style={{ display: "flex", gap: 8 }}>

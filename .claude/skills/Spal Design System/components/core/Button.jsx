@@ -1,6 +1,6 @@
 import React from "react";
 
-/** SPAL primary button — solid fills only (no gradients), full pill radius, tactile 0.96 press. */
+/** SPAL primary button, solid fills only (no gradients), full pill radius, tactile 0.96 press. */
 export function Button({
   variant = "primary",
   size = "md",

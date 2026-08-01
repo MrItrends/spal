@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-/** Floating "Ask SPAL" orb — the mascot's only appearance in-product; a gentle continuous bob, no spring bounce. */
+/** Floating "Ask SPAL" orb, the mascot's only appearance in-product; a gentle continuous bob, no spring bounce. */
 export function SparkAvatar({ onClick, src = "../../assets/brand/spal-ai-orb.webp" }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { const t = setTimeout(() => setMounted(true), 400); return () => clearTimeout(t); }, []);

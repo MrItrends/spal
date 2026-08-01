@@ -9,7 +9,7 @@ const colors = {
   red: ["#FEE2E2", "#B91C1C", "#EF4444"],
 };
 
-/** Small status pill — category tags, states ("Owing", "Paid"), counts. */
+/** Small status pill, category tags, states ("Owing", "Paid"), counts. */
 export function Badge({ label, color = "gray", dot = false, size = "sm" }) {
   const [bg, fg, dotColor] = colors[color];
   return (

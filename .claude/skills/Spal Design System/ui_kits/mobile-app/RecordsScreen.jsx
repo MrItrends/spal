@@ -34,7 +34,7 @@ function Row({ r }) {
   );
 }
 
-/** Records — filterable, date-grouped ledger with an owing banner and per-line payment status. */
+/** Records, filterable, date-grouped ledger with an owing banner and per-line payment status. */
 function RecordsScreen({ onNavigate, onOpenSheet }) {
   const { TopNavPills } = window.SpalDesignSystem_6a1cb4;
   const [filter, setFilter] = useState("all");

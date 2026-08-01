@@ -1,9 +1,9 @@
-/* SPAL — Typography tokens. Satoshi = display/brand voice. Inter Tight = body. Never Poppins. */
+/* SPAL, Typography tokens. Satoshi = display/brand voice. Inter Tight = body. Never Poppins. */
 :root{
   --font-display:'Satoshi', system-ui, -apple-system, sans-serif;
   --font-body:'Inter Tight', system-ui, -apple-system, sans-serif;
 
-  /* Type scale — the signature rhythm: big confident numbers, quiet supporting text */
+  /* Type scale, the signature rhythm: big confident numbers, quiet supporting text */
   --text-display:clamp(32px, 9vw, 42px); --lh-display:1.05; /* @kind other */ --ls-display:-0.02em; /* @kind other */ --fw-display:800; /* @kind other */
   --text-h1:24px;  --lh-h1:1.15; /* @kind other */ --ls-h1:-0.02em; /* @kind other */ --fw-h1:700; /* @kind other */
   --text-h2:18px;  --lh-h2:1.2;  /* @kind other */ --ls-h2:-0.01em; /* @kind other */ --fw-h2:700; /* @kind other */

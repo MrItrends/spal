@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-/** Bottom-anchored undo toast with a live countdown bar — the only "destructive action" feedback pattern in SPAL. */
+/** Bottom-anchored undo toast with a live countdown bar, the only "destructive action" feedback pattern in SPAL. */
 export function UndoToast({ message, onUndo, onExpire, duration = 10000 }) {
   const expiredRef = useRef(false);
   useEffect(() => {

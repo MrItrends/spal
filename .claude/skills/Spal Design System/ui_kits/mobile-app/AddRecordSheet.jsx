@@ -3,7 +3,7 @@ const { useState, useEffect } = React;
 const SALE_CATS = ["Food", "Drinks", "Breakfast", "Lunch", "Dinner"];
 const EXPENSE_CATS = ["Transport", "Groceries", "Utilities", "Rent", "Marketing"];
 
-/** Add Sale / Add Expense bottom sheet — the app's core data-entry surface. Drag handle, big amount field, category pills, paid/owing toggle. */
+/** Add Sale / Add Expense bottom sheet, the app's core data-entry surface. Drag handle, big amount field, category pills, paid/owing toggle. */
 function AddRecordSheet({ type, open, onClose }) {
   const { Button, PillChip } = window.SpalDesignSystem_6a1cb4;
   const [amount, setAmount] = useState("");

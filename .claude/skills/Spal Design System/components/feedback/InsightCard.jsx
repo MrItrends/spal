@@ -7,7 +7,7 @@ const variants = {
   tip: { bg: "linear-gradient(135deg, var(--blue-50), var(--purple-50))", border: "1px solid var(--blue-100)", titleColor: "var(--blue-600)", bodyColor: "var(--neutral-600)" },
 };
 
-/** Inline insight banner — daily nudges, tips, celebrations. Optional trailing metric. */
+/** Inline insight banner, daily nudges, tips, celebrations. Optional trailing metric. */
 export function InsightCard({ title, message, variant = "default", icon, metric, metricLabel, positive }) {
   const v = variants[variant];
   const metricColor = variant === "celebration" ? "#fff" : positive === true ? "var(--spal-green)" : positive === false ? "var(--spal-orange)" : "var(--spal-navy)";

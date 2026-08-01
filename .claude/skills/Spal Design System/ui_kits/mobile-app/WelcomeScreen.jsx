@@ -1,6 +1,6 @@
 const { useEffect, useState } = React;
 
-/** Onboarding splash — cinematic, dark canvas, wordmark, floating preview cards, single CTA. */
+/** Onboarding splash, cinematic, dark canvas, wordmark, floating preview cards, single CTA. */
 function WelcomeScreen({ onGetStarted, onLogin }) {
   const [splash, setSplash] = useState(true);
   useEffect(() => { const t = setTimeout(() => setSplash(false), 1400); return () => clearTimeout(t); }, []);

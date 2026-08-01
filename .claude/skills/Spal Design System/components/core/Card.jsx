@@ -1,6 +1,6 @@
 import React from "react";
 
-/** Standard SPAL card — sparing use per DESIGN.md; prefer borderless sections when possible. */
+/** Standard SPAL card, sparing use per DESIGN.md; prefer borderless sections when possible. */
 export function Card({ accent = "none", padding = "md", elevated = false, children, style, className = "", ...props }) {
   const accents = {
     green: "var(--spal-green)", blue: "var(--spal-blue)", orange: "var(--spal-orange)", purple: "var(--spal-purple)", none: "transparent",

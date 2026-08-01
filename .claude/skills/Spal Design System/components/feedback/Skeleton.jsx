@@ -1,6 +1,6 @@
 import React from "react";
 
-/** Shimmering placeholder — SPAL's loading state is always skeleton screens matching the real content shape, never spinners. */
+/** Shimmering placeholder, SPAL's loading state is always skeleton screens matching the real content shape, never spinners. */
 export function Skeleton({ width = "100%", height = 14, radius = 6, style }) {
   return <div style={{ width, height, borderRadius: radius, background: "linear-gradient(90deg,var(--neutral-100) 25%,#ECECED 50%,var(--neutral-100) 75%)", backgroundSize: "200% auto", animation: "spal-shimmer 1.4s linear infinite", ...style }}>
     <style>{`@keyframes spal-shimmer{0%{background-position:-200% center}100%{background-position:200% center}}`}</style>

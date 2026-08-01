@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-/** Weekly challenge progress card — gamification nudge shown on Home. */
+/** Weekly challenge progress card, gamification nudge shown on Home. */
 export function WeeklyChallengeCard({ label, current, target, completed = false }) {
   const pct = Math.min(Math.round((current / target) * 100), 100);
   return (

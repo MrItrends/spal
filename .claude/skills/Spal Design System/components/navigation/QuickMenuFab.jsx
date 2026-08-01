@@ -8,7 +8,7 @@ const items = [
   { key: "inventory", label: "Manage inventory", bg: "var(--blue-50)", fg: "var(--spal-blue)" },
 ];
 
-/** Floating quick-action menu — the app's primary entry point (bottom nav was removed in favor of this). */
+/** Floating quick-action menu, the app's primary entry point (bottom nav was removed in favor of this). */
 export function QuickMenuFab({ onSelect }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);

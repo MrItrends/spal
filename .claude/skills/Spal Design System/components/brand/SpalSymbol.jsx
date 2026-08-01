@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * The SPAL geometric symbol system — a proprietary set of abstract marks (never icons, mascots
+ * The SPAL geometric symbol system, a proprietary set of abstract marks (never icons, mascots
  * or stock illustration) used across empty states, loading states, onboarding and section dividers.
  * This is the core of SPAL's recognizable visual signature.
  */

@@ -7,7 +7,7 @@ const tabs = [
   { key: "profile", label: "Profile" },
 ];
 
-/** Frosted-glass bottom tab bar — used on inner/detail screens (Home/Records/Insights use TopNavPills instead). */
+/** Frosted-glass bottom tab bar, used on inner/detail screens (Home/Records/Insights use TopNavPills instead). */
 export function BottomNav({ active = "home", onChange }) {
   return (
     <nav style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: "var(--shell-max-w)", background: "rgba(255,255,255,0.88)", borderTop: "1px solid rgba(228,228,231,0.5)", backdropFilter: "saturate(180%) blur(20px)", zIndex: 50 }}>

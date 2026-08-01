@@ -8,7 +8,7 @@ const colors = {
   gray: { base: ["var(--neutral-100)", "var(--neutral-600)", "var(--neutral-200)"], selected: "var(--neutral-700)" },
 };
 
-/** Pill toggle — category filters, segmented choices. */
+/** Pill toggle, category filters, segmented choices. */
 export function PillChip({ label, icon, color = "gray", selected = false, size = "md", onClick }) {
   const c = colors[color];
   const [bg, fg, border] = c.base;

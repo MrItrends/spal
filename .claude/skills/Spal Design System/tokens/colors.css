@@ -1,14 +1,14 @@
-/* SPAL — Color tokens. Ground truth: app/globals.css @theme + component source (MrItrends/spal). */
+/* SPAL, Color tokens. Ground truth: app/globals.css @theme + component source (MrItrends/spal). */
 :root{
   /* ── Brand base ──────────────────────────────────────────────── */
   --spal-green:#22C55E;   /* sales · primary CTA · success · "paid" */
   --spal-blue:#2563EB;    /* profit · AI · insights */
-  --spal-orange:#F97316;  /* expenses / owing — sparingly, never a co-equal brand color */
+  --spal-orange:#F97316;  /* expenses / owing, sparingly, never a co-equal brand color */
   --spal-purple:#8B5CF6;  /* coach / learn */
-  --spal-navy:#0F172A;    /* dominant tone — text, headings, primary surfaces */
-  --spal-bg:#EEF3E9;      /* app background — the soft sage-green canvas. This tint IS the signature. */
+  --spal-navy:#0F172A;    /* dominant tone, text, headings, primary surfaces */
+  --spal-bg:#EEF3E9;      /* app background, the soft sage-green canvas. This tint IS the signature. */
 
-  /* ── Tints — each accent gets 50/100/(200)/500/600/(700) ───────── */
+  /* ── Tints, each accent gets 50/100/(200)/500/600/(700) ───────── */
   --green-50:#F0FDF4; --green-100:#DCFCE7; --green-200:#BBF7D0;
   --green-500:#22C55E; --green-600:#16A34A; --green-700:#15803D;
 
@@ -21,12 +21,12 @@
   --purple-50:#F5F3FF; --purple-100:#EDE9FE;
   --purple-500:#8B5CF6; --purple-600:#7C3AED;
 
-  /* ── Neutrals — cool-shifted (zinc), never warm gray ───────────── */
+  /* ── Neutrals, cool-shifted (zinc), never warm gray ───────────── */
   --neutral-50:#FAFAFA; --neutral-100:#F4F4F5; --neutral-200:#E4E4E7; --neutral-300:#D4D4D8;
   --neutral-400:#A1A1AA; --neutral-500:#71717A; --neutral-600:#52525B; --neutral-700:#3F3F46;
   --neutral-800:#27272A; --neutral-900:#18181B;
 
-  /* ── Vivid display accents — hero/data-viz cards only, never text-on-white ── */
+  /* ── Vivid display accents, hero/data-viz cards only, never text-on-white ── */
   --vivid-profit:#8B3CFF;  /* profit hero card */
   --vivid-sale:#2F63F5;    /* sale stat card */
   --vivid-expense:#ED712E; /* expense stat card */

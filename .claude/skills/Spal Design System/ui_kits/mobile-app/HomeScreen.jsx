@@ -28,7 +28,7 @@ function RecordRow({ r }) {
   );
 }
 
-/** Home — the personalized daily dashboard: profit hero, sale/expense split, owed banner, recent activity. */
+/** Home, the personalized daily dashboard: profit hero, sale/expense split, owed banner, recent activity. */
 function HomeScreen({ onNavigate, onOpenSheet }) {
   const { TopNavPills } = window.SpalDesignSystem_6a1cb4;
   return (
