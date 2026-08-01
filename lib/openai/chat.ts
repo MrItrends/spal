@@ -135,12 +135,12 @@ export async function generateDailyInsight(data: {
 export async function parseReceiptImage(
   imageBuffer: Buffer,
   mimeType: string,
-): Promise<{
+): Promise<Array<{
   type: "sale" | "expense";
   amount: number;
   description: string;
   category: string;
-} | null> {
+}> | null> {
   const base64   = imageBuffer.toString("base64");
   const imageUrl = `data:${mimeType};base64,${base64}`;
 
@@ -151,30 +151,37 @@ export async function parseReceiptImage(
         role: "user",
         content: [
           {
+            // "high" detail is essential for reading handwritten line-item lists accurately
             type: "image_url",
-            image_url: { url: imageUrl, detail: "low" },
+            image_url: { url: imageUrl, detail: "high" },
           },
           {
             type: "text",
-            text: `You are helping a small business owner in Nigeria record sales and expenses.
-Look at this receipt or invoice image and extract the key information.
+            text: `You are helping a small business owner in Nigeria record their sales and expenses.
+This image may be a receipt, an invoice, or a hand-written list of items with prices.
 
-Return ONLY valid JSON in this exact format:
+Read EVERY line and extract EACH item as its own entry — never merge separate lines into one total.
+For example, a list like:
+  Rice and Beans = ₦2,000
+  Fish stew and Rice = ₦4,000
+  Indomie and Egg = ₦2,500
+must return THREE separate items (2000, 4000, 2500), NOT one combined "Food sales" of 8500.
+
+Return ONLY valid JSON in this exact shape:
 {
-  "type": "sale" or "expense",
-  "amount": number,
-  "description": "brief description max 60 chars",
-  "category": "pick the best match"
+  "items": [
+    { "type": "sale" or "expense", "amount": number, "description": "the item name", "category": "best match" }
+  ]
 }
 
 Rules:
-- "type" is "expense" if the business PAID money (buying stock, fuel, etc.)
-- "type" is "sale" if the business RECEIVED money (sold goods/services)
-- "amount" is the TOTAL amount as a plain number (no ₦ symbol). Convert shorthand: 15k=15000.
-- "description" should be specific, e.g. "Fuel 20 litres", "Garri stock", "Customer payment"
-- "category" must be EXACTLY one of these names (no variations): Food, Drinks, Clothing, Services, Products, Stock, Fuel, Transport, Rent, Salary, Utilities, Other
-- Do NOT use names like "Food Sales", "Beverages", "General", "Groceries" — pick the closest exact match.
-- If the image is unreadable or contains no financial data, return: {"error":"cannot_read"}
+- One object per written line that has a price. Preserve the order.
+- "description" is the item exactly as written, e.g. "Rice and Beans", "Fish stew and Rice", "Fuel 20 litres".
+- "amount" is that line's price as a plain number (no ₦ symbol, no commas). Convert shorthand: 15k=15000, 2.5m=2500000.
+- "type" is "sale" if money was RECEIVED (goods/services sold), "expense" if money was PAID (stock, fuel, etc.). A price list of food/products a vendor sells is "sale".
+- "category" must be EXACTLY one of: Food, Drinks, Clothing, Services, Products, Stock, Fuel, Transport, Rent, Salary, Utilities, Other. Never invent variations like "Food Sales" or "Groceries".
+- Read carefully — hand-written amounts can be faint. Do not skip any line.
+- If the image is truly unreadable or has no prices, return {"items":[]}.
 Do NOT include any text outside the JSON.`,
           },
         ],
@@ -182,20 +189,26 @@ Do NOT include any text outside the JSON.`,
     ],
     response_format: { type: "json_object" },
     temperature: 0.1,
-    max_tokens: 150,
+    max_tokens: 1200,
   });
 
   const content = response.choices[0]?.message?.content ?? "{}";
   const parsed  = JSON.parse(content);
+  const rawItems: unknown[] = Array.isArray(parsed.items) ? parsed.items : [];
 
-  if (parsed.error || !parsed.amount || Number(parsed.amount) <= 0) return null;
+  const items = rawItems
+    .map((it) => {
+      const r = it as { type?: string; amount?: unknown; description?: unknown; category?: unknown };
+      return {
+        type: (r.type === "expense" ? "expense" : "sale") as "sale" | "expense",
+        amount: Number(r.amount),
+        description: String(r.description ?? "").slice(0, 100),
+        category: normalizeCategory(String(r.category ?? "Other")),
+      };
+    })
+    .filter((it) => it.amount > 0 && it.description.trim());
 
-  return {
-    type:        parsed.type === "sale" ? "sale" : "expense",
-    amount:      Number(parsed.amount),
-    description: String(parsed.description ?? "").slice(0, 100),
-    category:    normalizeCategory(String(parsed.category ?? "Other")),
-  };
+  return items.length > 0 ? items : null;
 }
 
 // ─── Ask SPAL chat ────────────────────────────────────────────────────────────

@@ -127,32 +127,35 @@ export default function PictureConfirmPage() {
       </div>
 
       <div className="px-5">
-        {/* Thumbnail */}
+        {/* Cropped image — shown in full so nothing is hidden */}
         {preview && (
-          <div className="relative rounded-2xl overflow-hidden" style={{ maxHeight: 180 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="Receipt" className="w-full object-cover" style={{ maxHeight: 180 }} />
-            <div className="absolute inset-0 flex">
+          <>
+            <div className="rounded-2xl overflow-hidden flex items-center justify-center" style={{ background: "#0F172A" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt="Captured note" className="w-full object-contain" style={{ maxHeight: 360 }} />
+            </div>
+            {/* Separate action buttons — not overlaid on the image */}
+            <div className="flex gap-2 mt-2.5">
               <button
                 onClick={() => router.back()}
-                className="flex-1 flex items-center justify-center gap-1.5 transition-opacity"
-                style={{ background: "rgba(0,0,0,0.45)" }}
+                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
+                style={{ background: "#F1F5F9" }}
                 aria-label="Retake photo"
               >
-                <ArrowReloadHorizontalIcon size={16} color="#fff" />
-                <span className="text-[12px] font-semibold text-white" style={{ fontFamily }}>Retake</span>
+                <ArrowReloadHorizontalIcon size={16} color="#334155" />
+                <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#334155" }}>Retake</span>
               </button>
               <button
                 onClick={() => router.back()}
-                className="flex-1 flex items-center justify-center gap-1.5 transition-opacity"
-                style={{ background: "rgba(34,197,94,0.6)" }}
+                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
+                style={{ background: "#fff", border: "1.5px solid #22C55E" }}
                 aria-label="Add another photo"
               >
-                <PlusSignIcon size={16} color="#fff" />
-                <span className="text-[12px] font-semibold text-white" style={{ fontFamily }}>Add Photo</span>
+                <PlusSignIcon size={16} color="#16A34A" />
+                <span className="text-[13px] font-semibold" style={{ fontFamily, color: "#16A34A" }}>Add Photo</span>
               </button>
             </div>
-          </div>
+          </>
         )}
 
         {/* Date picker */}
