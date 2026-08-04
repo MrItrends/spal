@@ -75,7 +75,7 @@ export default function ManualExpensePage() {
       }
       bumpRecordSaved();
       router.refresh();
-      router.push("/home");
+      window.location.href = "/home";
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Could not save. Please try again.");
       setSaving(false);

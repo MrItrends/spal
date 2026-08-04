@@ -130,7 +130,7 @@ export default function ImportExpensePage() {
       }
       bumpRecordSaved();
       router.refresh();
-      router.push("/home");
+      window.location.href = "/home";
     } catch {
       setSaving(false);
     }

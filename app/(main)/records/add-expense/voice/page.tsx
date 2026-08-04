@@ -146,7 +146,7 @@ export default function VoiceExpensePage() {
       }
       bumpRecordSaved();
       router.refresh();
-      router.push("/home");
+      window.location.href = "/home";
     } catch {
       setSaving(false);
     }

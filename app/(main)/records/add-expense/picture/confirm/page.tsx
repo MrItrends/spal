@@ -98,8 +98,7 @@ export default function PictureExpenseConfirmPage() {
       sessionStorage.removeItem("spal_expense_receipt_b64");
       sessionStorage.removeItem("spal_expense_receipt_file_type");
       bumpRecordSaved();
-      router.refresh();
-      router.push("/home");
+      window.location.href = "/home"; // hard nav — avoids the soft-nav chunk-load failure
     } catch {
       setSaving(false);
     }

@@ -151,7 +151,7 @@ export default function VoiceEntryPage() {
       }
       bumpRecordSaved();
       router.refresh();
-      router.push("/home");
+      window.location.href = "/home";
     } catch {
       setSaving(false);
     }
