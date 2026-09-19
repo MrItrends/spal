@@ -133,7 +133,7 @@ function OnboardingCarousel({
       >
         {SLIDES.map((slide, i) => (
           <div key={i} className="w-full h-full flex-shrink-0 snap-start snap-always">
-            <SlideView slide={slide} index={i} active={active} onGetStarted={() => router.push("/business-type")} onLogin={() => router.push("/login")} />
+            <SlideView slide={slide} index={i} active={active} onGetStarted={() => router.push("/onboarding")} onLogin={() => router.push("/login")} />
           </div>
         ))}
       </div>

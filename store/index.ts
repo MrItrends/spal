@@ -77,6 +77,9 @@ interface SPALStore {
   // Onboarding
   onboardingData: {
     businessType?: BusinessType;
+    businessName?: string;
+    businessSize?: string;   // solo | micro | small | medium | large
+    locations?: number;
     trackingMethods?: TrackingMethod[];
     goals?: BusinessGoal[];
     phoneNumber?: string;
