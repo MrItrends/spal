@@ -60,12 +60,7 @@ export default function WelcomePage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
-            style={{
-              backgroundImage: "url(/splash-background.webp)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-            }}
+            style={{ background: "#3F0B8C" }}
           >
             <motion.div
               initial={{ scale: 0.85, opacity: 0 }}
@@ -99,12 +94,26 @@ function OnboardingCarousel({
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const userTouchedRef = useRef(false);
 
   function onScroll() {
     const el = scrollerRef.current;
     if (!el) return;
     setActive(Math.round(el.scrollLeft / el.clientWidth));
   }
+
+  // Auto-advance through the slides so all three are seen; stop once the user swipes.
+  useEffect(() => {
+    if (!ready) return;
+    const id = setInterval(() => {
+      const el = scrollerRef.current;
+      if (!el || userTouchedRef.current) { clearInterval(id); return; }
+      const cur = Math.round(el.scrollLeft / el.clientWidth);
+      if (cur >= SLIDES.length - 1) { clearInterval(id); return; } // rest on the last slide
+      el.scrollTo({ left: (cur + 1) * el.clientWidth, behavior: "smooth" });
+    }, 3000);
+    return () => clearInterval(id);
+  }, [ready]);
 
   return (
     <motion.div
@@ -116,6 +125,9 @@ function OnboardingCarousel({
       <div
         ref={scrollerRef}
         onScroll={onScroll}
+        onPointerDown={() => { userTouchedRef.current = true; }}
+        onTouchStart={() => { userTouchedRef.current = true; }}
+        onWheel={() => { userTouchedRef.current = true; }}
         className="h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: "none" }}
       >
