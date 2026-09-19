@@ -1,10 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArrowRight01Icon } from "hugeicons-react";
+
+const FF = "var(--font-satoshi)";
+const DOME = "#3F0B8C"; // dark purple shape (illustration circle + bottom dome)
+
+interface Slide {
+  bg: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  alt: string;
+}
+
+const SLIDES: Slide[] = [
+  {
+    bg: "#B75512",
+    title: "Know Every Sale That Makes Your Business Grow",
+    subtitle: "Record your sales in seconds, keep track of your income, and stay on top of every transaction",
+    image: "/onboard-sales.webp",
+    alt: "A hand holding a sales report",
+  },
+  {
+    bg: "#117D39",
+    title: "Know Your Stock Before It Runs Out",
+    subtitle: "Track your inventory, manage your products, and always know what's available in your business",
+    image: "/onboard-stock.webp",
+    alt: "A stack of stock boxes",
+  },
+  {
+    bg: "#966CF7",
+    title: "Turn Your Records Into Business Insights",
+    subtitle: "See your profit, understand your performance, and make smarter decisions with insights that matter",
+    image: "/onboard-insights.webp",
+    alt: "A rising bar and line chart",
+  },
+];
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -17,7 +52,6 @@ export default function WelcomePage() {
 
   return (
     <div className="h-full relative overflow-hidden" style={{ background: "#0F172A" }}>
-
       {/* ── Splash overlay ── */}
       <AnimatePresence>
         {showSplash && (
@@ -51,174 +85,131 @@ export default function WelcomePage() {
         )}
       </AnimatePresence>
 
-      {/* ── Get Started content ── */}
-      <GetStartedContent router={router} ready={!showSplash} />
+      <OnboardingCarousel router={router} ready={!showSplash} />
     </div>
   );
 }
 
-function GetStartedContent({
+function OnboardingCarousel({
   router,
   ready,
 }: {
   router: ReturnType<typeof useRouter>;
   ready: boolean;
 }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  function onScroll() {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setActive(Math.round(el.scrollLeft / el.clientWidth));
+  }
+
   return (
-    <div
-      className="absolute inset-0 flex flex-col"
-      style={{
-        backgroundImage: "url(/splash-background.webp)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={ready ? { opacity: 1 } : {}}
+      transition={{ duration: 0.4 }}
+      className="absolute inset-0"
     >
-      {/* SPAL wordmark */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={ready ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.1, duration: 0.4 }}
-        className="relative pt-14 flex justify-center"
+      <div
+        ref={scrollerRef}
+        onScroll={onScroll}
+        className="h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none" }}
       >
-        <Image
-          src="/spal-wordmark.webp"
-          alt="SPAL"
-          width={120}
-          height={42}
-          priority
-          style={{ width: "110px", height: "auto" }}
-        />
-      </motion.div>
+        {SLIDES.map((slide, i) => (
+          <div key={i} className="w-full h-full flex-shrink-0 snap-start snap-always">
+            <SlideView slide={slide} index={i} active={active} onGetStarted={() => router.push("/business-type")} onLogin={() => router.push("/login")} />
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
 
-      {/* Cards + floating avatars */}
-      <div className="relative flex-1 flex items-center justify-center px-4" style={{ minHeight: 0 }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 16 }}
-          animate={ready ? { opacity: 1, scale: 1, y: 0 } : {}}
-          transition={{ delay: 0.18, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
-          className="relative w-full"
-          style={{ maxWidth: "400px", aspectRatio: "4 / 3.6" }}
+function SlideView({
+  slide,
+  index,
+  active,
+  onGetStarted,
+  onLogin,
+}: {
+  slide: Slide;
+  index: number;
+  active: number;
+  onGetStarted: () => void;
+  onLogin: () => void;
+}) {
+  return (
+    <div className="relative h-full flex flex-col overflow-hidden" style={{ background: slide.bg }}>
+      {/* Bottom dome — the dark-purple hill the circle sits on */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 bottom-0 z-0"
+        style={{
+          width: "176%",
+          height: "46%",
+          background: DOME,
+          borderTopLeftRadius: "50% 58%",
+          borderTopRightRadius: "50% 58%",
+        }}
+      />
+
+      {/* Header */}
+      <div className="relative z-20 px-6 pt-14">
+        <h1
+          className="text-white font-black leading-[1.08]"
+          style={{ fontFamily: FF, fontSize: "clamp(28px, 8.5vw, 38px)", letterSpacing: "-0.02em" }}
         >
-          {/* Floating avatar — top left */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={ready ? { opacity: 1, scale: 1 } : {}}
-            transition={{ delay: 0.45, duration: 0.4, ease: [0.34, 1.3, 0.64, 1] }}
-            className="absolute z-10 rounded-full overflow-hidden border-2 border-white"
-            style={{ width: 52, height: 52, top: "-8px", left: "4%" }}
-          >
-            <div
-              className="w-full h-full flex items-center justify-center text-white font-bold text-[18px]"
-              style={{ background: "linear-gradient(135deg, #2563EB, #8B5CF6)" }}
-            >
-              A
-            </div>
-          </motion.div>
-
-          {/* Floating avatar — right side */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={ready ? { opacity: 1, scale: 1 } : {}}
-            transition={{ delay: 0.55, duration: 0.4, ease: [0.34, 1.3, 0.64, 1] }}
-            className="absolute z-10 rounded-full overflow-hidden border-2 border-white"
-            style={{ width: 52, height: 52, top: "36%", right: "0%" }}
-          >
-            <div
-              className="w-full h-full flex items-center justify-center text-white font-bold text-[18px]"
-              style={{ background: "linear-gradient(135deg, #22C55E, #2563EB)" }}
-            >
-              T
-            </div>
-          </motion.div>
-
-          {/* Back card — Add Sale */}
-          <motion.div
-            initial={{ opacity: 0, x: -20, y: 10 }}
-            animate={ready ? { opacity: 1, x: 0, y: 0 } : {}}
-            transition={{ delay: 0.28, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
-            className="absolute"
-            style={{
-              top: "4%",
-              left: "2%",
-              width: "66%",
-              filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.32))",
-            }}
-          >
-            <Image
-              src="/addsales_getstartedscreen.webp"
-              alt="Add Sale preview"
-              width={500}
-              height={550}
-              priority
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </motion.div>
-
-          {/* Front card — Add Expense */}
-          <motion.div
-            initial={{ opacity: 0, x: 20, y: 10 }}
-            animate={ready ? { opacity: 1, x: 0, y: 0 } : {}}
-            transition={{ delay: 0.38, duration: 0.55, ease: [0.34, 1.1, 0.64, 1] }}
-            className="absolute"
-            style={{
-              bottom: "0%",
-              right: "0%",
-              width: "68%",
-              filter: "drop-shadow(0 20px 44px rgba(0,0,0,0.36))",
-            }}
-          >
-            <Image
-              src="/addexpense_getstartedscreen.webp"
-              alt="Add Expense preview"
-              width={500}
-              height={550}
-              priority
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </motion.div>
-        </motion.div>
+          {slide.title}
+        </h1>
+        <p
+          className="mt-4 leading-relaxed"
+          style={{ fontFamily: FF, fontSize: "clamp(15px, 4.4vw, 18px)", color: "rgba(255,255,255,0.72)" }}
+        >
+          {slide.subtitle}
+        </p>
       </div>
 
-      {/* Headline + subtitle + CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={ready ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.42, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="relative px-6"
-        style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom, 2.5rem))" }}
+      {/* Illustration circle — sits on the dome */}
+      <div className="relative z-10 flex-1 flex items-end justify-center pb-[7%]">
+        <Image
+          src={slide.image}
+          alt={slide.alt}
+          width={660}
+          height={660}
+          priority={index === 0}
+          className="w-[80%] max-w-[330px] h-auto"
+        />
+      </div>
+
+      {/* Controls over the dome */}
+      <div
+        className="relative z-20 px-5"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 26px)" }}
       >
-        {/* Headline */}
-        <h1
-          className="text-white font-bold text-center leading-tight mb-2"
-          style={{
-            fontFamily: "var(--font-satoshi)",
-            fontSize: "clamp(24px, 6.5vw, 30px)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Your Business Finance<br />Made Easy
-        </h1>
+        {/* Dots */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          {SLIDES.map((_, i) => (
+            <span
+              key={i}
+              className="rounded-full transition-all duration-200"
+              style={{
+                width: 8,
+                height: 8,
+                background: i === active ? "#22C55E" : "rgba(255,255,255,0.9)",
+              }}
+            />
+          ))}
+        </div>
 
-        {/* Subtitle */}
-        <p
-          className="text-center mb-7"
-          style={{
-            fontFamily: "var(--font-satoshi)",
-            fontSize: "14px",
-            color: "rgba(255,255,255,0.55)",
-            lineHeight: "1.55",
-          }}
-        >
-          Track your sales, know your profit and grow.<br />No accounting knowledge needed
-        </p>
-
-        {/* CTA button — circle-arrow left | text | animated ›› right */}
+        {/* Get Started */}
         <button
-          onClick={() => router.push("/business-type")}
+          onClick={onGetStarted}
           className="w-full h-[58px] rounded-full flex items-center active:scale-[0.97] transition-transform"
           style={{
-            fontFamily: "var(--font-satoshi)",
+            fontFamily: FF,
             background: "#22C55E",
             boxShadow: "0 8px 24px rgba(34,197,94,0.38)",
             paddingLeft: "6px",
@@ -226,35 +217,22 @@ function GetStartedContent({
           }}
           aria-label="Get Started"
         >
-          {/* Left circle with arrow */}
-          <div
-            className="w-[46px] h-[46px] rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.22)" }}
-          >
-            <ArrowRight01Icon size={20} color="#fff" />
+          <div className="w-[46px] h-[46px] rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.9)" }}>
+            <ArrowRight01Icon size={20} color="#16A34A" />
           </div>
-
-          {/* Label — centred in remaining space */}
-          <span
-            className="flex-1 text-center font-bold text-white text-[15px]"
-          >
-            🚀 Get Started
-          </span>
-
-          {/* Animated ›› chevrons */}
+          <span className="flex-1 text-center font-bold text-white text-[15px]">🚀 Get Started</span>
           <AnimatedChevrons />
         </button>
 
-        {/* Sign-in link */}
+        {/* Login */}
         <button
-          onClick={() => router.push("/login")}
-          className="w-full mt-4 text-center text-[13px] active:opacity-60 transition-opacity"
-          style={{ fontFamily: "var(--font-satoshi)", color: "rgba(255,255,255,0.55)" }}
+          onClick={onLogin}
+          className="w-full mt-4 text-center text-[13.5px] active:opacity-60 transition-opacity"
+          style={{ fontFamily: FF, color: "rgba(255,255,255,0.72)" }}
         >
-          Already have an account?{" "}
-          <span style={{ color: "#fff", fontWeight: 700 }}>Login</span>
+          Already have an account? <span style={{ color: "#fff", fontWeight: 700 }}>Login</span>
         </button>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -267,7 +245,7 @@ function AnimatedChevrons() {
       transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
     >
       <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "15px", fontWeight: 700 }}>›</span>
-      <span style={{ color: "rgba(255,255,255,0.75)", fontSize: "15px", fontWeight: 700 }}>›</span>
+      <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "15px", fontWeight: 700 }}>›</span>
     </motion.div>
   );
 }
