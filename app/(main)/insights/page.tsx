@@ -11,7 +11,7 @@ import {
   ChartIncreaseIcon, ArrowRight01Icon, PencilEdit01Icon, Cancel01Icon, Tick01Icon,
   Award01Icon, Alert01Icon, ChartDecreaseIcon, ShoppingBag01Icon, Tag01Icon,
   HeartCheckIcon, FireIcon, Notification03Icon, User02Icon, Home01Icon,
-  Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon,
+  Menu01Icon, BarChartIcon, ArrowDown01Icon, ArrowUp01Icon, ArrowLeft01Icon,
 } from "hugeicons-react";
 import { SALE_CATEGORIES } from "@/lib/utils/category";
 import { getGreeting } from "@/lib/utils/dates";
@@ -528,63 +528,12 @@ export default function InsightsPage() {
     <div className="min-h-full" style={{ background: BG }}>
 
       {/* ── Header ── */}
-      <div className="px-5 pt-12 flex items-center justify-between">
-        <div>
-          <p className="text-[13px] text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>{greeting}</p>
-          <h1 className="text-[24px] font-bold text-spal-navy leading-tight mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>
-            {displayName}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <button onClick={() => { setUnreadCount(0); router.push("/notifications"); }} aria-label="Notifications"
-            className="w-11 h-11 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform"
-            style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-            <Notification03Icon size={18} color="#0F172A" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
-          <button onClick={() => router.push("/profile")} aria-label="Profile"
-            className="w-11 h-11 rounded-full overflow-hidden active:scale-95 transition-transform"
-            style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-            {user?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-spal-green flex items-center justify-center">
-                <span className="text-white font-bold text-[15px]">
-                  {(user?.full_name ?? user?.business_name ?? "?")[0]?.toUpperCase() ?? <User02Icon size={18} color="#fff" />}
-                </span>
-              </div>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Top nav pills ── */}
-      <div className="px-5 mt-5 flex gap-2">
-        {[
-          { href: "/home",     label: "Home",     icon: <Home01Icon   size={14} /> },
-          { href: "/records",  label: "Records",  icon: <Menu01Icon   size={14} /> },
-          { href: "/insights", label: "Insights", icon: <BarChartIcon size={14} /> },
-        ].map(tab => {
-          const isActive = tab.href === "/insights";
-          return (
-            <Link key={tab.href} href={tab.href}
-              className="flex flex-1 items-center justify-center gap-1.5 px-4 h-10 rounded-full text-[13px] font-semibold transition-all active:scale-95"
-              style={{
-                background: isActive ? "#22C55E" : "#fff",
-                color:      isActive ? "#fff" : "#6B7280",
-                boxShadow:  isActive ? "0 2px 8px rgba(34,197,94,0.28)" : "0 1px 3px rgba(0,0,0,0.06)",
-                fontFamily: "var(--font-satoshi)",
-              }}>
-              {tab.icon}
-              {tab.label}
-            </Link>
-          );
-        })}
+      <div className="px-5 pt-12 flex items-center gap-3">
+        <button onClick={() => router.back()}
+          className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Back">
+          <ArrowLeft01Icon size={20} color="#0F172A" />
+        </button>
+        <h1 className="text-[22px] font-black text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Insights</h1>
       </div>
 
       {/* ── Period selector ── */}
