@@ -223,9 +223,11 @@ export function RestaurantHome() {
       <div className="px-5 mt-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[16px] font-black text-spal-navy" style={{ fontFamily: FF }}>Recent Sales</p>
-          <button onClick={() => router.push("/records")} className="inline-flex items-center gap-1 text-[13px] font-bold" style={{ fontFamily: FF, color: "#16A34A" }}>
-            View All Sales <ArrowRight01Icon size={14} color="#16A34A" />
-          </button>
+          {sales.length > 5 && (
+            <button onClick={() => router.push("/records")} className="inline-flex items-center gap-1 text-[13px] font-bold" style={{ fontFamily: FF, color: "#16A34A" }}>
+              View All Sales <ArrowRight01Icon size={14} color="#16A34A" />
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -240,7 +242,7 @@ export function RestaurantHome() {
             {recentSales.map((r) => {
               const owing = r.payment_status === "owing";
               return (
-                <div key={r.id} className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+                <button key={r.id} onClick={() => router.push(`/records/${r.id}`)} className="w-full text-left bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 active:scale-[0.99] transition-transform" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
                   <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FFF3EC" }}>
                     <Restaurant01Icon size={18} color="#F97316" />
                   </span>
@@ -254,7 +256,7 @@ export function RestaurantHome() {
                     <p className="text-[14px] font-black text-spal-navy" style={{ fontFamily: FF }}>{formatCurrency(r.amount)}</p>
                     <p className="text-[11px] text-neutral-400 mt-0.5">{relTime(r.created_at)}</p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
