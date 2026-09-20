@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search01Icon, Notification03Icon, QrCode01Icon, CubeIcon, Store01Icon,
   Package01Icon, PlusSignIcon, MinusSignIcon, SidebarRight01Icon, Notebook01Icon,
+  PlayIcon, PauseIcon, Tick02Icon,
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -255,25 +256,89 @@ function ProductDetail({ item, onClose, onAdjust, onSetThumb }: {
 }) {
   const gallery = item.images && item.images.length ? item.images : item.image_url ? [item.image_url] : [];
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const scroller = useRef<HTMLDivElement>(null);
   const cover = item.image_url ?? gallery[0] ?? null;
   const activeUrl = gallery[active];
+  const isCover = activeUrl != null && activeUrl === cover;
+
+  // Auto-advance the hero carousel until the user pauses or interacts.
+  useEffect(() => {
+    if (paused || gallery.length <= 1) return;
+    const t = setInterval(() => {
+      const el = scroller.current;
+      if (!el) return;
+      const next = (Math.round(el.scrollLeft / el.clientWidth) + 1) % gallery.length;
+      el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+    }, 3000);
+    return () => clearInterval(t);
+  }, [paused, gallery.length]);
 
   return (
     <>
-      {/* Hero */}
-      <div className="relative flex items-center justify-center" style={{ background: IMG_BG, minHeight: 300 }}>
+      {/* Hero carousel */}
+      <div className="relative" style={{ background: IMG_BG }}>
+        <div
+          ref={scroller}
+          onScroll={(e) => setActive(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+          onPointerDown={() => setPaused(true)}
+          className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {gallery.length === 0 ? (
+            <div className="shrink-0 w-full flex items-center justify-center" style={{ minHeight: 320 }}>
+              <Package01Icon size={72} color="#B7B7D6" />
+            </div>
+          ) : gallery.map((url, i) => (
+            <div key={i} className="snap-center shrink-0 w-full flex items-center justify-center" style={{ minHeight: 320 }}>
+              <Image src={url} alt="" width={320} height={320} className="h-[300px] w-auto object-contain" />
+            </div>
+          ))}
+        </div>
+
         <button onClick={onClose} className="absolute top-12 right-5 w-9 h-9 rounded-lg bg-white/80 flex items-center justify-center active:scale-95" aria-label="Close">
           <SidebarRight01Icon size={18} color="#475467" />
         </button>
-        {cover
-          ? <Image src={cover} alt={item.name} width={280} height={280} className="h-[260px] w-auto object-contain" />
-          : <Package01Icon size={72} color="#B7B7D6" />}
+
+        {gallery.length > 1 && (
+          <button onClick={() => setPaused((p) => !p)}
+            className="absolute top-12 left-5 w-9 h-9 rounded-full bg-white/80 flex items-center justify-center active:scale-95"
+            aria-label={paused ? "Play slideshow" : "Pause slideshow"}>
+            {paused ? <PlayIcon size={17} color="#0F172A" /> : <PauseIcon size={17} color="#0F172A" />}
+          </button>
+        )}
+
         <button onClick={() => { window.location.href = `/inventory/add?id=${item.id}`; }}
           className="absolute right-5 bottom-5 flex items-center gap-2 h-12 px-5 rounded-2xl text-white font-black text-[16px] active:scale-95"
           style={{ background: "#22C55E", fontFamily: FF, boxShadow: "0 8px 24px rgba(34,197,94,0.4)" }}>
           <Notebook01Icon size={19} color="#fff" /> Edit Item
         </button>
       </div>
+
+      {/* Carousel controls: dots + cover picker */}
+      {gallery.length > 0 && (
+        <div className="px-5 pt-3">
+          {gallery.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5">
+              {gallery.map((_, i) => (
+                <button key={i} onClick={() => { setPaused(true); scroller.current?.scrollTo({ left: i * (scroller.current?.clientWidth ?? 0), behavior: "smooth" }); }}
+                  aria-label={`Image ${i + 1}`} className="rounded-full transition-all" style={{ width: i === active ? 16 : 7, height: 7, background: i === active ? "#22C55E" : "#CBD5C0" }} />
+              ))}
+            </div>
+          )}
+          {isCover ? (
+            <p className="text-center text-[13px] font-bold mt-2.5 flex items-center justify-center gap-1.5" style={{ fontFamily: FF, color: "#16A34A" }}>
+              <Tick02Icon size={15} color="#16A34A" /> Cover photo
+            </p>
+          ) : (
+            <button onClick={() => activeUrl && onSetThumb(item, activeUrl)}
+              className="w-full mt-3 h-11 rounded-full font-bold text-[14px] active:scale-[0.98]"
+              style={{ fontFamily: FF, color: "#22C55E", border: "1.5px solid #22C55E" }}>
+              Set as cover photo
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="px-5 pt-5 pb-10">
         <h2 className="text-[28px] font-black text-spal-navy" style={{ fontFamily: FF }}>{item.name}</h2>
@@ -283,40 +348,6 @@ function ProductDetail({ item, onClose, onAdjust, onSetThumb }: {
         {item.category && (
           <div className="flex items-center gap-2 mt-3">
             <span className="px-3.5 py-1.5 rounded-full bg-white text-[13.5px] font-semibold text-spal-navy" style={{ fontFamily: FF }}>{item.category}</span>
-          </div>
-        )}
-
-        {/* Image carousel */}
-        {gallery.length > 0 && (
-          <div className="mt-5">
-            <div
-              onScroll={(e) => setActive(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
-              className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden rounded-2xl"
-              style={{ scrollbarWidth: "none" }}
-            >
-              {gallery.map((url, i) => (
-                <div key={i} className="snap-center shrink-0 w-full flex items-center justify-center rounded-2xl" style={{ background: IMG_BG, aspectRatio: "1 / 1" }}>
-                  <Image src={url} alt="" width={360} height={360} className="w-full h-full object-contain p-4" />
-                </div>
-              ))}
-            </div>
-            {gallery.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-3">
-                {gallery.map((_, i) => (
-                  <span key={i} className="rounded-full transition-all" style={{ width: i === active ? 16 : 7, height: 7, background: i === active ? "#22C55E" : "#CBD5C0" }} />
-                ))}
-              </div>
-            )}
-            {/* Set as cover */}
-            {activeUrl && (activeUrl === cover ? (
-              <p className="text-center text-[13px] font-semibold mt-2.5" style={{ fontFamily: FF, color: "#16A34A" }}>Cover photo</p>
-            ) : (
-              <button onClick={() => onSetThumb(item, activeUrl)}
-                className="w-full mt-3 h-11 rounded-full font-bold text-[14px] active:scale-[0.98]"
-                style={{ fontFamily: FF, color: "#22C55E", border: "1.5px solid #22C55E" }}>
-                Set as cover photo
-              </button>
-            ))}
           </div>
         )}
 
