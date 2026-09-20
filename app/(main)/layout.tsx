@@ -2,7 +2,7 @@ import { UserHydration } from "@/components/UserHydration";
 import { VoiceRecorder } from "@/components/voice/VoiceRecorder";
 import { BadgeCelebration } from "@/components/gamification/BadgeCelebration";
 import { PWAInstallPrompt } from "@/components/shared/PWAInstallPrompt";
-import { QuickMenuFab } from "@/components/shared/QuickMenuFab";
+import { BottomNav } from "@/components/ui/BottomNav";
 
 export default function MainLayout({
   children,
@@ -22,8 +22,8 @@ export default function MainLayout({
           {children}
         </div>
       </main>
-      {/* Quick Menu FAB — record sale/expense, chat with SPAL */}
-      <QuickMenuFab />
+      {/* Primary bottom navigation — Home / Sell / Stock / Wallet / Profile */}
+      <BottomNav />
       {/* Voice recorder overlay — triggered from anywhere via store */}
       <VoiceRecorder />
       {/* Badge celebration — rendered above everything */}

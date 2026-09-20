@@ -2,116 +2,48 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { Activity01Icon, File01Icon, ChartIncreaseIcon, User02Icon } from "hugeicons-react";
+import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon } from "hugeicons-react";
 
-interface NavItem {
-  href:    string;
-  label:   string;
-  icon:    React.ReactNode;
-  iconActive?: React.ReactNode;
-}
+const FF = "var(--font-satoshi)";
 
-const navItems: NavItem[] = [
-  {
-    href:  "/home",
-    label: "Home",
-    icon:  <Activity01Icon size={21} />,
-    iconActive: (
-      <Image
-        src="/home icon.svg"
-        alt="Home"
-        width={21}
-        height={21}
-        style={{ width: 21, height: 21 }}
-      />
-    ),
-  },
-  {
-    href:  "/records",
-    label: "Records",
-    icon:  <File01Icon size={21} />,
-    iconActive: (
-      <Image
-        src="/records_icon.svg"
-        alt="Records"
-        width={21}
-        height={21}
-        style={{ width: 21, height: 21 }}
-      />
-    ),
-  },
-  {
-    href:  "/insights",
-    label: "Insights",
-    icon:  <ChartIncreaseIcon size={21} />,
-    iconActive: (
-      <Image
-        src="/insights_icon.svg"
-        alt="Insights"
-        width={21}
-        height={21}
-        style={{ width: 21, height: 21 }}
-      />
-    ),
-  },
-  {
-    href:  "/profile",
-    label: "Profile",
-    icon:  <User02Icon size={21} />,
-    iconActive: (
-      <Image
-        src="/profile_icon.svg"
-        alt="Profile"
-        width={21}
-        height={21}
-        style={{ width: 21, height: 21 }}
-      />
-    ),
-  },
+const TABS = [
+  { href: "/home",              label: "Home",    Icon: Home01Icon },
+  { href: "/records/add-sale",  label: "Sell",    Icon: ShoppingCartAdd01Icon },
+  { href: "/inventory",         label: "Stock",   Icon: PackageIcon },
+  { href: "/wallet",            label: "Wallet",  Icon: Wallet01Icon },
+  { href: "/profile",           label: "Profile", Icon: User02Icon },
 ];
+
+// Full-screen flows where the tab bar should not show.
+const HIDDEN = ["/ask", "/set-goals", "/records/add-sale/", "/records/add-expense/", "/picture", "/voice", "/confirm", "/scan"];
 
 export function BottomNav() {
   const pathname = usePathname();
-
-  if (pathname === "/home" || pathname === "/records" || pathname === "/insights" || pathname.startsWith("/ask")) return null;
+  if (HIDDEN.some((p) => pathname.includes(p))) return null;
 
   return (
-    <nav data-coachmark="bottom_nav" className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] glass-nav bottom-nav z-50">
-      <div className="flex items-center justify-around px-2 pt-2 pb-2">
-        {navItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+    <nav
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 z-40"
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
+      aria-label="Primary"
+    >
+      <div
+        className="flex items-center justify-between rounded-[26px] px-2 py-2"
+        style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "saturate(180%) blur(20px)", boxShadow: "0 4px 24px rgba(0,0,0,0.10)" }}
+      >
+        {TABS.map(({ href, label, Icon }) => {
+          const active = href === "/home" ? pathname === "/home" : pathname.startsWith(href);
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              data-coachmark={`tab-${item.label.toLowerCase()}`}
-              className="flex flex-col items-center gap-[3px] min-w-[52px] min-h-[48px] justify-center relative"
-              aria-label={item.label}
+              key={href}
+              href={href}
+              className="flex-1 flex flex-col items-center gap-1 py-1.5 rounded-2xl active:scale-95 transition-transform"
+              style={{ background: active ? "#EEF3E9" : "transparent" }}
+              aria-current={active ? "page" : undefined}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-[2px] rounded-full bg-spal-green"
-                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                />
-              )}
-              <span
-                className={`relative z-10 transition-all duration-200 ${
-                  isActive ? "text-spal-navy scale-110" : "text-neutral-400"
-                }`}
-              >
-                {isActive && item.iconActive ? item.iconActive : item.icon}
-              </span>
-              <span
-                className={`relative z-10 text-[9.5px] font-semibold tracking-tight transition-colors duration-200 ${
-                  isActive ? "text-spal-navy" : "text-neutral-400"
-                }`}
-                style={{ fontFamily: "var(--font-satoshi)" }}
-              >
-                {item.label}
+              <Icon size={22} color={active ? "#0F172A" : "#9CA3AF"} />
+              <span className="text-[10.5px] font-semibold" style={{ fontFamily: FF, color: active ? "#0F172A" : "#9CA3AF" }}>
+                {label}
               </span>
             </Link>
           );
