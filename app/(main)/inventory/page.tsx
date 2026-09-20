@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import {
   Search01Icon, Notification03Icon, QrCode01Icon, CubeIcon, Store01Icon,
   Package01Icon, PlusSignIcon, MinusSignIcon, SidebarRight01Icon, Notebook01Icon,
@@ -42,7 +42,17 @@ export default function StockPage() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [detail, setDetail] = useState<InventoryItem | null>(null);
+  const [showCats, setShowCats] = useState(false);
+  const [order, setOrder] = useState<string[]>([]);
   const catScroller = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try { const s = localStorage.getItem("spal-cat-order"); if (s) setOrder(JSON.parse(s)); } catch { /* ignore */ }
+  }, []);
+  function saveOrder(next: string[]) {
+    setOrder(next);
+    try { localStorage.setItem("spal-cat-order", JSON.stringify(next)); } catch { /* ignore */ }
+  }
 
   async function adjustQty(item: InventoryItem, next: number) {
     const q = Math.max(0, next);
@@ -73,11 +83,19 @@ export default function StockPage() {
   }, []);
   useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-  const categories = useMemo(() => {
+  const countMap = useMemo(() => {
     const counts = new Map<string, number>();
     items.forEach((it) => { if (it.category) counts.set(it.category, (counts.get(it.category) ?? 0) + 1); });
-    return Array.from(counts.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name));
+    return counts;
   }, [items]);
+
+  // Apply the user's saved order; unknown/new categories fall to the end alphabetically.
+  const categories = useMemo(() => {
+    const names = Array.from(countMap.keys());
+    const known = order.filter((n) => names.includes(n));
+    const rest = names.filter((n) => !order.includes(n)).sort((a, b) => a.localeCompare(b));
+    return [...known, ...rest].map((name) => ({ name, count: countMap.get(name) ?? 0 }));
+  }, [countMap, order]);
 
   const filtered = activeCat ? items.filter((it) => it.category === activeCat) : items;
 
@@ -157,23 +175,24 @@ export default function StockPage() {
                   <button key={c.name} onClick={() => setActiveCat(on ? null : c.name)}
                     className="snap-start shrink-0 text-left active:scale-[0.98] transition-transform" style={{ width: 168 }}>
                     <div className="w-14 h-3 rounded-t-xl -mb-1 ml-1" style={{ background: on ? "#22C55E" : "#fff" }} />
-                    <div className="rounded-2xl rounded-tl-none px-4 py-5" style={{ background: on ? "#22C55E" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                    <div className="rounded-2xl rounded-tl-none px-4 py-5 flex flex-col justify-center" style={{ background: on ? "#22C55E" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", minHeight: 96 }}>
                       <p className="text-[19px] font-black leading-tight" style={{ fontFamily: FF, color: on ? "#fff" : "#0F172A" }}>{c.name}</p>
                       <p className="text-[14px] mt-1" style={{ fontFamily: FF, color: on ? "rgba(255,255,255,0.85)" : "#9CA3AF" }}>{c.count} Item{c.count !== 1 ? "s" : ""}</p>
                     </div>
                   </button>
                 );
               })}
-              {/* View More */}
-              <button onClick={() => setActiveCat(null)}
-                className="snap-start shrink-0 text-left active:scale-[0.98] transition-transform" style={{ width: 168 }}>
-                <div className="w-14 h-3 rounded-t-xl -mb-1 ml-1" style={{ background: "#16A34A" }} />
-                <div className="rounded-2xl rounded-tl-none px-4 py-5" style={{ background: "#22C55E" }}>
-                  <PlusSignIcon size={26} color="#fff" />
-                  <p className="text-[19px] font-black leading-tight mt-1 text-white" style={{ fontFamily: FF }}>View More</p>
-                  <p className="text-[14px] mt-0.5" style={{ fontFamily: FF, color: "rgba(255,255,255,0.85)" }}>Click for More</p>
-                </div>
-              </button>
+              {/* View More — only when there are more than 4 categories */}
+              {categories.length > 4 && (
+                <button onClick={() => setShowCats(true)}
+                  className="snap-start shrink-0 text-left active:scale-[0.98] transition-transform" style={{ width: 168 }}>
+                  <div className="w-14 h-3 rounded-t-xl -mb-1 ml-1" style={{ background: "#16A34A" }} />
+                  <div className="rounded-2xl rounded-tl-none px-4 py-5 flex flex-col justify-center" style={{ background: "#22C55E", minHeight: 96 }}>
+                    <p className="text-[19px] font-black leading-tight text-white" style={{ fontFamily: FF }}>View More</p>
+                    <p className="text-[14px] mt-1" style={{ fontFamily: FF, color: "rgba(255,255,255,0.85)" }}>Click for More</p>
+                  </div>
+                </button>
+              )}
             </div>
             {pages > 1 && (
               <div className="flex items-center justify-center gap-1.5 mt-3">
@@ -232,7 +251,45 @@ export default function StockPage() {
         )}
       </AnimatePresence>
 
-      {/* (detail drawer rendered above) */}
+      {/* All categories — partial drawer with drag-to-reorder */}
+      <AnimatePresence>
+        {showCats && (
+          <>
+            <motion.div key="cscrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60]" style={{ background: "rgba(10,14,26,0.35)" }} onClick={() => setShowCats(false)} />
+            <motion.div key="cpanel" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+              className="fixed right-0 top-0 bottom-0 z-[61] w-[88%] max-w-[440px] flex flex-col overflow-y-auto"
+              style={{ background: "#EDF3E8", fontFamily: FF }}>
+              <div className="flex justify-end px-5 pt-12 pb-1">
+                <button onClick={() => setShowCats(false)} className="w-9 h-9 rounded-lg flex items-center justify-center active:scale-95"
+                  style={{ border: "1.5px solid #C7D2C0" }} aria-label="Close">
+                  <SidebarRight01Icon size={18} color="#475467" />
+                </button>
+              </div>
+              <div className="px-5 pb-8">
+                <h2 className="text-[26px] font-black text-spal-navy" style={{ fontFamily: FF }}>All Categories</h2>
+                <p className="text-[13.5px] text-neutral-500 mt-1 mb-4" style={{ fontFamily: FF }}>Drag to reorder how they show on Stock.</p>
+                <Reorder.Group axis="y" values={categories.map((c) => c.name)} onReorder={saveOrder} className="space-y-3">
+                  {categories.map((c) => (
+                    <Reorder.Item key={c.name} value={c.name} whileDrag={{ scale: 1.03, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}
+                      className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3 cursor-grab active:cursor-grabbing"
+                      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <span className="grid grid-cols-2 gap-x-1 gap-y-1 flex-shrink-0">
+                        {Array.from({ length: 6 }).map((_, i) => <span key={i} className="w-1 h-1 rounded-full" style={{ background: "#CBD5C0" }} />)}
+                      </span>
+                      <button onClick={() => { setActiveCat(c.name); setShowCats(false); }} className="flex-1 text-left">
+                        <p className="text-[16px] font-bold text-spal-navy" style={{ fontFamily: FF }}>{c.name}</p>
+                        <p className="text-[13px] text-neutral-400" style={{ fontFamily: FF }}>{c.count} Item{c.count !== 1 ? "s" : ""}</p>
+                      </button>
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Floating Add Inventory */}
       <AnimatePresence>
