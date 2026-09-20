@@ -1,20 +1,100 @@
 "use client";
 
-import { Wallet01Icon } from "hugeicons-react";
+import { useState } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search01Icon, Notification03Icon, ComputerUserIcon } from "hugeicons-react";
+import { useSPALStore } from "@/store";
 
+const BG = "#EEF3E9";
 const FF = "var(--font-satoshi)";
 
-// Placeholder — the full Wallet screen is built in a later pass.
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  return "Good Evening";
+}
+
+const PERIODS = [
+  { key: "today", label: "Today" },
+  { key: "week",  label: "This Week" },
+  { key: "month", label: "This Month" },
+  { key: "year",  label: "This Year" },
+] as const;
+
 export default function WalletPage() {
+  const { user, activeBusiness } = useSPALStore();
+  const businessName = activeBusiness?.business_name || user?.business_name || "Your Store";
+  const [period, setPeriod] = useState<(typeof PERIODS)[number]["key"]>("today");
+  const [toast, setToast] = useState(false);
+
+  function claim() {
+    setToast(true);
+    setTimeout(() => setToast(false), 2400);
+  }
+
   return (
-    <div className="min-h-full flex flex-col items-center justify-center px-8 text-center" style={{ background: "#EDF3E8", fontFamily: FF }}>
-      <span className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: "#EAF0FC" }}>
-        <Wallet01Icon size={30} color="#2563EB" />
-      </span>
-      <h1 className="text-[20px] font-black text-spal-navy" style={{ fontFamily: FF }}>Wallet</h1>
-      <p className="text-[14px] text-neutral-500 mt-2 max-w-[260px]" style={{ fontFamily: FF }}>
-        Your SPAL account, payments and POS connections will live here soon.
-      </p>
+    <div className="min-h-full flex flex-col" style={{ background: BG, fontFamily: FF }}>
+      {/* Header */}
+      <div className="px-5 pt-12 pb-3 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
+          {user?.avatar_url
+            ? <Image src={user.avatar_url} alt="" width={44} height={44} className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-[16px] font-black text-white">{businessName.charAt(0)}</div>}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] text-neutral-500" style={{ fontFamily: FF }}>{greeting()}</p>
+          <p className="text-[18px] font-black text-spal-navy truncate" style={{ fontFamily: FF }}>{businessName}</p>
+        </div>
+        <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
+        <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification03Icon size={19} color="#6B7280" /></button>
+      </div>
+
+      {/* Period tabs */}
+      <div className="px-5 mt-2">
+        <div className="flex items-center bg-white rounded-full p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+          {PERIODS.map((p) => {
+            const active = period === p.key;
+            return (
+              <button key={p.key} onClick={() => setPeriod(p.key)}
+                className="flex-1 h-10 rounded-full text-[14px] font-bold transition-all"
+                style={{ background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Empty / claim state */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+        <ComputerUserIcon size={56} color="#5B6472" strokeWidth={1.5} />
+        <h1 className="text-[30px] font-black text-spal-navy leading-tight mt-6" style={{ fontFamily: FF }}>
+          Get a SPAL account number for your business in less than 1 minute
+        </h1>
+        <p className="text-[16px] text-neutral-500 mt-4" style={{ fontFamily: FF }}>See all your transactions in one place</p>
+
+        <button onClick={claim}
+          className="w-full max-w-[420px] h-16 rounded-full text-white font-black text-[18px] mt-10 active:scale-[0.98] transition-transform"
+          style={{ background: "#F97316", fontFamily: FF, boxShadow: "0 10px 30px rgba(249,115,22,0.35)" }}>
+          Claim Number
+        </button>
+      </div>
+
+      {/* Coming-soon toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+            className="fixed left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-full"
+            style={{ background: "#0F172A", bottom: "calc(var(--bottom-nav-h, 88px) + 16px)", boxShadow: "0 10px 30px rgba(0,0,0,0.28)" }}
+          >
+            <span className="text-[14px] font-bold text-white" style={{ fontFamily: FF }}>Coming soon — we're building this for you</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
