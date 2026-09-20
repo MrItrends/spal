@@ -27,10 +27,17 @@ export async function POST(req: NextRequest) {
     const bytes = new Uint8Array(await file.arrayBuffer());
 
     const admin = createAdminClient();
-    const { error } = await admin.storage.from("inventory").upload(path, bytes, {
+    const doUpload = () => admin.storage.from("inventory").upload(path, bytes, {
       contentType: file.type,
       upsert: false,
     });
+
+    let { error } = await doUpload();
+    // First upload on a fresh project: the bucket may not exist yet — create it and retry.
+    if (error && /bucket not found/i.test(error.message)) {
+      await admin.storage.createBucket("inventory", { public: true, fileSizeLimit: MAX_BYTES });
+      ({ error } = await doUpload());
+    }
     if (error) throw error;
 
     const { data } = admin.storage.from("inventory").getPublicUrl(path);
