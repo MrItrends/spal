@@ -304,6 +304,7 @@ export default function ProfilePage() {
           <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Set and manage your Notifications" onClick={() => setActiveSheet("notifications")} />
           <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => setActiveSheet("currency")} />
           <ProfileRow icon={<Invoice01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Billing & Plan" sub="Manage your payment plan" onClick={() => router.push("/billing")} />
+          <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Billing History" sub="See your past payments" onClick={() => router.push("/billing/history")} />
           <ProfileRow icon={<HelpCircleIcon size={20} color="#2563EB" />} tint="#E4ECFB" title="Help & Support" sub="Get help where necessary" onClick={soon} />
           <ProfileRow icon={<Shield01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Security" sub="Add an extra layer of security to your account" onClick={soon} />
           <ProfileRow icon={<Share08Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Share/Invite Others" sub="Invite others to join the account" onClick={soon} last />
