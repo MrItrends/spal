@@ -159,6 +159,9 @@ export default function SellPage() {
     setSaving(true);
     const paid = payMethod === "debt" ? "owed" : (amountMode === "other" && amountPaid < total ? "owed" : "paid");
     const desc = cartLines.map((l) => `${l.item.name} x${l.qty}`).join(", ");
+    // Inherit the product's stock category (single category → that one, mixed → "Mixed").
+    const cats = Array.from(new Set(cartLines.map((l) => l.item.category).filter(Boolean))) as string[];
+    const saleCategory = cats.length === 1 ? cats[0] : cats.length > 1 ? "Mixed" : null;
     try {
       await fetch("/api/records", {
         method: "POST",
@@ -167,7 +170,8 @@ export default function SellPage() {
           type: "sale",
           amount: total,
           description: desc,
-          category: "Sales",
+          category: saleCategory,
+          preserve_category: true,
           input_method: "manual",
           payment_status: paid,
           customer_name: customerName || null,

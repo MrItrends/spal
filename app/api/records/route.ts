@@ -54,13 +54,17 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { type, amount, description, category, input_method, raw_input, record_date, payment_status, customer_name } = body;
+    const { type, amount, description, category, preserve_category, input_method, raw_input, record_date, payment_status, customer_name } = body;
 
     if (!type || !amount) {
       return NextResponse.json({ success: false, error: "type and amount are required" }, { status: 400 });
     }
 
     const bizId = await getActiveBusinessId(supabase, user.id);
+
+    // Sales from the POS carry the product's stock category verbatim (preserve_category);
+    // everything else is normalized to the canonical set.
+    const finalCategory = preserve_category ? (category?.trim() || null) : normalizeCategory(category);
 
     const { data, error } = await supabase
       .from("records")
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
         type,
         amount: parseFloat(amount),
         description: description?.trim() || null,
-        category: normalizeCategory(category),
+        category: finalCategory,
         input_method: input_method || "text",
         raw_input: raw_input || null,
         record_date: record_date || todayISO(),
