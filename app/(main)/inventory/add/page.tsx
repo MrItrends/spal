@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import {
   ArrowLeft01Icon, QrCode01Icon, Image02Icon, InformationCircleIcon,
   PlusSignIcon, ArrowDown01Icon, ArrowUp01Icon, MinusSignCircleIcon, Cancel01Icon, Tick01Icon,
@@ -10,6 +9,9 @@ import type { InventoryVariation } from "@/lib/types";
 
 const BG = "#EDF3E8";
 const FF = "var(--font-satoshi)";
+
+// A locally-previewed image that uploads in the background.
+type Pic = { id: string; preview: string; url?: string; uploading: boolean; failed?: boolean };
 
 const inputCls = "w-full rounded-2xl px-4 text-[15px] text-spal-navy outline-none placeholder:text-neutral-400";
 const inputStyle = { fontFamily: FF, background: "#F1F4EE", height: 56 } as const;
@@ -22,8 +24,8 @@ export default function AddInventoryPage() {
   const [name, setName]           = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [quantity, setQuantity]   = useState("");
-  const [images, setImages]       = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [pics, setPics]           = useState<Pic[]>([]);
+  const uploading = pics.some((p) => p.uploading);
   const [lowStock, setLowStock]   = useState("");
   const [boughtFor, setBoughtFor] = useState("");
   const [sku, setSku]             = useState("");
@@ -57,20 +59,41 @@ export default function AddInventoryPage() {
 
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    setUploading(true); setError("");
-    for (const file of Array.from(files)) {
-      if (file.size > 1024 * 1024) { setError("Each image must be less than 1MB"); continue; }
+    setError("");
+    const chosen = Array.from(files);
+    // Show a preview immediately, then upload each in the background.
+    const newPics: Pic[] = chosen
+      .filter((f) => {
+        if (f.size > 1024 * 1024) { setError("Each image must be less than 1MB"); return false; }
+        return true;
+      })
+      .map((f) => ({ id: crypto.randomUUID(), preview: URL.createObjectURL(f), uploading: true, file: f } as Pic & { file: File }));
+    setPics((prev) => [...prev, ...newPics]);
+    if (fileRef.current) fileRef.current.value = "";
+
+    for (const p of newPics as (Pic & { file: File })[]) {
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", p.file);
       try {
         const res = await fetch("/api/upload", { method: "POST", body: fd });
         const d = await res.json();
-        if (d.success) setImages((prev) => [...prev, d.url]);
-        else setError(d.error || "Upload failed");
-      } catch { setError("Upload failed"); }
+        setPics((prev) => prev.map((x) => x.id === p.id
+          ? { ...x, uploading: false, url: d.success ? d.url : undefined, failed: !d.success }
+          : x));
+        if (!d.success) setError(d.error || "Upload failed — the image will show but won't be saved");
+      } catch {
+        setPics((prev) => prev.map((x) => x.id === p.id ? { ...x, uploading: false, failed: true } : x));
+        setError("Upload failed — the image will show but won't be saved");
+      }
     }
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function removePic(id: string) {
+    setPics((prev) => {
+      const gone = prev.find((p) => p.id === id);
+      if (gone?.preview.startsWith("blob:")) URL.revokeObjectURL(gone.preview);
+      return prev.filter((p) => p.id !== id);
+    });
   }
 
   function addVariation() {
@@ -86,6 +109,7 @@ export default function AddInventoryPage() {
   async function save() {
     if (!valid || saving) return;
     setSaving(true); setError("");
+    const urls = pics.filter((p) => p.url).map((p) => p.url as string);
     try {
       const res = await fetch("/api/inventory", {
         method: "POST",
@@ -99,8 +123,8 @@ export default function AddInventoryPage() {
           sku,
           category,
           gtin,
-          image_url: images[0] || null,
-          images,
+          image_url: urls[0] || null,
+          images: urls,
           discount_eligible: discountOn,
           discount: discountOn ? discount : null,
           variations: variations.filter((v) => v.size_or_flavour.trim()),
@@ -155,7 +179,7 @@ export default function AddInventoryPage() {
         <div>
           <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" multiple hidden
             onChange={(e) => onFiles(e.target.files)} />
-          {images.length === 0 ? (
+          {pics.length === 0 ? (
             <button onClick={() => fileRef.current?.click()}
               className="w-full rounded-2xl bg-white flex flex-col items-center justify-center py-8 active:scale-[0.99] transition-transform"
               style={{ border: "1.5px dashed #C7D2C0" }}>
@@ -168,10 +192,21 @@ export default function AddInventoryPage() {
             </button>
           ) : (
             <div className="w-full rounded-2xl bg-white p-3 flex flex-wrap gap-3" style={{ border: "1.5px dashed #C7D2C0" }}>
-              {images.map((url, i) => (
-                <div key={url} className="relative rounded-xl overflow-hidden" style={{ width: 96, height: 96 }}>
-                  <Image src={url} alt="" width={96} height={96} className="w-full h-full object-cover" />
-                  <button onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
+              {pics.map((p) => (
+                <div key={p.id} className="relative rounded-xl overflow-hidden" style={{ width: 96, height: 96 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                  {p.uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.55)" }}>
+                      <div className="w-5 h-5 rounded-full border-2 border-spal-green border-t-transparent animate-spin" />
+                    </div>
+                  )}
+                  {p.failed && (
+                    <div className="absolute bottom-0 inset-x-0 text-center py-0.5" style={{ background: "rgba(220,38,38,0.85)" }}>
+                      <span className="text-[9px] font-bold text-white" style={{ fontFamily: FF }}>not saved</span>
+                    </div>
+                  )}
+                  <button onClick={() => removePic(p.id)}
                     className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center" aria-label="Remove image">
                     <Cancel01Icon size={13} color="#fff" />
                   </button>
@@ -183,7 +218,6 @@ export default function AddInventoryPage() {
               </button>
             </div>
           )}
-          {uploading && <p className="text-[12.5px] text-neutral-500 mt-2" style={{ fontFamily: FF }}>Uploading…</p>}
         </div>
 
         {/* Low stock */}
