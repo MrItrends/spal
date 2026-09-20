@@ -88,14 +88,17 @@ export default function BillingPage() {
   return (
     <div className="min-h-full pb-32" style={{ background: "#EDF3E8", fontFamily: FF }}>
       {/* Purple hero */}
-      <div className="relative overflow-hidden px-5 pt-12 pb-14" style={{ background: PURPLE }}>
+      <div className="relative px-5 pt-12 pb-14" style={{ background: PURPLE }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/plan-ladder.webp" alt="" aria-hidden
+          className="absolute right-2 top-8 pointer-events-none select-none" style={{ height: 360, width: "auto" }} />
         <button onClick={() => router.back()}
-          className="w-11 h-11 rounded-full flex items-center justify-center active:scale-95" style={{ background: "rgba(255,255,255,0.2)" }} aria-label="Back">
+          className="relative z-10 w-11 h-11 rounded-full flex items-center justify-center active:scale-95" style={{ background: "rgba(255,255,255,0.2)" }} aria-label="Back">
           <ArrowLeft01Icon size={20} color="#fff" />
         </button>
-        <h1 className="text-[34px] font-black text-white leading-tight mt-4 max-w-[62%]" style={{ fontFamily: FF }}>Choose your payment plan</h1>
-        <p className="text-[16px] text-white/85 mt-4" style={{ fontFamily: FF }}>Unlimited usage</p>
-        <p className="text-[16px] text-white/85" style={{ fontFamily: FF }}>7-days free trial</p>
+        <h1 className="relative z-10 text-[34px] font-black text-white leading-tight mt-4 max-w-[62%]" style={{ fontFamily: FF }}>Choose your payment plan</h1>
+        <p className="relative z-10 text-[16px] text-white/85 mt-4" style={{ fontFamily: FF }}>Unlimited usage</p>
+        <p className="relative z-10 text-[16px] text-white/85" style={{ fontFamily: FF }}>7-days free trial</p>
       </div>
 
       {/* Plan cards */}
