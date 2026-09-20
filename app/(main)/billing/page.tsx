@@ -75,10 +75,10 @@ const CURRENT = "starter";
 
 export default function BillingPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState(CURRENT);
+  const [selected, setSelected] = useState<string | null>(null);
   const [toast, setToast] = useState(false);
 
-  const canSubscribe = selected !== CURRENT;
+  const canSubscribe = selected !== null && selected !== CURRENT;
   function subscribe() {
     if (!canSubscribe) return;
     setToast(true);
@@ -99,7 +99,7 @@ export default function BillingPage() {
       </div>
 
       {/* Plan cards */}
-      <div className="px-4 -mt-6 space-y-4">
+      <div className="px-4 mt-5 space-y-4">
         {PLANS.map((plan) => {
           const isCurrent = plan.id === CURRENT;
           const on = selected === plan.id;
