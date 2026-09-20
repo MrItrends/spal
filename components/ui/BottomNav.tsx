@@ -15,7 +15,7 @@ const TABS = [
 ];
 
 // Full-screen flows where the tab bar should not show.
-const HIDDEN = ["/ask", "/set-goals", "/records/add-sale/", "/records/add-expense/", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/profile/"];
+const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/profile/", "/insights"];
 
 export function BottomNav() {
   const pathname = usePathname();
