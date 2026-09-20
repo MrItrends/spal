@@ -35,7 +35,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="min-h-full flex flex-col" style={{ background: BG, fontFamily: FF }}>
+    <div className="flex flex-col" style={{ background: BG, fontFamily: FF, minHeight: "100dvh" }}>
       {/* Header */}
       <div className="px-5 pt-12 pb-3 flex items-center gap-3">
         <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
@@ -68,7 +68,7 @@ export default function WalletPage() {
       </div>
 
       {/* Empty / claim state */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-8" style={{ paddingBottom: "calc(var(--bottom-nav-h, 88px) + 16px)" }}>
         <ComputerUserIcon size={56} color="#5B6472" strokeWidth={1.5} />
         <h1 className="text-[30px] font-black text-spal-navy leading-tight mt-6" style={{ fontFamily: FF }}>
           Get a SPAL account number for your business in less than 1 minute
