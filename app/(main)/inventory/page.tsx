@@ -52,6 +52,17 @@ export default function StockPage() {
     }).catch(() => {});
   }
 
+  async function setThumbnail(item: InventoryItem, url: string) {
+    const rest = (item.images ?? []).filter((u) => u !== url);
+    const images = [url, ...rest];
+    const patch = { image_url: url, images };
+    setDetail((d) => d && d.id === item.id ? { ...d, ...patch } : d);
+    setItems((prev) => prev.map((it) => it.id === item.id ? { ...it, ...patch } : it));
+    await fetch(`/api/inventory/${item.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch),
+    }).catch(() => {});
+  }
+
   const fetchInventory = useCallback(async () => {
     try {
       const res = await fetch("/api/inventory");
@@ -214,7 +225,7 @@ export default function StockPage() {
               transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
               className="fixed right-0 top-0 bottom-0 z-[61] w-[88%] max-w-[440px] flex flex-col overflow-y-auto"
               style={{ background: "#EDF3E8", fontFamily: FF }}>
-              <ProductDetail item={detail} onClose={() => setDetail(null)} onAdjust={adjustQty} />
+              <ProductDetail item={detail} onClose={() => setDetail(null)} onAdjust={adjustQty} onSetThumb={setThumbnail} />
             </motion.div>
           </>
         )}
@@ -237,18 +248,15 @@ export default function StockPage() {
   );
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  food_seller: "Food", bar_owner: "Drinks", fashion_vendor: "Fashion",
-  salon: "Salon", kiosk: "Store", market_trader: "Market", other: "Product",
-};
-
-function ProductDetail({ item, onClose, onAdjust }: {
-  item: InventoryItem; onClose: () => void; onAdjust: (item: InventoryItem, next: number) => void;
+function ProductDetail({ item, onClose, onAdjust, onSetThumb }: {
+  item: InventoryItem; onClose: () => void;
+  onAdjust: (item: InventoryItem, next: number) => void;
+  onSetThumb: (item: InventoryItem, url: string) => void;
 }) {
-  const { user, activeBusiness } = useSPALStore();
-  const typeLabel = TYPE_LABEL[(activeBusiness?.business_type ?? user?.business_type) ?? ""] || null;
-  const gallery = (item.images && item.images.length ? item.images : item.image_url ? [item.image_url] : []).slice(0, 4);
-  const tags = [typeLabel, item.category].filter(Boolean) as string[];
+  const gallery = item.images && item.images.length ? item.images : item.image_url ? [item.image_url] : [];
+  const [active, setActive] = useState(0);
+  const cover = item.image_url ?? gallery[0] ?? null;
+  const activeUrl = gallery[active];
 
   return (
     <>
@@ -257,8 +265,8 @@ function ProductDetail({ item, onClose, onAdjust }: {
         <button onClick={onClose} className="absolute top-12 right-5 w-9 h-9 rounded-lg bg-white/80 flex items-center justify-center active:scale-95" aria-label="Close">
           <SidebarRight01Icon size={18} color="#475467" />
         </button>
-        {item.image_url
-          ? <Image src={item.image_url} alt={item.name} width={280} height={280} className="h-[260px] w-auto object-contain" />
+        {cover
+          ? <Image src={cover} alt={item.name} width={280} height={280} className="h-[260px] w-auto object-contain" />
           : <Package01Icon size={72} color="#B7B7D6" />}
         <button onClick={() => { window.location.href = `/inventory/add?id=${item.id}`; }}
           className="absolute right-5 bottom-5 flex items-center gap-2 h-12 px-5 rounded-2xl text-white font-black text-[16px] active:scale-95"
@@ -271,34 +279,49 @@ function ProductDetail({ item, onClose, onAdjust }: {
         <h2 className="text-[28px] font-black text-spal-navy" style={{ fontFamily: FF }}>{item.name}</h2>
         <p className="text-[18px] font-medium text-neutral-400 mt-1" style={{ fontFamily: FF }}>{formatCurrency(price(item))}</p>
 
-        {tags.length > 0 && (
+        {/* Category tag (only what the user entered) */}
+        {item.category && (
           <div className="flex items-center gap-2 mt-3">
-            {tags.map((t, i) => (
-              <span key={t} className="flex items-center gap-2">
-                {i > 0 && <span className="text-neutral-400">*</span>}
-                <span className="px-3 py-1.5 rounded-full bg-white text-[13.5px] font-semibold text-spal-navy" style={{ fontFamily: FF }}>{t}</span>
-              </span>
-            ))}
+            <span className="px-3.5 py-1.5 rounded-full bg-white text-[13.5px] font-semibold text-spal-navy" style={{ fontFamily: FF }}>{item.category}</span>
           </div>
         )}
 
-        {/* Gallery */}
+        {/* Image carousel */}
         {gallery.length > 0 && (
-          <div className="bg-white rounded-2xl p-3 mt-5 grid grid-cols-2 gap-3">
-            {gallery.map((url, i) => (
-              <div key={i} className="rounded-xl flex items-center justify-center" style={{ background: IMG_BG, aspectRatio: "1 / 1" }}>
-                <Image src={url} alt="" width={160} height={160} className="w-full h-full object-contain p-2" />
+          <div className="mt-5">
+            <div
+              onScroll={(e) => setActive(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+              className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden rounded-2xl"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {gallery.map((url, i) => (
+                <div key={i} className="snap-center shrink-0 w-full flex items-center justify-center rounded-2xl" style={{ background: IMG_BG, aspectRatio: "1 / 1" }}>
+                  <Image src={url} alt="" width={360} height={360} className="w-full h-full object-contain p-4" />
+                </div>
+              ))}
+            </div>
+            {gallery.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-3">
+                {gallery.map((_, i) => (
+                  <span key={i} className="rounded-full transition-all" style={{ width: i === active ? 16 : 7, height: 7, background: i === active ? "#22C55E" : "#CBD5C0" }} />
+                ))}
               </div>
+            )}
+            {/* Set as cover */}
+            {activeUrl && (activeUrl === cover ? (
+              <p className="text-center text-[13px] font-semibold mt-2.5" style={{ fontFamily: FF, color: "#16A34A" }}>Cover photo</p>
+            ) : (
+              <button onClick={() => onSetThumb(item, activeUrl)}
+                className="w-full mt-3 h-11 rounded-full font-bold text-[14px] active:scale-[0.98]"
+                style={{ fontFamily: FF, color: "#22C55E", border: "1.5px solid #22C55E" }}>
+                Set as cover photo
+              </button>
             ))}
           </div>
         )}
 
-        {/* Measured by / Quantity available */}
-        <div className="bg-white rounded-2xl px-4 py-4 mt-4 space-y-3.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[15px] text-neutral-500" style={{ fontFamily: FF }}>Measured by</span>
-            <span className="text-[15px] font-black text-spal-navy capitalize" style={{ fontFamily: FF }}>{item.unit}</span>
-          </div>
+        {/* Quantity available */}
+        <div className="bg-white rounded-2xl px-4 py-4 mt-4">
           <div className="flex items-center justify-between">
             <span className="text-[15px] text-neutral-500" style={{ fontFamily: FF }}>Quantity Available</span>
             <span className="text-[15px] font-black text-spal-navy" style={{ fontFamily: FF }}>{item.initial_stock ?? item.quantity}</span>
