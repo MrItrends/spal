@@ -270,7 +270,7 @@ export default function ProfilePage() {
 
       {/* Big avatar + name */}
       <div className="flex flex-col items-center mt-4">
-        <label className="relative cursor-pointer">
+        <label className="relative cursor-pointer block w-28 h-28">
           <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarChange} disabled={avatarLoading} />
           <div className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center" style={{ background: "#CBD9C4" }}>
             {user?.avatar_url
@@ -279,11 +279,11 @@ export default function ProfilePage() {
               : avatarLoading ? <span className="text-white animate-pulse">…</span>
               : <UserIcon size={44} color="#ffffff" />}
           </div>
-          <span className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-white flex items-center justify-center" style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>
+          <span className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-white flex items-center justify-center" style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>
             <Camera01Icon size={16} color="#8B5CF6" />
           </span>
         </label>
-        <button onClick={() => setActiveSheet("name")} className="mt-3 text-[17px] font-black text-spal-navy">
+        <button onClick={() => setActiveSheet("name")} className="mt-4 text-[17px] font-black text-spal-navy">
           {user?.full_name ?? "Add a Name"}
         </button>
       </div>
