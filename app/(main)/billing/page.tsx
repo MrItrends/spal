@@ -82,6 +82,7 @@ export default function BillingPage() {
   const [toast, setToast] = useState(false);
 
   const canSubscribe = selected !== null && selected !== CURRENT;
+  const maxYearlySave = Math.max(...PLANS.map((p) => p.yearlyOff * 12));
   function subscribe() {
     if (!canSubscribe) return;
     setToast(true);
@@ -91,10 +92,10 @@ export default function BillingPage() {
   return (
     <div className="min-h-full pb-32" style={{ background: "#EDF3E8", fontFamily: FF }}>
       {/* Purple hero */}
-      <div className="relative px-5 pt-12 pb-14" style={{ background: PURPLE }}>
+      <div className="relative overflow-hidden px-5 pt-12 pb-14" style={{ background: PURPLE }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/plan-ladder.webp" alt="" aria-hidden
-          className="absolute right-2 top-8 pointer-events-none select-none" style={{ height: 360, width: "auto" }} />
+          className="absolute right-2 top-4 pointer-events-none select-none" style={{ height: "auto", maxHeight: "82%", width: "auto" }} />
         <button onClick={() => router.back()}
           className="relative z-10 w-11 h-11 rounded-full flex items-center justify-center active:scale-95" style={{ background: "rgba(255,255,255,0.2)" }} aria-label="Back">
           <ArrowLeft01Icon size={20} color="#fff" />
@@ -111,9 +112,15 @@ export default function BillingPage() {
             const active = period === p;
             return (
               <button key={p} onClick={() => setPeriod(p)}
-                className="flex-1 h-10 rounded-full text-[14px] font-bold transition-all"
+                className="flex-1 h-10 rounded-full text-[14px] font-bold transition-all flex items-center justify-center gap-2"
                 style={{ background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
                 {p === "month" ? "Monthly" : "Yearly"}
+                {p === "year" && (
+                  <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+                    style={{ background: active ? "#fff" : "#22C55E", color: active ? "#16A34A" : "#fff" }}>
+                    Save {formatCurrency(maxYearlySave)}
+                  </span>
+                )}
               </button>
             );
           })}
