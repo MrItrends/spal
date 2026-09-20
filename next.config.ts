@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   // Do NOT add a `turbopack` key here — its presence enables Turbopack
   // even without the --turbopack flag in Next.js 16 on Windows.
 
+  // Allow product/photo images served from the Supabase storage bucket.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+    ],
+  },
+
   async headers() {
     return [
       {

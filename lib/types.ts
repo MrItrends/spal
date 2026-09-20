@@ -78,9 +78,26 @@ export interface InventoryItem {
   // Populated by the Stocks flow — the Sell catalog lights these up automatically.
   category?: string | null;
   image_url?: string | null;
+  images?: string[] | null;
   initial_stock?: number | null; // baseline used for the "X sold" progress bar
+  sku?: string | null;
+  gtin?: string | null;
+  discount?: number | null;
+  discount_eligible?: boolean | null;
+  variations?: InventoryVariation[] | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface InventoryVariation {
+  size_or_flavour: string;
+  unit_price?: number | null;
+  quantity?: number | null;
+  sku?: string | null;
+  gtin?: string | null;
+  cost_price?: number | null;
+  discount?: number | null;
+  low_stock_threshold?: number | null;
 }
 
 export interface BusinessRecord {
