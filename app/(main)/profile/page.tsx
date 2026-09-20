@@ -16,6 +16,7 @@ import {
   Store01Icon, Coins01Icon, ReceiptDollarIcon, ArrowRight01Icon, Camera01Icon, FireIcon, Tick01Icon, Alert01Icon,
   BookOpen01Icon, Message01Icon, GridViewIcon, File01Icon, Folder01Icon,
   PlusSignIcon, Archive01Icon, Building04Icon,
+  Briefcase01Icon, Location01Icon, UserAdd01Icon, Invoice01Icon, HelpCircleIcon, Shield01Icon, Share08Icon, Search01Icon,
 } from "hugeicons-react";
 import type { TrackingMethod } from "@/store";
 
@@ -80,7 +81,9 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, setUser, logout, activeBusiness, setActiveBusiness, businesses, setBusinesses } = useSPALStore();
   const [signingOut,    setSigningOut]    = useState(false);
+  const [comingSoon,    setComingSoon]    = useState(false);
   const [activeSheet,   setActiveSheet]   = useState<SheetType>(null);
+  const soon = () => { setComingSoon(true); setTimeout(() => setComingSoon(false), 2200); };
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [switchingBiz,  setSwitchingBiz]  = useState<string | null>(null);
   const [bizToManage,   setBizToManage]   = useState<Business | null>(null);
@@ -248,322 +251,84 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="px-4 pt-6 space-y-4">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="w-10 h-10 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
-          style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}
-        >
-          <ArrowLeft01Icon size={18} color="#0F172A" />
-        </button>
-        <h1 className="text-xl font-bold text-spal-navy font-[family-name:var(--font-satoshi)]">
-          Profile
-        </h1>
+    <div className="min-h-full pb-28" style={{ background: "#EEF3E9", fontFamily: "var(--font-satoshi)" }}>
+      {/* Header */}
+      <div className="px-5 pt-12 pb-2 flex items-center gap-3">
+        <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
+          {user?.avatar_url
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-[16px] font-black text-white">{(user?.business_name ?? "S").charAt(0)}</div>}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] text-neutral-500">{greeting()}</p>
+          <p className="text-[18px] font-black text-spal-navy truncate">{user?.business_name ?? "Your Store"}</p>
+        </div>
+        <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
+        <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification01Icon size={19} color="#6B7280" /></button>
       </div>
 
-      {/* User card */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <Card padding="md">
-          <div className="flex items-center gap-4">
-            {/* Tappable avatar */}
-            <label className="relative w-14 h-14 flex-shrink-0 cursor-pointer group">
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={handleAvatarChange}
-                disabled={avatarLoading}
-              />
-              {/* Avatar image or initials */}
-              <div className="w-14 h-14 bg-spal-green rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
-                {user?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  avatarLoading ? (
-                    <span className="text-sm animate-pulse">…</span>
-                  ) : (
-                    user?.full_name?.[0]?.toUpperCase() ??
-                    user?.business_name?.[0]?.toUpperCase() ??
-                    <UserIcon size={22} color="#fff" />
-                  )
-                )}
-              </div>
-              {/* Camera overlay */}
-              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
-                {avatarLoading
-                  ? <span className="text-white text-xs animate-pulse">…</span>
-                  : <Camera01Icon size={16} color="#fff" />
-                }
-              </div>
-            </label>
-
-            <div className="flex-1 min-w-0">
-              <button
-                onClick={() => setActiveSheet("name")}
-                className="flex items-center gap-1.5 group text-left w-full"
-              >
-                <p className="font-bold text-spal-navy text-base truncate">
-                  {user?.full_name ?? user?.business_name ?? "Tap to set your name"}
-                </p>
-                <span className="flex-shrink-0 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
-                  <PencilMiniIcon />
-                </span>
-              </button>
-              <p className="text-sm text-neutral-400 truncate mt-0.5">
-                {user?.email ?? user?.phone_number ?? ""}
-              </p>
-              <div className="mt-1.5">
-                <Badge label={businessLabel} color="green" />
-              </div>
-            </div>
+      {/* Big avatar + name */}
+      <div className="flex flex-col items-center mt-4">
+        <label className="relative cursor-pointer">
+          <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarChange} disabled={avatarLoading} />
+          <div className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center" style={{ background: "#CBD9C4" }}>
+            {user?.avatar_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+              : avatarLoading ? <span className="text-white animate-pulse">…</span>
+              : <UserIcon size={44} color="#ffffff" />}
           </div>
-        </Card>
-      </motion.div>
+          <span className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-white flex items-center justify-center" style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>
+            <Camera01Icon size={16} color="#8B5CF6" />
+          </span>
+        </label>
+        <button onClick={() => setActiveSheet("name")} className="mt-3 text-[17px] font-black text-spal-navy">
+          {user?.full_name ?? "Add a Name"}
+        </button>
+      </div>
 
-      {/* Stats */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-        <Card padding="md">
-          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-3">
-            Your progress
-          </p>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <StatItem
-              value={
-                <span className="inline-flex items-center gap-1">
-                  {user?.streak_days ?? 0}
-                  <FireIcon size={16} color="#F97316" />
-                </span>
-              }
-              label="Day streak"
-            />
-            <HealthStatItem health={health} />
-            <VerifiedStatItem verified={isVerified} onFix={() => setActiveSheet("business")} />
-          </div>
-        </Card>
-      </motion.div>
+      {/* Menu group 1 */}
+      <div className="px-4 mt-6">
+        <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+          <ProfileRow icon={<UserIcon size={20} color="#F97316" />} tint="#FDECDD" title="Personal Profile" sub="Set and manage your profile" onClick={() => setActiveSheet("name")} />
+          <ProfileRow icon={<Briefcase01Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Business Profile" sub="Set and manage your business profile" onClick={() => setActiveSheet("business")} />
+          <ProfileRow icon={<Location01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Business Locations" sub="Set and manage your business locations" onClick={soon} />
+          <ProfileRow icon={<UserAdd01Icon size={20} color="#2563EB" />} tint="#E4ECFB" title="Staffs & Permission" sub="Add your staffs and set their permissions" onClick={soon} last />
+        </div>
+      </div>
 
-      {/* My Businesses */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-        <Card padding="none">
-          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-            <p className="text-sm font-bold text-spal-navy">My Businesses</p>
-            <button
-              onClick={() => router.push("/add-business")}
-              className="flex items-center gap-1 active:opacity-70 transition-opacity"
-            >
-              <PlusSignIcon size={14} color="#22C55E" />
-              <span className="text-[13px] font-semibold" style={{ color: "#22C55E" }}>Add business</span>
-            </button>
-          </div>
-          <div className="pb-2">
-            {businesses.map((biz, i) => {
-              const isActive  = biz.id === activeBusiness?.id;
-              const typeColor = BIZ_TYPE_COLORS[biz.business_type] ?? "#22C55E";
-              return (
-                <div
-                  key={biz.id}
-                  className={`flex items-center gap-3 px-4 py-3 active:bg-neutral-50 transition-colors ${i < businesses.length - 1 ? "border-b border-neutral-50" : ""}`}
-                >
-                  {/* Coloured initial */}
-                  <button
-                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                    onClick={() => switchBusiness(biz)}
-                    disabled={!!switchingBiz}
-                  >
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[15px] font-bold"
-                      style={{ background: typeColor }}
-                    >
-                      {biz.business_name[0]?.toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-spal-navy truncate">{biz.business_name}</p>
-                      <p className="text-xs text-neutral-400 mt-0.5 truncate">{BUSINESS_TYPE_LABELS[biz.business_type] ?? "Business"}</p>
-                    </div>
-                    {isActive && (
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#22C55E" }}>
-                        <Tick01Icon size={11} color="#fff" />
-                      </div>
-                    )}
-                    {switchingBiz === biz.id && (
-                      <div className="w-5 h-5 rounded-full border-2 border-spal-green border-t-transparent animate-spin flex-shrink-0" />
-                    )}
-                  </button>
-                  {/* Options */}
-                  <button
-                    onClick={() => { setBizToManage(biz); setActiveSheet("biz-options"); }}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 flex-shrink-0 active:bg-neutral-200 transition-colors ml-1"
-                    aria-label="Business options"
-                  >
-                    <ArrowRight01Icon size={15} className="text-neutral-400" />
-                  </button>
-                </div>
-              );
-            })}
-            {businesses.length === 0 && (
-              <div className="px-4 py-3 flex items-center gap-2 text-neutral-400">
-                <Building04Icon size={16} />
-                <span className="text-[13px]">No businesses yet</span>
-              </div>
-            )}
-          </div>
-        </Card>
-      </motion.div>
+      {/* Menu group 2 */}
+      <div className="px-4 mt-4">
+        <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+          <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Set and manage your Notifications" onClick={() => setActiveSheet("notifications")} />
+          <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => setActiveSheet("currency")} />
+          <ProfileRow icon={<Invoice01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Billing & Plan" sub="Manage your payment plan" onClick={() => router.push("/billing")} />
+          <ProfileRow icon={<HelpCircleIcon size={20} color="#2563EB" />} tint="#E4ECFB" title="Help & Support" sub="Get help where necessary" onClick={soon} />
+          <ProfileRow icon={<Shield01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Security" sub="Add an extra layer of security to your account" onClick={soon} />
+          <ProfileRow icon={<Share08Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Share/Invite Others" sub="Invite others to join the account" onClick={soon} last />
+        </div>
+      </div>
 
-      {/* Settings */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Card padding="none">
-          {([
-            {
-              icon:    <UserIcon size={18} color="#0F172A" />,
-              label:   "Your name",
-              hint:    user?.full_name ? user.full_name : "Tap to set your name",
-              sheet:   "name" as SheetType,
-            },
-            ...(!user?.email ? [{
-              icon:    <Mail01Icon size={18} color="#2563EB" />,
-              label:   "Add email address",
-              hint:    "Sign in with email too",
-              sheet:   "add-email" as SheetType,
-            }] : []),
-            ...(!user?.phone_number ? [{
-              icon:    <SmartPhone01Icon size={18} color="#2563EB" />,
-              label:   "Business phone",
-              hint:    "Add your business contact number",
-              sheet:   "add-phone" as SheetType,
-            }] : [{
-              icon:    <SmartPhone01Icon size={18} color="#0F172A" />,
-              label:   "Business phone",
-              hint:    user.phone_number!,
-              sheet:   "add-phone" as SheetType,
-            }]),
-            {
-              icon:    <ChatIcon size={18} color="#16A34A" />,
-              label:   "WhatsApp reports",
-              hint:    user?.whatsapp_number ? `Sending to ${user.whatsapp_number}` : "Set up weekly reports",
-              sheet:   "whatsapp" as SheetType,
-            },
-            {
-              icon:    <Notification01Icon size={18} color="#8B5CF6" />,
-              label:   "Notifications",
-              hint:    "Daily reminders to track",
-              sheet:   "notifications" as SheetType,
-            },
-            {
-              icon:    <Store01Icon size={18} color="#F97316" />,
-              label:   "Business details",
-              hint:    user?.business_name ?? "Add your business name",
-              sheet:   "business" as SheetType,
-            },
-            {
-              icon:    <Coins01Icon size={18} color="#16A34A" />,
-              label:   "Currency",
-              hint:    user?.currency ?? "NGN",
-              sheet:   "currency" as SheetType,
-            },
-            {
-              icon:    <Folder01Icon size={18} color="#2563EB" />,
-              label:   "Record tracking methods",
-              hint:    (() => {
-                const methods = (activeBusiness?.tracking_methods ?? []).filter(m => m !== "nothing") as TrackingMethod[];
-                return methods.length > 0
-                  ? methods.map(m => TRACKING_METHOD_LABELS[m] ?? m).join(", ")
-                  : "How do you currently track records?";
-              })(),
-              sheet:   "tracking-methods" as SheetType,
-            },
-            {
-              icon:    <BookOpen01Icon size={18} color="#8B5CF6" />,
-              label:   "Business goals",
-              hint:    (() => {
-                const goals = activeBusiness?.business_goals ?? [];
-                return goals.length > 0
-                  ? goals.map(g => GOAL_LABELS[g] ?? g).join(", ")
-                  : "What do you want to achieve?";
-              })(),
-              sheet:   "business-goals" as SheetType,
-            },
-          ] as { icon: React.ReactNode; label: string; hint: string; sheet: SheetType }[]).map((item, i, arr) => (
-            <button
-              key={item.label}
-              onClick={() => setActiveSheet(item.sheet)}
-              className={`w-full flex items-center gap-3 px-4 py-4 active:bg-neutral-50 transition-colors ${
-                i < arr.length - 1 ? "border-b border-neutral-50" : ""
-              }`}
-            >
-              <div className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center flex-shrink-0">
-                {item.icon}
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold text-spal-navy">{item.label}</p>
-                <p className="text-xs text-neutral-400 mt-0.5">{item.hint}</p>
-              </div>
-              <ArrowRight01Icon size={18} className="text-neutral-300" />
-            </button>
-          ))}
-        </Card>
-      </motion.div>
+      {/* Log out + version */}
+      <div className="flex flex-col items-center mt-8">
+        <button onClick={handleSignOut} disabled={signingOut} className="text-[16px] font-black active:opacity-70" style={{ color: "#EF4444" }}>
+          {signingOut ? "Logging out…" : "Log Out"}
+        </button>
+        <p className="text-[13px] text-neutral-400 mt-2">Ver. 1.1</p>
+      </div>
 
-      {/* Payment history row */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-        <Card padding="none">
-          <button
-            onClick={() => router.push("/billing")}
-            className="w-full flex items-center gap-3 px-4 py-4 active:bg-neutral-50 transition-colors"
-          >
-            <div className="w-9 h-9 rounded-full bg-spal-purple-50 flex items-center justify-center flex-shrink-0">
-              <ReceiptDollarIcon size={18} color="#8B5CF6" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-spal-navy">Payment history</p>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Coach subscriptions, receipts and renewals
-              </p>
-            </div>
-            <ArrowRight01Icon size={18} className="text-neutral-300" />
-          </button>
-        </Card>
-      </motion.div>
+      {/* Coming-soon toast */}
+      <AnimatePresence>
+        {comingSoon && (
+          <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }}
+            transition={{ duration: 0.22 }} className="fixed left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-full"
+            style={{ background: "#0F172A", bottom: "calc(var(--bottom-nav-h, 88px) + 16px)", boxShadow: "0 10px 30px rgba(0,0,0,0.28)" }}>
+            <span className="text-[14px] font-bold text-white">Coming soon — we are building this for you</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Achievements */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-        <Card padding="md">
-          <AchievementsSection />
-        </Card>
-      </motion.div>
-
-      {/* About */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-        <Card padding="md">
-          <div className="text-center">
-            <p className="text-sm font-bold text-spal-navy">SPAL v1.0</p>
-            <p className="text-xs text-neutral-400 mt-0.5">
-              Spending · Profiting · Analysing · Looping
-            </p>
-            <p className="text-xs text-neutral-300 mt-2">
-              Your AI business companion for everyday entrepreneurs
-            </p>
-          </div>
-        </Card>
-      </motion.div>
-
-      {/* Sign out */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-        <Button
-          variant="ghost"
-          fullWidth
-          loading={signingOut}
-          onClick={handleSignOut}
-          className="!text-red-500 !font-semibold"
-        >
-          Sign out
-        </Button>
-      </motion.div>
-
-      <div className="h-4" />
 
       {/* ── Switch toast ──────────────────────────────────────────── */}
       <AnimatePresence>
@@ -705,6 +470,29 @@ export default function ProfilePage() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  return "Good Evening";
+}
+
+function ProfileRow({ icon, tint, title, sub, onClick, last }: {
+  icon: React.ReactNode; tint: string; title: string; sub: string; onClick: () => void; last?: boolean;
+}) {
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-3.5 px-3 py-4 text-left active:bg-black/[0.02] transition-colors"
+      style={{ borderBottom: last ? "none" : "1px solid #F1F3EF" }}>
+      <span className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: tint }}>{icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-[16px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>{title}</span>
+        <span className="block text-[13px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>{sub}</span>
+      </span>
+      <ArrowRight01Icon size={18} color="#C4CBD4" />
+    </button>
+  );
+}
 
 function PencilMiniIcon() {
   return <PencilEdit01Icon size={13} color="#A1A1AA" />;
