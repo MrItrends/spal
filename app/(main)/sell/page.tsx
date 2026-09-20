@@ -17,7 +17,6 @@ import type { InventoryItem } from "@/lib/types";
 const BG        = "#EEF3E9";
 const IMG_BG    = "#ECECF7";
 const FF        = "var(--font-satoshi)";
-const VAT_RATE  = 0.075;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function greeting() {
@@ -116,7 +115,9 @@ export default function SellPage() {
   );
   const subtotal  = cartLines.reduce((s, l) => s + price(l.item) * l.qty, 0);
   const discount  = 0;
-  const vat       = Math.round(subtotal * VAT_RATE);
+  const taxRate   = user?.tax_rate ?? 7.5;
+  const vat       = Math.round(subtotal * taxRate / 100);
+  const vatLabel  = `VAT (${taxRate}%)`;
   const total     = subtotal - discount + vat;
   const cartCount = cartLines.reduce((s, l) => s + l.qty, 0);
 
@@ -423,14 +424,14 @@ export default function SellPage() {
                 <CartPanel
                   lines={cartLines} customerName={customerName} setCustomerName={setCustomerName}
                   setQty={setQty} clearCart={clearCart}
-                  subtotal={subtotal} discount={discount} vat={vat} total={total} count={cartCount}
+                  subtotal={subtotal} discount={discount} vat={vat} vatLabel={vatLabel} total={total} count={cartCount}
                   onTakePayment={openPayment}
                 />
               )}
 
               {drawer === "payment" && (
                 <PaymentPanel
-                  subtotal={subtotal} discount={discount} vat={vat} total={total}
+                  subtotal={subtotal} discount={discount} vat={vat} vatLabel={vatLabel} total={total}
                   method={payMethod} setMethod={setPayMethod}
                   amountMode={amountMode} setAmountMode={setAmountMode}
                   otherAmount={otherAmount} setOtherAmount={setOtherAmount}
@@ -440,7 +441,7 @@ export default function SellPage() {
 
               {drawer === "success" && (
                 <SuccessPanel
-                  lines={cartLines} vat={vat} total={total}
+                  lines={cartLines} vat={vat} vatLabel={vatLabel} total={total}
                   method={payMethod ?? "cash"} receiptNo={receiptNo} onDone={finishSale}
                 />
               )}
@@ -476,12 +477,12 @@ function CategoryPanel({ categories, onPick }: { categories: string[]; onPick: (
 
 // ── Cart drawer ──────────────────────────────────────────────────────────────
 function CartPanel({
-  lines, customerName, setCustomerName, setQty, clearCart, subtotal, discount, vat, total, count, onTakePayment,
+  lines, customerName, setCustomerName, setQty, clearCart, subtotal, discount, vat, vatLabel, total, count, onTakePayment,
 }: {
   lines: { item: InventoryItem; qty: number }[];
   customerName: string; setCustomerName: (v: string) => void;
   setQty: (id: string, qty: number) => void; clearCart: () => void;
-  subtotal: number; discount: number; vat: number; total: number; count: number;
+  subtotal: number; discount: number; vat: number; vatLabel: string; total: number; count: number;
   onTakePayment: () => void;
 }) {
   return (
@@ -537,7 +538,7 @@ function CartPanel({
         <div className="bg-white rounded-2xl px-4 py-3.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <Row label="Sub-total" value={formatCurrency(subtotal)} muted />
           <Row label="Discount" value={formatCurrency(discount)} muted />
-          <Row label="VAT (7.5%)" value={formatCurrency(vat)} muted />
+          <Row label={vatLabel} value={formatCurrency(vat)} muted />
           <div className="h-px my-2" style={{ background: "#EEF0EC" }} />
           <div className="flex items-center justify-between">
             <span className="text-[18px] font-black text-spal-navy" style={{ fontFamily: FF }}>Total</span>
@@ -565,9 +566,9 @@ function Row({ label, value, muted }: { label: string; value: string; muted?: bo
 
 // ── Payment drawer ───────────────────────────────────────────────────────────
 function PaymentPanel({
-  subtotal, discount, vat, total, method, setMethod, amountMode, setAmountMode, otherAmount, setOtherAmount, change, saving, onConfirm,
+  subtotal, discount, vat, vatLabel, total, method, setMethod, amountMode, setAmountMode, otherAmount, setOtherAmount, change, saving, onConfirm,
 }: {
-  subtotal: number; discount: number; vat: number; total: number;
+  subtotal: number; discount: number; vat: number; vatLabel: string; total: number;
   method: PayMethod | null; setMethod: (m: PayMethod) => void;
   amountMode: "full" | "other"; setAmountMode: (m: "full" | "other") => void;
   otherAmount: string; setOtherAmount: (v: string) => void;
@@ -582,7 +583,7 @@ function PaymentPanel({
         <div className="bg-white rounded-2xl px-4 py-3.5 mb-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <Row label="Sub-total" value={formatCurrency(subtotal)} muted />
           <Row label="Discount" value={formatCurrency(discount)} muted />
-          <Row label="VAT (7.5%)" value={formatCurrency(vat)} muted />
+          <Row label={vatLabel} value={formatCurrency(vat)} muted />
           <div className="h-px my-2" style={{ background: "#EEF0EC" }} />
           <div className="flex items-center justify-between">
             <span className="text-[18px] font-black text-spal-navy" style={{ fontFamily: FF }}>Total</span>
@@ -656,10 +657,10 @@ function PaymentPanel({
 
 // ── Success drawer ───────────────────────────────────────────────────────────
 function SuccessPanel({
-  lines, vat, total, method, receiptNo, onDone,
+  lines, vat, vatLabel, total, method, receiptNo, onDone,
 }: {
   lines: { item: InventoryItem; qty: number }[];
-  vat: number; total: number; method: PayMethod; receiptNo: string; onDone: () => void;
+  vat: number; vatLabel: string; total: number; method: PayMethod; receiptNo: string; onDone: () => void;
 }) {
   return (
     <>
@@ -680,7 +681,7 @@ function SuccessPanel({
           {lines.map(({ item, qty }) => (
             <Row key={item.id} label={item.name} value={formatCurrency(price(item) * qty)} muted />
           ))}
-          <Row label="VAT (7.5%)" value={formatCurrency(vat)} muted />
+          <Row label={vatLabel} value={formatCurrency(vat)} muted />
           <div className="h-px my-2" style={{ background: "#EEF0EC" }} />
           <div className="flex items-center justify-between">
             <span className="text-[18px] font-black text-spal-navy" style={{ fontFamily: FF }}>Total</span>

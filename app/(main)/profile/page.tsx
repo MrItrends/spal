@@ -425,9 +425,10 @@ export default function ProfilePage() {
       <CurrencySheet
         open={activeSheet === "currency"}
         current={user?.currency ?? "NGN"}
+        currentTax={user?.tax_rate ?? 7.5}
         onClose={() => setActiveSheet(null)}
-        onSave={async (code) => {
-          const err = await saveProfile({ currency: code });
+        onSave={async (code, taxRate) => {
+          const err = await saveProfile({ currency: code, tax_rate: taxRate });
           if (!err) setActiveSheet(null);
           return err;
         }}
@@ -813,31 +814,34 @@ function WhatsAppSheet({ open, current, onClose, onSave }: {
 
 // ── Currency sheet ─────────────────────────────────────────────────────────
 
-function CurrencySheet({ open, current, onClose, onSave }: {
+function CurrencySheet({ open, current, currentTax, onClose, onSave }: {
   open: boolean;
   current: string;
+  currentTax: number;
   onClose: () => void;
-  onSave: (code: string) => Promise<string | null>;
+  onSave: (code: string, taxRate: number) => Promise<string | null>;
 }) {
   const [selected, setSelected] = useState(current);
+  const [tax, setTax]           = useState(String(currentTax));
   const [saving, setSaving]     = useState(false);
   const [error,  setError]      = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) { setSelected(current); setError(null); }
-  }, [open, current]);
+    if (open) { setSelected(current); setTax(String(currentTax)); setError(null); }
+  }, [open, current, currentTax]);
 
   async function handleSave() {
     setSaving(true);
     setError(null);
-    const err = await onSave(selected);
+    const err = await onSave(selected, parseFloat(tax) || 0);
     if (err) setError(err);
     setSaving(false);
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Currency">
+    <Sheet open={open} onClose={onClose} title="Receipts & Tax">
       <div className="space-y-4">
+        <p className="text-[13px] font-bold text-spal-navy -mb-1">Currency</p>
         <div className="space-y-2">
           {CURRENCIES.map(c => (
             <button
@@ -859,9 +863,22 @@ function CurrencySheet({ open, current, onClose, onSave }: {
             </button>
           ))}
         </div>
+        <div>
+          <p className="text-[13px] font-bold text-spal-navy mb-2">Tax rate (VAT)</p>
+          <div className="flex items-center gap-2 bg-neutral-50 border-2 border-neutral-100 rounded-2xl px-4 h-14">
+            <input
+              type="number" inputMode="decimal" min="0" step="0.1"
+              value={tax} onChange={(e) => setTax(e.target.value)}
+              placeholder="0"
+              className="flex-1 bg-transparent outline-none text-[15px] font-semibold text-spal-navy"
+            />
+            <span className="text-[15px] font-bold text-neutral-400">%</span>
+          </div>
+          <p className="text-[11.5px] text-neutral-400 mt-1.5 px-1">Applied to sales at checkout. Set to 0 if you do not charge tax.</p>
+        </div>
         {error && <p className="text-xs text-red-500 text-center -mt-1">{error}</p>}
         <Button fullWidth loading={saving} onClick={handleSave}>
-          Save currency ✓
+          Save ✓
         </Button>
       </div>
     </Sheet>
