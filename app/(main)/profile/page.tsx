@@ -272,12 +272,12 @@ export default function ProfilePage() {
       <div className="flex flex-col items-center mt-4">
         <label className="relative cursor-pointer block w-28 h-28">
           <input type="file" accept="image/*" className="sr-only" onChange={handleAvatarChange} disabled={avatarLoading} />
-          <div className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center" style={{ background: "#CBD9C4" }}>
+          <div className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center" style={{ background: "#D9C7B8" }}>
             {user?.avatar_url
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
               : avatarLoading ? <span className="text-white animate-pulse">…</span>
-              : <UserIcon size={44} color="#ffffff" />}
+              : <span className="text-[40px] font-black text-white">{(user?.business_name ?? user?.full_name ?? "S").charAt(0).toUpperCase()}</span>}
           </div>
           <span className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full bg-white flex items-center justify-center" style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>
             <Camera01Icon size={16} color="#8B5CF6" />
