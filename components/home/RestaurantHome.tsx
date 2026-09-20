@@ -182,8 +182,8 @@ export function RestaurantHome() {
 
       {/* Insight promo */}
       <div className="px-5 mt-4">
-        <div className="rounded-2xl overflow-hidden relative flex items-center" style={{ background: "#F0F3FE", minHeight: 150 }}>
-          <div className="flex-1 px-4 py-5">
+        <div className="rounded-2xl overflow-hidden relative px-4 py-5" style={{ background: "#F0F3FE", minHeight: 150 }}>
+          <div className="relative z-10" style={{ maxWidth: "60%" }}>
             <p className="text-[16px] font-black text-spal-navy leading-snug" style={{ fontFamily: FF }}>View full Earning/Spending Insight</p>
             <p className="text-[13px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>Looking for more insights?</p>
             <button onClick={() => router.push("/insights")} className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 h-11 active:scale-[0.98] transition-transform" style={{ background: "#2563EB" }}>
@@ -191,7 +191,7 @@ export function RestaurantHome() {
               <ArrowRight01Icon size={16} color="#fff" />
             </button>
           </div>
-          <Image src="/home-insight-bars.webp" alt="" width={180} height={146} className="h-full w-auto object-contain self-stretch" style={{ maxWidth: "42%" }} />
+          <Image src="/home-insight-bars.webp" alt="" width={286} height={200} className="absolute right-4 top-1/2 -translate-y-1/2 w-[135px] h-auto pointer-events-none" />
         </div>
       </div>
 
@@ -263,8 +263,8 @@ export function RestaurantHome() {
 
       {/* POS device promo */}
       <div className="px-5 mt-5">
-        <div className="rounded-2xl overflow-hidden relative flex items-center" style={{ background: "#EEFAF3", minHeight: 148 }}>
-          <div className="flex-1 px-4 py-5">
+        <div className="rounded-2xl overflow-hidden relative px-4 py-5" style={{ background: "#EEFAF3", minHeight: 150 }}>
+          <div className="relative z-10" style={{ maxWidth: "62%" }}>
             <p className="text-[18px] font-black text-spal-navy leading-tight" style={{ fontFamily: FF }}>Do you have a POS Device?</p>
             <p className="text-[12.5px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>Either a handheld or desktop POS device</p>
             <button onClick={() => router.push("/wallet")} className="mt-4 inline-flex items-center gap-2 rounded-full px-5 h-11 active:scale-[0.98] transition-transform" style={{ background: "#22C55E" }}>
@@ -272,14 +272,14 @@ export function RestaurantHome() {
               <ArrowRight01Icon size={15} color="#fff" />
             </button>
           </div>
-          <Image src="/home-pos-device.webp" alt="" width={136} height={150} className="h-full w-auto object-contain self-stretch" style={{ maxWidth: "38%" }} />
+          <Image src="/home-pos-device.webp" alt="" width={510} height={600} className="absolute right-2 bottom-0 h-[140px] w-auto pointer-events-none" />
         </div>
       </div>
 
       {/* SPAL account number promo */}
       <div className="px-5 mt-3">
-        <div className="rounded-2xl overflow-hidden relative flex items-center" style={{ background: "#FFF4EF", minHeight: 170 }}>
-          <div className="flex-1 px-4 py-5">
+        <div className="rounded-2xl overflow-hidden relative px-4 py-5" style={{ background: "#FFF4EF", minHeight: 178 }}>
+          <div className="relative z-10" style={{ maxWidth: "62%" }}>
             <p className="text-[18px] font-black text-spal-navy leading-tight" style={{ fontFamily: FF }}>Get Your SPAL<br />Account Number</p>
             <p className="text-[12.5px] text-neutral-500 mt-1.5 leading-relaxed" style={{ fontFamily: FF }}>Receive payments directly in SPAL and keep your business records up to date</p>
             <button onClick={() => router.push("/wallet")} className="mt-4 inline-flex items-center gap-2 rounded-full px-5 h-11 active:scale-[0.98] transition-transform" style={{ background: "#F97316" }}>
@@ -287,7 +287,7 @@ export function RestaurantHome() {
               <ArrowRight01Icon size={15} color="#fff" />
             </button>
           </div>
-          <Image src="/home-account-phone.webp" alt="" width={164} height={206} className="h-full w-auto object-contain self-stretch" style={{ maxWidth: "36%" }} />
+          <Image src="/home-account-phone.webp" alt="" width={222} height={400} className="absolute right-3 bottom-0 h-[158px] w-auto pointer-events-none" />
         </div>
       </div>
     </div>
