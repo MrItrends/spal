@@ -395,8 +395,8 @@ export default function RecordsPage() {
                         transition={{ delay: i * 0.03 }}
                         className="rounded-2xl overflow-hidden bg-white"
                         style={{
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                          border: record.payment_status === "owing" ? "1px solid #FED7AA" : "1px solid rgba(228,228,231,0.5)",
+                          boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
+                          border: record.payment_status === "owing" ? "1px solid #FED7AA" : "none",
                         }}
                       >
                         <SwipeableRow
@@ -406,10 +406,10 @@ export default function RecordsPage() {
                           selected={selectedIds.has(record.id)}
                           onSelect={() => toggleSelect(record.id)}
                         >
-                          <div className="flex items-center gap-3 px-4 py-3.5">
+                          <div className="flex items-center gap-3 px-4 py-4">
                             <RecordIcon record={record} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-[13.5px] font-semibold text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
+                              <p className="text-[15px] font-black text-spal-navy truncate" style={{ fontFamily: "var(--font-satoshi)" }}>
                                 {record.description ?? record.category ?? (record.type === "sale" ? "Sale" : "Expense")}
                               </p>
                               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -441,7 +441,7 @@ export default function RecordsPage() {
                             </div>
                             <div className="text-right flex-shrink-0">
                               <p
-                                className="text-[13.5px] font-bold"
+                                className="text-[15px] font-black"
                                 style={{ fontFamily: "var(--font-satoshi)", color: record.type === "sale" ? "#16A34A" : "#EA580C" }}
                               >
                                 {record.type === "sale" ? "+" : "–"}{formatCurrency(record.amount)}
