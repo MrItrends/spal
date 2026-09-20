@@ -71,7 +71,7 @@ const PLANS: Plan[] = [
   },
 ];
 
-const CURRENT = "starter";
+const CURRENT: string | null = null; // no active plan yet
 
 export default function BillingPage() {
   const router = useRouter();
