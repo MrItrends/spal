@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -62,6 +62,8 @@ export default function SellPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeCat, setActiveCat] = useState("All");
+  const chipsRef = useRef<HTMLDivElement>(null);
+  const [catLimit, setCatLimit] = useState(999); // how many category chips fit in two rows
   const [selected, setSelected]   = useState<Set<string>>(new Set());
   const [cart, setCart]           = useState<Record<string, number>>({});
   const [customerName, setCustomerName] = useState("");
@@ -91,6 +93,20 @@ export default function SellPage() {
   }, [items]);
 
   const filtered = activeCat === "All" ? items : items.filter((it) => (it.category ?? "") === activeCat);
+
+  // Keep the category chips within two rows; overflow is reached via "View All".
+  useEffect(() => { setCatLimit(999); }, [categories.length]);
+  useEffect(() => {
+    const onResize = () => setCatLimit(999);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  useLayoutEffect(() => {
+    const el = chipsRef.current;
+    if (!el) return;
+    const twoRows = 96; // two 40px rows + gap + tolerance
+    if (el.scrollHeight > twoRows && catLimit > 0) setCatLimit((n) => Math.min(n, categories.length) - 1);
+  });
 
   const cartLines = useMemo(
     () => Object.entries(cart)
@@ -252,9 +268,9 @@ export default function SellPage() {
           </div>
         ) : (
           <>
-            {/* Category chips */}
-            <div className="px-5 flex flex-wrap gap-2.5 mb-4">
-              {["All", ...categories.slice(0, 7)].map((c) => {
+            {/* Category chips — capped to two rows, View All appears only on overflow */}
+            <div ref={chipsRef} className="px-5 flex flex-wrap gap-2.5 mb-4">
+              {["All", ...categories.slice(0, catLimit)].map((c) => {
                 const on = activeCat === c;
                 return (
                   <button
@@ -271,13 +287,15 @@ export default function SellPage() {
                   </button>
                 );
               })}
-              <button
-                onClick={() => setDrawer("category")}
-                className="px-4 h-10 rounded-full text-[14px] font-bold active:scale-95 transition-all bg-white"
-                style={{ fontFamily: FF, color: "#22C55E", border: "1.5px solid #22C55E" }}
-              >
-                View All
-              </button>
+              {catLimit < categories.length && (
+                <button
+                  onClick={() => setDrawer("category")}
+                  className="px-4 h-10 rounded-full text-[14px] font-bold active:scale-95 transition-all bg-white"
+                  style={{ fontFamily: FF, color: "#22C55E", border: "1.5px solid #22C55E" }}
+                >
+                  View All
+                </button>
+              )}
             </div>
 
             {/* Product grid */}
