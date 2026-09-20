@@ -20,6 +20,32 @@ function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-[15px] font-bold text-spal-navy mb-2" style={{ fontFamily: FF }}>{children}</p>;
 }
 
+const TIP_SKU  = "SKU is your own product code for tracking stock, like BC-50CL. You make it up yourself, and it's optional.";
+const TIP_GTIN = "GTIN is the barcode number printed on the product (UPC, EAN or ISBN). Type or scan the digits under the barcode.";
+const TIP_DISCOUNT = "An amount taken off the selling price at checkout. It must be less than the selling price.";
+const TIP_LOWSTOCK = "We'll warn you when the stock drops to this number, so you can restock in time.";
+
+function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative flex items-center">
+      <button type="button" onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }} aria-label="More info" className="flex items-center justify-center active:scale-90">
+        <InformationCircleIcon size={18} color="#9CA3AF" />
+      </button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <span className="absolute z-40 right-0 bottom-full mb-2.5 w-56 rounded-2xl px-3.5 py-2.5 text-white text-[12.5px] leading-relaxed"
+            style={{ fontFamily: FF, background: "#0F172A", boxShadow: "0 10px 30px rgba(0,0,0,0.22)" }}>
+            {text}
+            <span className="absolute right-3 top-full w-3 h-3 rotate-45 -translate-y-1.5" style={{ background: "#0F172A" }} />
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
 export default function AddInventoryPage() {
   const [name, setName]           = useState("");
   const [unitPrice, setUnitPrice] = useState("");
@@ -240,7 +266,7 @@ export default function AddInventoryPage() {
           <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
             <input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Enter Number"
               className="flex-1 bg-transparent outline-none text-[15px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
-            <InformationCircleIcon size={18} color="#9CA3AF" />
+            <InfoTip text={TIP_SKU} />
           </div>
         </div>
 
@@ -277,7 +303,7 @@ export default function AddInventoryPage() {
           <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
             <input value={gtin} onChange={(e) => setGtin(e.target.value)} placeholder="UPC, EAN or ISBN"
               className="flex-1 bg-transparent outline-none text-[15px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
-            <InformationCircleIcon size={18} color="#9CA3AF" />
+            <InfoTip text={TIP_GTIN} />
           </div>
         </div>
 
@@ -289,7 +315,7 @@ export default function AddInventoryPage() {
               <input value={discount} onChange={(e) => setDiscount(e.target.value)} type="number" inputMode="decimal"
                 placeholder="Enter Number  less than selling price"
                 className="flex-1 bg-transparent outline-none text-[15px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
-              <InformationCircleIcon size={18} color="#9CA3AF" />
+              <InfoTip text={TIP_DISCOUNT} />
             </div>
           </div>
         )}
@@ -308,11 +334,11 @@ export default function AddInventoryPage() {
               <VField label="Size or Flavour" value={v.size_or_flavour} onChange={(x) => updateVariation(i, { size_or_flavour: x })} placeholder="Enter Size or Flavour" />
               <VField label="Unit Price" value={v.unit_price ?? ""} onChange={(x) => updateVariation(i, { unit_price: x === "" ? null : parseFloat(x) })} placeholder="Enter Amount" num />
               <VField label="Number of Items Available" value={v.quantity ?? ""} onChange={(x) => updateVariation(i, { quantity: x === "" ? null : parseFloat(x) })} placeholder="Enter Amount" num />
-              <VField label="SKU" value={v.sku ?? ""} onChange={(x) => updateVariation(i, { sku: x })} placeholder="Enter Number" info />
-              <VField label="GTIN" value={v.gtin ?? ""} onChange={(x) => updateVariation(i, { gtin: x })} placeholder="UPC, EAN or ISBN" info />
+              <VField label="SKU" value={v.sku ?? ""} onChange={(x) => updateVariation(i, { sku: x })} placeholder="Enter Number" infoText={TIP_SKU} />
+              <VField label="GTIN" value={v.gtin ?? ""} onChange={(x) => updateVariation(i, { gtin: x })} placeholder="UPC, EAN or ISBN" infoText={TIP_GTIN} />
               <VField label="How much you bought it for" value={v.cost_price ?? ""} onChange={(x) => updateVariation(i, { cost_price: x === "" ? null : parseFloat(x) })} placeholder="Enter Amount" num />
               <VField label="Discount" value={v.discount ?? ""} onChange={(x) => updateVariation(i, { discount: x === "" ? null : parseFloat(x) })} placeholder="Add discount" num />
-              <VField label="Low Stock Alert" value={v.low_stock_threshold ?? ""} onChange={(x) => updateVariation(i, { low_stock_threshold: x === "" ? null : parseFloat(x) })} placeholder="Enter Number" info num />
+              <VField label="Low Stock Alert" value={v.low_stock_threshold ?? ""} onChange={(x) => updateVariation(i, { low_stock_threshold: x === "" ? null : parseFloat(x) })} placeholder="Enter Number" infoText={TIP_LOWSTOCK} num />
             </div>
           </div>
         ))}
@@ -365,8 +391,8 @@ function ExtraRow({ title, sub, added, onAdd, addLabel = "+ Add" }: { title: str
   );
 }
 
-function VField({ label, value, onChange, placeholder, num, info }: {
-  label: string; value: string | number; onChange: (v: string) => void; placeholder: string; num?: boolean; info?: boolean;
+function VField({ label, value, onChange, placeholder, num, infoText }: {
+  label: string; value: string | number; onChange: (v: string) => void; placeholder: string; num?: boolean; infoText?: string;
 }) {
   return (
     <div>
@@ -375,7 +401,7 @@ function VField({ label, value, onChange, placeholder, num, info }: {
         <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
           type={num ? "number" : "text"} inputMode={num ? "decimal" : "text"}
           className="flex-1 bg-transparent outline-none text-[14.5px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
-        {info && <InformationCircleIcon size={17} color="#9CA3AF" />}
+        {infoText && <InfoTip text={infoText} />}
       </div>
     </div>
   );
