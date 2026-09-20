@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft01Icon, CheckmarkCircle02Icon } from "hugeicons-react";
+import { formatCurrency } from "@/lib/utils/currency";
 
 const FF = "var(--font-satoshi)";
 const PURPLE = "#3F0B8C";
@@ -13,7 +14,8 @@ interface Plan {
   id: string;
   name: string;
   tagline: string;
-  price: string;
+  monthly: number;      // ₦ per month
+  yearlyOff: number;    // ₦ off each month when billed yearly
   cardBg: string;
   features: Feature[];
 }
@@ -23,7 +25,7 @@ const PLANS: Plan[] = [
     id: "starter",
     name: "Starter Plan",
     tagline: "For individuals and small businesses getting started",
-    price: "₦0",
+    monthly: 3500, yearlyOff: 200,
     cardBg: "#ECF7EF",
     features: [
       { label: "Record sales" },
@@ -37,7 +39,7 @@ const PLANS: Plan[] = [
     id: "growth",
     name: "Growth",
     tagline: "For businesses ready to understand and improve",
-    price: "₦0",
+    monthly: 3500, yearlyOff: 300,
     cardBg: "#FCEEE8",
     features: [
       { label: "Everything in Starter" },
@@ -54,7 +56,7 @@ const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     tagline: "For established businesses managing more",
-    price: "₦0",
+    monthly: 7500, yearlyOff: 500,
     cardBg: "#EEEBFB",
     features: [
       { label: "Everything in Growth" },
@@ -76,6 +78,7 @@ const CURRENT: string | null = null; // no active plan yet
 export default function BillingPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
+  const [period, setPeriod] = useState<"month" | "year">("month");
   const [toast, setToast] = useState(false);
 
   const canSubscribe = selected !== null && selected !== CURRENT;
@@ -101,11 +104,29 @@ export default function BillingPage() {
         <p className="relative z-10 text-[16px] text-white/85" style={{ fontFamily: FF }}>7-days free trial</p>
       </div>
 
+      {/* Billing period toggle */}
+      <div className="px-4 mt-5">
+        <div className="flex items-center bg-white rounded-full p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+          {(["month", "year"] as const).map((p) => {
+            const active = period === p;
+            return (
+              <button key={p} onClick={() => setPeriod(p)}
+                className="flex-1 h-10 rounded-full text-[14px] font-bold transition-all"
+                style={{ background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
+                {p === "month" ? "Monthly" : "Yearly"}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Plan cards */}
-      <div className="px-4 mt-5 space-y-4">
+      <div className="px-4 mt-4 space-y-4">
         {PLANS.map((plan) => {
           const isCurrent = plan.id === CURRENT;
           const on = selected === plan.id;
+          const perMonth = period === "year" ? plan.monthly - plan.yearlyOff : plan.monthly;
+          const yearlyTotal = (plan.monthly - plan.yearlyOff) * 12;
           return (
             <button key={plan.id} onClick={() => setSelected(plan.id)}
               className="w-full text-left rounded-3xl overflow-hidden active:scale-[0.99] transition-transform"
@@ -124,10 +145,15 @@ export default function BillingPage() {
                   </span>
                 </div>
                 <p className="text-[14.5px] text-neutral-500 mt-1.5" style={{ fontFamily: FF }}>{plan.tagline}</p>
-                <p className="mt-3" style={{ fontFamily: FF }}>
-                  <span className="text-[26px] font-black text-spal-navy line-through decoration-2">{plan.price}</span>
-                  <span className="text-[16px] text-neutral-500"> / month</span>
-                </p>
+                <div className="mt-3" style={{ fontFamily: FF }}>
+                  <p>
+                    <span className="text-[26px] font-black text-spal-navy">{formatCurrency(perMonth)}</span>
+                    <span className="text-[16px] text-neutral-500"> / month</span>
+                  </p>
+                  {period === "year" && (
+                    <p className="text-[13px] text-neutral-500 mt-0.5">{formatCurrency(yearlyTotal)} billed yearly</p>
+                  )}
+                </div>
 
                 <div className="mt-4 space-y-3">
                   {plan.features.map((f) => (
