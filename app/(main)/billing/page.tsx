@@ -25,7 +25,7 @@ const PLANS: Plan[] = [
     id: "starter",
     name: "Starter Plan",
     tagline: "For individuals and small businesses getting started",
-    monthly: 3500, yearlyOff: 200,
+    monthly: 1500, yearlyOff: 200,
     cardBg: "#ECF7EF",
     features: [
       { label: "Record sales" },
