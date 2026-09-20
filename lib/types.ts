@@ -75,6 +75,10 @@ export interface InventoryItem {
   low_stock_threshold: number;
   cost_price?: number | null;
   selling_price?: number | null;
+  // Populated by the Stocks flow — the Sell catalog lights these up automatically.
+  category?: string | null;
+  image_url?: string | null;
+  initial_stock?: number | null; // baseline used for the "X sold" progress bar
   created_at: string;
   updated_at: string;
 }
