@@ -360,7 +360,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                 <div className="flex items-center justify-between mb-1">
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className="text-[12.5px] font-medium text-spal-navy truncate">{item.name}</span>
-                    {i === 0 && <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2F63F5" }}>Best</span>}
+                    {i === 0 && <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2563EB" }}>Best</span>}
                   </span>
                   <span className="text-[12px] font-semibold text-spal-navy flex-shrink-0 ml-2">{formatCurrency(item.amount)}</span>
                 </div>
@@ -368,7 +368,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                   <motion.div className="h-full rounded-full" initial={{ width: "0%" }}
                     animate={{ width: `${(item.amount / maxItem) * 100}%` }}
                     transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
-                    style={{ background: "#2F63F5" }} />
+                    style={{ background: "#2563EB" }} />
                 </div>
               </div>
             ))}
@@ -394,7 +394,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                 <div className="flex items-center justify-between mb-1">
                   <button onClick={() => { setRenamingCat(cat.name); setNewName(cat.name); }}
                     className="flex items-center gap-1.5 active:opacity-70 transition-opacity">
-                    <Tag01Icon size={11} color="#8B3CFF" className="flex-shrink-0" />
+                    <Tag01Icon size={11} color="#8B5CF6" className="flex-shrink-0" />
                     <span className="text-[12.5px] font-medium text-spal-navy underline decoration-dotted underline-offset-2 decoration-neutral-300">{cat.name}</span>
                     <PencilEdit01Icon size={10} className="text-neutral-300" />
                   </button>
@@ -407,7 +407,7 @@ function TopSellersCard({ records, periodLabel, onCategoryRenamed }: { records: 
                   <motion.div className="h-full rounded-full" initial={{ width: "0%" }}
                     animate={{ width: `${(cat.amount / maxCat) * 100}%` }}
                     transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
-                    style={{ background: "#8B3CFF" }} />
+                    style={{ background: "#8B5CF6" }} />
                 </div>
               </div>
             ))}
@@ -547,7 +547,7 @@ export default function InsightsPage() {
         <AnimatePresence mode="wait">
           <motion.div key={`profit-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-[20px] px-5 py-5" style={{ background: "#8B3CFF" }}>
+            className="rounded-3xl px-5 py-5" style={{ background: "#8B5CF6" }}>
             {loading ? (
               <div className="space-y-4 animate-pulse">
                 <div className="h-3 w-20 rounded-full bg-white/20" />
@@ -574,7 +574,7 @@ export default function InsightsPage() {
           <motion.div
             key={`sales-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="rounded-[20px] px-4 py-4 min-w-0" style={{ background: "#2F63F5" }}>
+            className="rounded-3xl px-4 py-4 min-w-0" style={{ background: "#2563EB" }}>
             {loading ? (
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-10 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
@@ -590,7 +590,7 @@ export default function InsightsPage() {
           <motion.div
             key={`expense-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}
-            className="rounded-[20px] px-4 py-4 min-w-0" style={{ background: "#ED712E" }}>
+            className="rounded-3xl px-4 py-4 min-w-0" style={{ background: "#F97316" }}>
             {loading ? (
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-16 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
@@ -609,7 +609,7 @@ export default function InsightsPage() {
         {!loading && owed > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-            className="rounded-[20px] px-4 py-4 mt-2.5 flex items-center justify-between gap-3"
+            className="rounded-3xl px-4 py-4 mt-2.5 flex items-center justify-between gap-3"
             style={{ background: "#D3E0C7" }}
           >
             <div className="min-w-0">
@@ -628,14 +628,14 @@ export default function InsightsPage() {
       {/* ── Daily breakdown chart ── */}
       <div className="px-5 mt-4">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div className="bg-white rounded-[20px] p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div className="bg-white rounded-3xl p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[14px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
+              <p className="text-[15px] font-black text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Daily Breakdown
               </p>
               <div className="flex items-center gap-3">
-                <Legend color="#2F63F5" label="sale" />
-                <Legend color="#ED712E" label="Expense" />
+                <Legend color="#2563EB" label="sale" />
+                <Legend color="#F97316" label="Expense" />
               </div>
             </div>
             {loading ? (
@@ -654,8 +654,8 @@ export default function InsightsPage() {
                     contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", fontSize: 12, fontFamily: "var(--font-satoshi)" }}
                     labelStyle={{ fontWeight: 700, color: "#0F172A" }}
                   />
-                  <Bar dataKey="profit"   fill="#2F63F5" radius={[6, 6, 0, 0]} maxBarSize={28} />
-                  <Bar dataKey="expenses" fill="#ED712E" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="profit"   fill="#2563EB" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="expenses" fill="#F97316" radius={[6, 6, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -667,8 +667,8 @@ export default function InsightsPage() {
       {!loading && curRecords.length > 0 && (
         <div className="px-5 mt-4">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-            <div className="bg-white rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-              <p className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#A1A1AA", fontFamily: "var(--font-satoshi)" }}>
+            <div className="bg-white rounded-3xl p-5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+              <p className="text-[11px] font-bold uppercase tracking-wide mb-3" style={{ color: "#A1A1AA", fontFamily: "var(--font-satoshi)" }}>
                 Business Health
               </p>
               <div className="flex items-center gap-4">
@@ -683,7 +683,7 @@ export default function InsightsPage() {
               {health.state !== "empty" && (
                 <button
                   onClick={() => { sessionStorage.setItem("spal_ask_prefill", `How is my business health? Sales: ${formatCurrency(t.sales)}, Expenses: ${formatCurrency(t.expenses)}`); router.push("/ask"); }}
-                  className="mt-4 w-full h-11 rounded-xl flex items-center justify-center gap-2 text-[13px] font-semibold transition-opacity active:opacity-70"
+                  className="mt-4 w-full h-12 rounded-full flex items-center justify-center gap-2 text-[13.5px] font-bold transition-opacity active:opacity-70"
                   style={{ background: health.state === "healthy" ? "#DCFCE7" : health.state === "even" ? "#FFF3E0" : "#FEE2E2", color: HEALTH_COLOR[health.state] }}>
                   <HeartCheckIcon size={15} />
                   Get a deeper diagnosis from SPAL
@@ -718,7 +718,7 @@ export default function InsightsPage() {
       {/* ── Empty state ── */}
       {!loading && curRecords.length === 0 && (
         <div className="px-5 mt-8 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mx-auto" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
             <ChartIncreaseIcon size={26} className="text-neutral-300" />
           </div>
           <p className="text-spal-navy font-semibold mt-3" style={{ fontFamily: "var(--font-satoshi)" }}>No records for {dateRange}</p>
