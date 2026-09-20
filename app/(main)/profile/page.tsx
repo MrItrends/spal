@@ -302,7 +302,7 @@ export default function ProfilePage() {
       <div className="px-4 mt-4">
         <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
           <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Set and manage your Notifications" onClick={() => setActiveSheet("notifications")} />
-          <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => setActiveSheet("currency")} />
+          <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => router.push("/profile/receipts")} />
           <ProfileRow icon={<Invoice01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Billing & Plan" sub="Manage your payment plan" onClick={() => router.push("/billing")} />
           <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Billing History" sub="See your past payments" onClick={() => router.push("/billing/history")} />
           <ProfileRow icon={<HelpCircleIcon size={20} color="#2563EB" />} tint="#E4ECFB" title="Help & Support" sub="Get help where necessary" onClick={soon} />
