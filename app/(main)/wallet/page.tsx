@@ -16,17 +16,9 @@ function greeting() {
   return "Good Evening";
 }
 
-const PERIODS = [
-  { key: "today", label: "Today" },
-  { key: "week",  label: "This Week" },
-  { key: "month", label: "This Month" },
-  { key: "year",  label: "This Year" },
-] as const;
-
 export default function WalletPage() {
   const { user, activeBusiness } = useSPALStore();
   const businessName = activeBusiness?.business_name || user?.business_name || "Your Store";
-  const [period, setPeriod] = useState<(typeof PERIODS)[number]["key"]>("today");
   const [toast, setToast] = useState(false);
 
   function claim() {
@@ -49,22 +41,6 @@ export default function WalletPage() {
         </div>
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification03Icon size={19} color="#6B7280" /></button>
-      </div>
-
-      {/* Period tabs */}
-      <div className="px-5 mt-2">
-        <div className="flex items-center bg-white rounded-full p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-          {PERIODS.map((p) => {
-            const active = period === p.key;
-            return (
-              <button key={p.key} onClick={() => setPeriod(p.key)}
-                className="flex-1 h-10 rounded-full text-[14px] font-bold transition-all"
-                style={{ background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
-                {p.label}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Empty / claim state */}
