@@ -65,6 +65,7 @@ export default function AddInventoryPage() {
 
   const [catOptions, setCatOptions] = useState<string[]>([]);
   const [catOpen, setCatOpen] = useState(false);
+  const [addingCat, setAddingCat] = useState(false);
   const [newCat, setNewCat] = useState("");
 
   const [saving, setSaving] = useState(false);
@@ -271,28 +272,46 @@ export default function AddInventoryPage() {
         </div>
 
         {/* Category */}
-        <div className="relative">
-          <Label>Add Category</Label>
-          <button onClick={() => setCatOpen((o) => !o)}
+        <div>
+          <Label>Choose a Category</Label>
+          <button onClick={() => { setCatOpen((o) => !o); setAddingCat(false); }}
             className="w-full flex items-center justify-between rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
             <span className="text-[15px]" style={{ fontFamily: FF, color: category ? "#0F172A" : "#9CA3AF" }}>{category || "Select Category"}</span>
-            <ArrowDown01Icon size={18} color="#9CA3AF" />
+            {catOpen ? <ArrowUp01Icon size={18} color="#9CA3AF" /> : <ArrowDown01Icon size={18} color="#9CA3AF" />}
           </button>
+
           {catOpen && (
-            <div className="absolute z-20 left-0 right-0 mt-1 bg-white rounded-2xl overflow-hidden py-1" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-              {catOptions.map((c) => (
-                <button key={c} onClick={() => { setCategory(c); setCatOpen(false); }}
-                  className="w-full px-4 py-3 text-left text-[14.5px] flex items-center justify-between hover:bg-gray-50" style={{ fontFamily: FF }}>
-                  {c} {c === category && <Tick01Icon size={15} color="#22C55E" />}
-                </button>
-              ))}
-              <div className="flex items-center gap-2 px-3 py-2 border-t border-gray-100">
-                <input value={newCat} onChange={(e) => setNewCat(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && newCat.trim()) { setCategory(newCat.trim()); setCatOptions((p) => [...new Set([...p, newCat.trim()])]); setNewCat(""); setCatOpen(false); } }}
-                  placeholder="Add new category…" className="flex-1 text-[13.5px] outline-none py-1" style={{ fontFamily: FF }} />
-                <button onClick={() => { if (newCat.trim()) { setCategory(newCat.trim()); setCatOptions((p) => [...new Set([...p, newCat.trim()])]); setNewCat(""); setCatOpen(false); } }}
-                  className="text-[13px] font-bold" style={{ color: "#22C55E", fontFamily: FF }}>Add</button>
-              </div>
+            <div className="mt-2 rounded-2xl p-2 space-y-2" style={{ background: "#F1F4EE" }}>
+              {addingCat ? (
+                <input
+                  autoFocus value={newCat} onChange={(e) => setNewCat(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newCat.trim()) {
+                      const c = newCat.trim();
+                      setCategory(c); setCatOptions((p) => [...new Set([...p, c])]);
+                      setNewCat(""); setAddingCat(false); setCatOpen(false);
+                    }
+                  }}
+                  placeholder="Add a Category"
+                  className="w-full rounded-2xl px-4 bg-white text-[15px] text-spal-navy outline-none placeholder:text-neutral-400"
+                  style={{ fontFamily: FF, height: 56, border: "1.5px solid #22C55E" }}
+                />
+              ) : (
+                <>
+                  {catOptions.map((c) => (
+                    <button key={c} onClick={() => { setCategory(c); setCatOpen(false); }}
+                      className="w-full rounded-2xl bg-white px-4 py-4 text-left flex items-center justify-between active:scale-[0.99] transition-transform"
+                      style={{ fontFamily: FF }}>
+                      <span className="text-[15px]" style={{ color: c === category ? "#0F172A" : "#4B5563" }}>{c}</span>
+                      {c === category && <Tick01Icon size={16} color="#22C55E" />}
+                    </button>
+                  ))}
+                  <button onClick={() => setAddingCat(true)}
+                    className="w-full rounded-2xl px-4 py-4 text-center active:scale-[0.99] transition-transform">
+                    <span className="text-[15px] font-black" style={{ fontFamily: FF, color: "#22C55E" }}>+ Add a New Category</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
