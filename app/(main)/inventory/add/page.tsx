@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft01Icon, QrCode01Icon, Image02Icon, InformationCircleIcon,
   PlusSignIcon, ArrowDown01Icon, ArrowUp01Icon, MinusSignCircleIcon, Cancel01Icon, Tick01Icon,
 } from "hugeicons-react";
-import type { InventoryVariation } from "@/lib/types";
+import type { InventoryItem, InventoryVariation } from "@/lib/types";
 
 const BG = "#EDF3E8";
 const FF = "var(--font-satoshi)";
@@ -47,6 +48,11 @@ function InfoTip({ text }: { text: string }) {
 }
 
 export default function AddInventoryPage() {
+  return <Suspense><AddInventoryInner /></Suspense>;
+}
+
+function AddInventoryInner() {
+  const editId = useSearchParams().get("id");
   const [name, setName]           = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [quantity, setQuantity]   = useState("");
@@ -74,13 +80,32 @@ export default function AddInventoryPage() {
 
   useEffect(() => {
     fetch("/api/inventory").then((r) => r.json()).then((d) => {
-      if (d.success) {
-        const cats = new Set<string>();
-        (d.data.items ?? []).forEach((it: { category?: string }) => { if (it.category) cats.add(it.category); });
-        setCatOptions(Array.from(cats).sort());
+      if (!d.success) return;
+      const items: InventoryItem[] = d.data.items ?? [];
+      const cats = new Set<string>();
+      items.forEach((it) => { if (it.category) cats.add(it.category); });
+      setCatOptions(Array.from(cats).sort());
+
+      // Edit mode: prefill from the existing item.
+      if (editId) {
+        const it = items.find((x) => x.id === editId);
+        if (it) {
+          setName(it.name);
+          setUnitPrice(it.selling_price != null ? String(it.selling_price) : "");
+          setQuantity(String(it.quantity));
+          setLowStock(it.low_stock_threshold != null ? String(it.low_stock_threshold) : "");
+          setBoughtFor(it.cost_price != null ? String(it.cost_price) : "");
+          setSku(it.sku ?? "");
+          setCategory(it.category ?? "");
+          setGtin(it.gtin ?? "");
+          const urls = it.images && it.images.length ? it.images : it.image_url ? [it.image_url] : [];
+          setPics(urls.map((u) => ({ id: crypto.randomUUID(), preview: u, url: u, uploading: false })));
+          if (it.discount != null || it.discount_eligible) { setDiscountOn(true); setExtraOpen(true); if (it.discount != null) setDiscount(String(it.discount)); }
+          if (it.variations && it.variations.length) { setVariations(it.variations); setExtraOpen(true); }
+        }
       }
     }).catch(() => {});
-  }, []);
+  }, [editId]);
 
   const valid = name.trim() && unitPrice && quantity;
 
@@ -138,8 +163,8 @@ export default function AddInventoryPage() {
     setSaving(true); setError("");
     const urls = pics.filter((p) => p.url).map((p) => p.url as string);
     try {
-      const res = await fetch("/api/inventory", {
-        method: "POST",
+      const res = await fetch(editId ? `/api/inventory/${editId}` : "/api/inventory", {
+        method: editId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
@@ -170,7 +195,7 @@ export default function AddInventoryPage() {
           className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Back">
           <ArrowLeft01Icon size={20} color="#0F172A" />
         </button>
-        <h1 className="text-[30px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>Add an Inventory</h1>
+        <h1 className="text-[30px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>{editId ? "Edit an Inventory" : "Add an Inventory"}</h1>
       </div>
 
       <div className="px-5 mt-6 space-y-6">
@@ -387,7 +412,7 @@ export default function AddInventoryPage() {
         <button onClick={save} disabled={!valid || saving || uploading}
           className="w-full h-14 rounded-full font-black text-[17px] active:scale-[0.98] transition-transform"
           style={{ fontFamily: FF, background: valid ? "#22C55E" : "#CBD5C0", color: valid ? "#fff" : "#8A9585" }}>
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Saving…" : editId ? "Save Changes" : "Save"}
         </button>
       </div>
     </div>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search01Icon, Notification03Icon, QrCode01Icon, CubeIcon, Store01Icon,
-  Package01Icon, PlusSignIcon,
+  Package01Icon, PlusSignIcon, MinusSignIcon, SidebarRight01Icon, Notebook01Icon,
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -40,7 +40,17 @@ export default function StockPage() {
   const [loading, setLoading] = useState(true);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [detail, setDetail] = useState<InventoryItem | null>(null);
   const catScroller = useRef<HTMLDivElement>(null);
+
+  async function adjustQty(item: InventoryItem, next: number) {
+    const q = Math.max(0, next);
+    setDetail((d) => d && d.id === item.id ? { ...d, quantity: q } : d);
+    setItems((prev) => prev.map((it) => it.id === item.id ? { ...it, quantity: q } : it));
+    await fetch(`/api/inventory/${item.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ quantity: q }),
+    }).catch(() => {});
+  }
 
   const fetchInventory = useCallback(async () => {
     try {
@@ -169,7 +179,7 @@ export default function StockPage() {
             const low = isLow(it);
             const prog = stockProgress(it);
             return (
-              <div key={it.id} className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+              <button key={it.id} onClick={() => setDetail(it)} className="text-left bg-white rounded-2xl overflow-hidden active:scale-[0.98] transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                 {low && (
                   <div className="text-center py-1.5" style={{ background: "#FEE0E1" }}>
                     <span className="text-[12px] font-bold" style={{ fontFamily: FF, color: "#DC2626" }}>Stock is getting low</span>
@@ -188,11 +198,29 @@ export default function StockPage() {
                     <div className="h-full rounded-full" style={{ width: `${prog.fill * 100}%`, background: "#16A34A" }} />
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
+
+      {/* Product detail drawer */}
+      <AnimatePresence>
+        {detail && (
+          <>
+            <motion.div key="scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60]" style={{ background: "rgba(10,14,26,0.35)" }} onClick={() => setDetail(null)} />
+            <motion.div key="panel" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+              className="fixed right-0 top-0 bottom-0 z-[61] w-[88%] max-w-[440px] flex flex-col overflow-y-auto"
+              style={{ background: "#EDF3E8", fontFamily: FF }}>
+              <ProductDetail item={detail} onClose={() => setDetail(null)} onAdjust={adjustQty} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* (detail drawer rendered above) */}
 
       {/* Floating Add Inventory */}
       <AnimatePresence>
@@ -205,6 +233,92 @@ export default function StockPage() {
           <Store01Icon size={20} color="#fff" /> Add Inventory
         </motion.button>
       </AnimatePresence>
+    </>
+  );
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  food_seller: "Food", bar_owner: "Drinks", fashion_vendor: "Fashion",
+  salon: "Salon", kiosk: "Store", market_trader: "Market", other: "Product",
+};
+
+function ProductDetail({ item, onClose, onAdjust }: {
+  item: InventoryItem; onClose: () => void; onAdjust: (item: InventoryItem, next: number) => void;
+}) {
+  const { user, activeBusiness } = useSPALStore();
+  const typeLabel = TYPE_LABEL[(activeBusiness?.business_type ?? user?.business_type) ?? ""] || null;
+  const gallery = (item.images && item.images.length ? item.images : item.image_url ? [item.image_url] : []).slice(0, 4);
+  const tags = [typeLabel, item.category].filter(Boolean) as string[];
+
+  return (
+    <>
+      {/* Hero */}
+      <div className="relative flex items-center justify-center" style={{ background: IMG_BG, minHeight: 300 }}>
+        <button onClick={onClose} className="absolute top-12 right-5 w-9 h-9 rounded-lg bg-white/80 flex items-center justify-center active:scale-95" aria-label="Close">
+          <SidebarRight01Icon size={18} color="#475467" />
+        </button>
+        {item.image_url
+          ? <Image src={item.image_url} alt={item.name} width={280} height={280} className="h-[260px] w-auto object-contain" />
+          : <Package01Icon size={72} color="#B7B7D6" />}
+        <button onClick={() => { window.location.href = `/inventory/add?id=${item.id}`; }}
+          className="absolute right-5 bottom-5 flex items-center gap-2 h-12 px-5 rounded-2xl text-white font-black text-[16px] active:scale-95"
+          style={{ background: "#22C55E", fontFamily: FF, boxShadow: "0 8px 24px rgba(34,197,94,0.4)" }}>
+          <Notebook01Icon size={19} color="#fff" /> Edit Item
+        </button>
+      </div>
+
+      <div className="px-5 pt-5 pb-10">
+        <h2 className="text-[28px] font-black text-spal-navy" style={{ fontFamily: FF }}>{item.name}</h2>
+        <p className="text-[18px] font-medium text-neutral-400 mt-1" style={{ fontFamily: FF }}>{formatCurrency(price(item))}</p>
+
+        {tags.length > 0 && (
+          <div className="flex items-center gap-2 mt-3">
+            {tags.map((t, i) => (
+              <span key={t} className="flex items-center gap-2">
+                {i > 0 && <span className="text-neutral-400">*</span>}
+                <span className="px-3 py-1.5 rounded-full bg-white text-[13.5px] font-semibold text-spal-navy" style={{ fontFamily: FF }}>{t}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Gallery */}
+        {gallery.length > 0 && (
+          <div className="bg-white rounded-2xl p-3 mt-5 grid grid-cols-2 gap-3">
+            {gallery.map((url, i) => (
+              <div key={i} className="rounded-xl flex items-center justify-center" style={{ background: IMG_BG, aspectRatio: "1 / 1" }}>
+                <Image src={url} alt="" width={160} height={160} className="w-full h-full object-contain p-2" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Measured by / Quantity available */}
+        <div className="bg-white rounded-2xl px-4 py-4 mt-4 space-y-3.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[15px] text-neutral-500" style={{ fontFamily: FF }}>Measured by</span>
+            <span className="text-[15px] font-black text-spal-navy capitalize" style={{ fontFamily: FF }}>{item.unit}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[15px] text-neutral-500" style={{ fontFamily: FF }}>Quantity Available</span>
+            <span className="text-[15px] font-black text-spal-navy" style={{ fontFamily: FF }}>{item.initial_stock ?? item.quantity}</span>
+          </div>
+        </div>
+
+        {/* Quantity stepper */}
+        <div className="bg-white rounded-2xl px-4 py-3.5 mt-4 flex items-center justify-between">
+          <span className="text-[16px] font-black text-spal-navy" style={{ fontFamily: FF }}>Quantity</span>
+          <div className="flex items-center gap-4 rounded-xl px-3 py-2" style={{ background: "#EAF3E5" }}>
+            <button onClick={() => onAdjust(item, item.quantity - 1)} className="w-7 h-7 flex items-center justify-center active:scale-90" aria-label="Decrease">
+              <MinusSignIcon size={16} color="#374151" />
+            </button>
+            <span className="text-[16px] font-black text-spal-navy min-w-[28px] text-center" style={{ fontFamily: FF }}>{item.quantity}</span>
+            <button onClick={() => onAdjust(item, item.quantity + 1)} className="w-7 h-7 flex items-center justify-center active:scale-90" aria-label="Increase">
+              <PlusSignIcon size={16} color="#374151" />
+            </button>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
