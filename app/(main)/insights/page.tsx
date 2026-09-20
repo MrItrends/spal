@@ -216,21 +216,27 @@ function PeriodDropdown({ period, onChange }: { period: Period; onChange: (p: Pe
 }
 
 // ── Pct badge (matching home page) ───────────────────────────────────────────
-function PctBadge({ pct, small, dark }: { pct: number | null; small?: boolean; dark?: boolean }) {
+function PctBadge({ pct, small, dark, light }: { pct: number | null; small?: boolean; dark?: boolean; light?: boolean }) {
   const noData = pct === null;
   const isUp   = !noData && pct >= 0;
+  const bg = light
+    ? (noData ? "#F1F3EF" : isUp ? "#E7F6EC" : "#FEE0E1")
+    : noData
+      ? "rgba(255,255,255,0.16)"
+      : dark
+        ? (isUp ? "rgba(255,255,255,0.15)" : "rgba(255,80,80,0.22)")
+        : (isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)");
+  const color = light
+    ? (noData ? "#9CA3AF" : isUp ? "#16A34A" : "#DC2626")
+    : noData ? "rgba(255,255,255,0.75)" : isUp ? "#fff" : "#FFBBBB";
   return (
     <div
       className="flex items-center gap-0.5 rounded-full font-bold"
       style={{
         padding:    small ? "3px 7px" : "4px 9px",
         fontSize:   small ? "10px" : "11px",
-        background: noData
-          ? "rgba(255,255,255,0.16)"
-          : dark
-            ? (isUp ? "rgba(255,255,255,0.15)" : "rgba(255,80,80,0.22)")
-            : (isUp ? "rgba(255,255,255,0.22)" : "rgba(255,80,80,0.28)"),
-        color: noData ? "rgba(255,255,255,0.75)" : isUp ? "#fff" : "#FFBBBB",
+        background: bg,
+        color,
       }}
     >
       {!noData && (isUp
@@ -547,21 +553,21 @@ export default function InsightsPage() {
         <AnimatePresence mode="wait">
           <motion.div key={`profit-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl px-5 py-5" style={{ background: "#8B5CF6" }}>
+            className="rounded-2xl px-5 py-5 bg-white" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
             {loading ? (
               <div className="space-y-4 animate-pulse">
-                <div className="h-3 w-20 rounded-full bg-white/20" />
-                <div className="h-10 w-36 rounded-xl bg-white/20" />
+                <div className="h-3 w-20 rounded-full bg-neutral-200/60" />
+                <div className="h-10 w-36 rounded-xl bg-neutral-200/60" />
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-white/70 text-[13px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>
+                  <p className="text-[13px] font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: "#8B5CF6" }}>
                     {periodLabel} · Profit
                   </p>
-                  <PctBadge pct={profitPct} />
+                  <PctBadge pct={profitPct} light />
                 </div>
-                <p className="text-white font-bold" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(28px, 8vw, 38px)", letterSpacing: "-0.02em" }}>
+                <p className="text-spal-navy font-black" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(28px, 8vw, 38px)", letterSpacing: "-0.02em" }}>
                   {cashProfit < 0 ? "–" : ""}{formatCurrency(Math.abs(cashProfit))}
                 </p>
               </>
@@ -574,32 +580,32 @@ export default function InsightsPage() {
           <motion.div
             key={`sales-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="rounded-2xl px-4 py-4 min-w-0" style={{ background: "#2563EB" }}>
+            className="rounded-2xl px-4 py-4 min-w-0 bg-white" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
             {loading ? (
-              <div className="space-y-3 animate-pulse"><div className="h-2.5 w-10 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
+              <div className="space-y-3 animate-pulse"><div className="h-2.5 w-10 rounded-full bg-neutral-200/60" /><div className="h-7 w-24 rounded-xl bg-neutral-200/60" /></div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-2 gap-2">
-                  <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>Sale</p>
-                  <PctBadge pct={salesPct} small />
+                  <p className="text-[12px] font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: "#2563EB" }}>Sale</p>
+                  <PctBadge pct={salesPct} small light />
                 </div>
-                <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.sales)}</p>
+                <p className="text-spal-navy font-black truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.sales)}</p>
               </>
             )}
           </motion.div>
           <motion.div
             key={`expense-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}
-            className="rounded-2xl px-4 py-4 min-w-0" style={{ background: "#F97316" }}>
+            className="rounded-2xl px-4 py-4 min-w-0 bg-white" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
             {loading ? (
-              <div className="space-y-3 animate-pulse"><div className="h-2.5 w-16 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
+              <div className="space-y-3 animate-pulse"><div className="h-2.5 w-16 rounded-full bg-neutral-200/60" /><div className="h-7 w-24 rounded-xl bg-neutral-200/60" /></div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-2 gap-2">
-                  <p className="text-white/70 text-[12px] font-medium" style={{ fontFamily: "var(--font-satoshi)" }}>Expense</p>
-                  <PctBadge pct={expensePct} small />
+                  <p className="text-[12px] font-semibold" style={{ fontFamily: "var(--font-satoshi)", color: "#F97316" }}>Expense</p>
+                  <PctBadge pct={expensePct} small light />
                 </div>
-                <p className="text-white font-bold truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.expenses)}</p>
+                <p className="text-spal-navy font-black truncate" style={{ fontFamily: "var(--font-satoshi)", fontSize: "clamp(16px, 5.5vw, 22px)", letterSpacing: "-0.01em" }}>{formatCurrency(t.expenses)}</p>
               </>
             )}
           </motion.div>
