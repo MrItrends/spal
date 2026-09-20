@@ -374,16 +374,12 @@ export default function RecordsPage() {
             <div className="space-y-6">
               {Object.entries(grouped).map(([date, dayRecords]) => (
                 <div key={date}>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3">
                     <p
-                      className="text-[15px] font-bold text-spal-navy"
+                      className="text-[15px] font-black text-spal-navy"
                       style={{ fontFamily: "var(--font-satoshi)" }}
                     >
                       {date}
-                    </p>
-                    <p className="text-[12px] font-semibold text-neutral-400" style={{ fontFamily: "var(--font-satoshi)" }}>
-                      {dayRecords.filter(r => r.type === "sale").length > 0 &&
-                        `+${formatCurrency(dayRecords.filter(r => r.type === "sale").reduce((s, r) => s + r.amount, 0))}`}
                     </p>
                   </div>
                   <div className="space-y-2.5">
