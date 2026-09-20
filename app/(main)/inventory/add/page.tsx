@@ -140,6 +140,14 @@ function AddInventoryInner() {
     }
   }
 
+  function commitNewCat() {
+    const c = newCat.trim();
+    if (!c) { setAddingCat(false); return; }
+    setCategory(c);
+    setCatOptions((p) => [...new Set([...p, c])]);
+    setNewCat(""); setAddingCat(false); setCatOpen(false);
+  }
+
   function removePic(id: string) {
     setPics((prev) => {
       const gone = prev.find((p) => p.id === id);
@@ -162,6 +170,8 @@ function AddInventoryInner() {
     if (!valid || saving) return;
     setSaving(true); setError("");
     const urls = pics.filter((p) => p.url).map((p) => p.url as string);
+    // Fall back to a category typed but not explicitly confirmed.
+    const effectiveCategory = category || newCat.trim();
     try {
       const res = await fetch(editId ? `/api/inventory/${editId}` : "/api/inventory", {
         method: editId ? "PATCH" : "POST",
@@ -173,7 +183,7 @@ function AddInventoryInner() {
           low_stock_threshold: lowStock,
           cost_price: boughtFor,
           sku,
-          category,
+          category: effectiveCategory,
           gtin,
           image_url: urls[0] || null,
           images: urls,
@@ -308,19 +318,21 @@ function AddInventoryInner() {
           {catOpen && (
             <div className="mt-2 rounded-2xl p-2 space-y-2" style={{ background: "#F1F4EE" }}>
               {addingCat ? (
-                <input
-                  autoFocus value={newCat} onChange={(e) => setNewCat(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && newCat.trim()) {
-                      const c = newCat.trim();
-                      setCategory(c); setCatOptions((p) => [...new Set([...p, c])]);
-                      setNewCat(""); setAddingCat(false); setCatOpen(false);
-                    }
-                  }}
-                  placeholder="Add a Category"
-                  className="w-full rounded-2xl px-4 bg-white text-[15px] text-spal-navy outline-none placeholder:text-neutral-400"
-                  style={{ fontFamily: FF, height: 56, border: "1.5px solid #22C55E" }}
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus value={newCat} onChange={(e) => setNewCat(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") commitNewCat(); }}
+                    onBlur={commitNewCat}
+                    placeholder="Add a Category"
+                    className="flex-1 rounded-2xl px-4 bg-white text-[15px] text-spal-navy outline-none placeholder:text-neutral-400"
+                    style={{ fontFamily: FF, height: 56, border: "1.5px solid #22C55E" }}
+                  />
+                  <button onMouseDown={(e) => e.preventDefault()} onClick={commitNewCat} disabled={!newCat.trim()}
+                    className="rounded-2xl flex items-center justify-center active:scale-95 disabled:opacity-40"
+                    style={{ background: "#22C55E", width: 56, height: 56 }} aria-label="Add category">
+                    <Tick01Icon size={22} color="#fff" />
+                  </button>
+                </div>
               ) : (
                 <>
                   {catOptions.map((c) => (
