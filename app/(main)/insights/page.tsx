@@ -276,28 +276,28 @@ interface DiagnosisCardProps {
   icon: React.ReactNode; tag: string; title: string; body: string;
   variant: DiagnosisVariant; askPrompt?: string;
 }
-const VARIANT_STYLE: Record<DiagnosisVariant, { tagBg: string; tagText: string; iconBg: string }> = {
-  positive: { tagBg: "#DCFCE7", tagText: "#2D7A3A", iconBg: "#DCFCE7" },
-  warning:  { tagBg: "#FFF3E0", tagText: "#FF7A00", iconBg: "#FFF3E0" },
-  alert:    { tagBg: "#FEE2E2", tagText: "#DF191C", iconBg: "#FEE2E2" },
-  neutral:  { tagBg: "#EFF6FF", tagText: "#2563EB", iconBg: "#EFF6FF" },
+const VARIANT_STYLE: Record<DiagnosisVariant, { bg: string; iconBg: string; tagBg: string; tagText: string }> = {
+  positive: { bg: "#E7F6EC", iconBg: "#CDEDD8", tagBg: "#CDEDD8", tagText: "#16A34A" },
+  warning:  { bg: "#FFF4EF", iconBg: "#FCE0D0", tagBg: "#FCE0D0", tagText: "#F97316" },
+  alert:    { bg: "#FEE0E1", iconBg: "#FDCED0", tagBg: "#FDCED0", tagText: "#DC2626" },
+  neutral:  { bg: "#EAF0FC", iconBg: "#D7E4FA", tagBg: "#D7E4FA", tagText: "#2563EB" },
 };
 function DiagnosisCard({ icon, tag, title, body, variant, askPrompt }: DiagnosisCardProps) {
   const router = useRouter();
   const s = VARIANT_STYLE[variant];
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+      className="rounded-2xl p-4" style={{ background: s.bg }}>
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.iconBg }}>{icon}</div>
+        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: s.iconBg }}>{icon}</div>
         <div className="flex-1 min-w-0">
           <p className="text-[13.5px] font-bold text-spal-navy leading-tight mb-1" style={{ fontFamily: "var(--font-satoshi)" }}>{title}</p>
-          <p className="text-[12.5px] text-neutral-500 leading-relaxed">{body}</p>
+          <p className="text-[12.5px] text-neutral-600 leading-relaxed">{body}</p>
           <div className="flex items-center justify-between mt-3">
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: s.tagBg, color: s.tagText }}>{tag}</span>
             {askPrompt && (
               <button onClick={() => { sessionStorage.setItem("spal_ask_prefill", askPrompt); router.push("/ask"); }}
-                className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: "#2563EB" }}>
+                className="flex items-center gap-1.5 bg-white rounded-full px-3 h-8 text-[12px] font-bold" style={{ color: "#16A34A" }}>
                 Ask SPAL <ArrowRight01Icon size={12} />
               </button>
             )}
@@ -547,7 +547,7 @@ export default function InsightsPage() {
         <AnimatePresence mode="wait">
           <motion.div key={`profit-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl px-5 py-5" style={{ background: "#8B5CF6" }}>
+            className="rounded-2xl px-5 py-5" style={{ background: "#8B5CF6" }}>
             {loading ? (
               <div className="space-y-4 animate-pulse">
                 <div className="h-3 w-20 rounded-full bg-white/20" />
@@ -574,7 +574,7 @@ export default function InsightsPage() {
           <motion.div
             key={`sales-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="rounded-3xl px-4 py-4 min-w-0" style={{ background: "#2563EB" }}>
+            className="rounded-2xl px-4 py-4 min-w-0" style={{ background: "#2563EB" }}>
             {loading ? (
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-10 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
@@ -590,7 +590,7 @@ export default function InsightsPage() {
           <motion.div
             key={`expense-${period}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}
-            className="rounded-3xl px-4 py-4 min-w-0" style={{ background: "#F97316" }}>
+            className="rounded-2xl px-4 py-4 min-w-0" style={{ background: "#F97316" }}>
             {loading ? (
               <div className="space-y-3 animate-pulse"><div className="h-2.5 w-16 rounded-full bg-white/20" /><div className="h-7 w-24 rounded-xl bg-white/20" /></div>
             ) : (
@@ -609,7 +609,7 @@ export default function InsightsPage() {
         {!loading && owed > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-            className="rounded-3xl px-4 py-4 mt-2.5 flex items-center justify-between gap-3"
+            className="rounded-2xl px-4 py-4 mt-2.5 flex items-center justify-between gap-3"
             style={{ background: "#D3E0C7" }}
           >
             <div className="min-w-0">
@@ -628,7 +628,7 @@ export default function InsightsPage() {
       {/* ── Daily breakdown chart ── */}
       <div className="px-5 mt-4">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div className="bg-white rounded-3xl p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
             <div className="flex items-center justify-between mb-4">
               <p className="text-[15px] font-black text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>
                 Daily Breakdown
@@ -667,7 +667,7 @@ export default function InsightsPage() {
       {!loading && curRecords.length > 0 && (
         <div className="px-5 mt-4">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-            <div className="bg-white rounded-3xl p-5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+            <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
               <p className="text-[11px] font-bold uppercase tracking-wide mb-3" style={{ color: "#A1A1AA", fontFamily: "var(--font-satoshi)" }}>
                 Business Health
               </p>
