@@ -129,7 +129,7 @@ export function PerishableHome() {
       out.push({ id: "peak", tone: "info", title: `Your busiest time is around ${hourLabel(busiest.hour)}`, body: `${busiest.orders} orders came in around then. Have your best sellers ready before it starts.`, ctaLabel: "Ask SPAL", ctaHref: "/ask" });
     }
     if (period === "today" && totalSales === 0) {
-      out.push({ id: "nosale", tone: "info", title: "No orders yet today", body: "Take your first order to start tracking your day.", ctaLabel: "Take an Order", ctaHref: "/sell" });
+      out.push({ id: "nosale", tone: "info", title: "No orders yet today", body: "Take your first order to start tracking your day.", ctaLabel: "Take an Order", ctaHref: "/orders/new" });
     } else if (totalSales > 0) {
       out.push({ id: "made", tone: "success", title: `You've made ${formatCurrency(totalSales)} in sales`, body: "Keep it up. Check your insights to see what's driving it.", ctaLabel: "See Insights", ctaHref: "/insights" });
     }
@@ -150,7 +150,7 @@ export function PerishableHome() {
   ];
 
   const QUICK = [
-    { label: "POS",      Icon: Invoice01Icon, tint: "#FFF3EC", color: "#F97316", href: "/sell" },
+    { label: "POS",      Icon: Invoice01Icon, tint: "#FFF3EC", color: "#F97316", href: "/orders/new" },
     { label: "Add Item", Icon: CheckListIcon, tint: "#EAF7EE", color: "#16A34A", href: "/menu/add" },
     { label: "Restock",  Icon: PackageIcon,   tint: "#F3EEFF", color: "#8B5CF6", href: "/inventory" },
   ];

@@ -48,6 +48,7 @@ export interface User {
   business_goals?: BusinessGoal[];
   currency: string;
   tax_rate?: number | null;
+  table_count?: number | null;
   whatsapp_number?: string;
   avatar_url?: string | null;
   streak_days: number;

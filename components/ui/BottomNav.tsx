@@ -19,20 +19,22 @@ const TABS = [
 // Restaurants and bars: orders come from the menu, stock is ingredients/drinks.
 const PERISHABLE_TABS = [
   { href: "/home",      label: "Home",      Icon: Home01Icon },
-  { href: "/sell",      label: "Orders",    Icon: Hamburger01Icon },
+  { href: "/orders",    label: "Orders",    Icon: Hamburger01Icon },
   { href: "/menu",      label: "Menu",      Icon: MenuRestaurantIcon },
   { href: "/inventory", label: "Ingredients", Icon: PackageIcon },
   { href: "/profile",   label: "Profile",   Icon: User02Icon },
 ];
 
 // Full-screen flows where the tab bar should not show.
-const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/menu/add", "/profile/", "/insights"];
+const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/menu/add", "/orders/new", "/profile/", "/insights"];
 
 export function BottomNav() {
   const pathname = usePathname();
   const { user, activeBusiness } = useSPALStore();
   const tabs = isPerishable(activeBusiness?.business_type ?? user?.business_type) ? PERISHABLE_TABS : TABS;
-  if (HIDDEN.some((p) => pathname.includes(p))) return null;
+  // Restaurant/bar orders run full-screen from the menu picker.
+  const perishable = tabs === PERISHABLE_TABS;
+  if (HIDDEN.some((p) => pathname.includes(p)) || (perishable && pathname.startsWith("/sell"))) return null;
 
   return (
     <nav

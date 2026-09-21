@@ -8,11 +8,12 @@ import {
   PlusSignIcon, MinusSignIcon, BankIcon, CreditCardIcon, Money02Icon,
   MoneyBag01Icon, Link04Icon, Books01Icon, CheckmarkCircle02Icon, PrinterIcon,
   Navigation03Icon, ShoppingCartAdd01Icon, SidebarRight01Icon, ShoppingCartCheck01Icon,
-  Package01Icon,
+  Package01Icon, ArrowLeft01Icon,
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
 import { isPerishable } from "@/lib/business-mode";
+import type { OrderType } from "@/lib/orders";
 import type { InventoryItem, MenuItem } from "@/lib/types";
 
 const BG        = "#EEF3E9";
@@ -81,6 +82,10 @@ export default function SellPage() {
   const [selected, setSelected]   = useState<Set<string>>(new Set());
   const [cart, setCart]           = useState<Record<string, number>>({});
   const [customerName, setCustomerName] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [query, setQuery]         = useState("");
+  // Restaurant/bar orders arrive from New Order with ?type=online|walkin|table[&table=N].
+  const [flow, setFlow] = useState<{ ready: boolean; type: OrderType | null; table: number | null }>({ ready: false, type: null, table: null });
 
   const [drawer, setDrawer]       = useState<Drawer>(null);
   const [payMethod, setPayMethod] = useState<PayMethod | null>(null);
@@ -88,7 +93,23 @@ export default function SellPage() {
   const [otherAmount, setOtherAmount] = useState("");
   const [saving, setSaving]       = useState(false);
   const [receiptNo, setReceiptNo] = useState("");
-  const [lastSale, setLastSale]   = useState<{ total: number; method: PayMethod } | null>(null);
+  const [lastSaleId, setLastSaleId] = useState<string | undefined>();
+  const [lastSale, setLastSale]   = useState<{ total: number; method: PayMethod; id?: string } | null>(null);
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const t = q.get("type");
+    const tbl = parseInt(q.get("table") ?? "", 10);
+    setFlow({
+      ready: true,
+      type: t === "online" || t === "walkin" || t === "table" ? t : null,
+      table: t === "table" && tbl > 0 ? tbl : null,
+    });
+  }, []);
+  // A restaurant order always starts from New Order.
+  useEffect(() => {
+    if (perishable && flow.ready && !flow.type) window.location.replace("/orders/new");
+  }, [perishable, flow]);
 
   const fetchInventory = useCallback(async () => {
     try {
@@ -109,7 +130,10 @@ export default function SellPage() {
     return Array.from(set).sort();
   }, [items]);
 
-  const filtered = activeCat === "All" ? items : items.filter((it) => (it.category ?? "") === activeCat);
+  const filtered = items.filter((it) =>
+    (activeCat === "All" || (it.category ?? "") === activeCat) &&
+    (!query.trim() || it.name.toLowerCase().includes(query.trim().toLowerCase()))
+  );
 
   // Keep the category chips within two rows; overflow is reached via "View All".
   useEffect(() => { setCatLimit(999); }, [categories.length]);
@@ -165,7 +189,7 @@ export default function SellPage() {
       return next;
     });
   }
-  function clearCart() { setCart({}); setCustomerName(""); }
+  function clearCart() { setCart({}); setCustomerName(""); setInstructions(""); }
 
   function openPayment() {
     setPayMethod(null); setAmountMode("full"); setOtherAmount("");
@@ -176,12 +200,15 @@ export default function SellPage() {
     if (!payMethod || saving) return;
     setSaving(true);
     const paid = payMethod === "debt" ? "owed" : (amountMode === "other" && amountPaid < total ? "owed" : "paid");
-    const desc = cartLines.map((l) => `${l.item.name} x${l.qty}`).join(", ");
+    const desc = perishable && cartLines.length === 1 && cartLines[0].qty === 1
+      ? cartLines[0].item.name
+      : cartLines.map((l) => `${l.item.name} x${l.qty}`).join(", ");
     // Inherit the product's stock category (single category → that one, mixed → "Mixed").
     const cats = Array.from(new Set(cartLines.map((l) => l.item.category).filter(Boolean))) as string[];
     const saleCategory = cats.length === 1 ? cats[0] : cats.length > 1 ? "Mixed" : null;
+    let savedId: string | undefined;
     try {
-      await fetch("/api/records", {
+      const saveRes = await fetch("/api/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -198,9 +225,17 @@ export default function SellPage() {
             amount_paid: amountPaid,
             subtotal, vat, discount,
             items: cartLines.map((l) => ({ name: l.item.name, qty: l.qty, price: price(l.item) })),
+            ...(perishable && flow.type ? {
+              order_type: flow.type,
+              table: flow.table,
+              // Walk-ins leave with their food; online and table orders are still being prepared.
+              status: flow.type === "walkin" ? "delivered" : "preparing",
+              instructions: instructions.trim(),
+            } : {}),
           }),
         }),
       });
+      savedId = (await saveRes.json().catch(() => null))?.data?.id;
       // Update stock (best-effort): a menu order adds to "sold", retail deducts from inventory.
       await Promise.all(
         cartLines.map((l) =>
@@ -212,13 +247,14 @@ export default function SellPage() {
         )
       );
     } catch { /* keep the receipt visible even if the network hiccups */ }
+    setLastSaleId(savedId);
     setReceiptNo(`#BM-${Math.floor(10000 + Math.random() * 89999)}`);
     setSaving(false);
     setDrawer("success");
   }
 
   function finishSale() {
-    setLastSale({ total, method: payMethod ?? "cash" });
+    setLastSale({ total, method: payMethod ?? "cash", id: lastSaleId });
     clearCart();
     setDrawer(null);
     fetchInventory();
@@ -241,6 +277,13 @@ export default function SellPage() {
     <>
       <div className="min-h-full pb-40" style={{ background: BG, fontFamily: FF }}>
         {/* Header */}
+        {perishable ? (
+          <div className="px-5 pt-12 pb-4">
+            <button onClick={() => { window.location.href = "/orders"; }} aria-label="Back to orders" className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+              <ArrowLeft01Icon size={20} color="#0F172A" />
+            </button>
+          </div>
+        ) : (
         <div className="px-5 pt-12 pb-3 flex items-center gap-3">
           <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
             {user?.avatar_url
@@ -258,13 +301,17 @@ export default function SellPage() {
             <Notification03Icon size={19} color="#6B7280" />
           </button>
         </div>
+        )}
 
         {/* Search + scan */}
         <div className="px-5 pt-1 pb-4 flex items-center gap-2.5">
           <div className="flex-1 flex items-center gap-2.5 bg-white/70 rounded-2xl px-4 h-13" style={{ height: 52 }}>
             <Search01Icon size={18} color="#9CA3AF" />
             <input
-              placeholder="Search products by name or SKU..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search"
+              placeholder={perishable ? "Search food..." : "Search products by name or SKU..."}
               className="flex-1 bg-transparent outline-none text-[14px] text-spal-navy placeholder:text-neutral-400"
               style={{ fontFamily: FF }}
             />
@@ -376,7 +423,7 @@ export default function SellPage() {
               <div className="rounded-2xl bg-white flex items-center justify-between px-5 py-3" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.16)" }}>
                 <span className="text-[16px] font-black text-spal-navy" style={{ fontFamily: FF }}>View Recent Sale</span>
                 <button
-                  onClick={() => { window.location.href = "/records"; }}
+                  onClick={() => { window.location.href = perishable && lastSale?.id ? `/records/${lastSale.id}` : "/records"; }}
                   className="flex items-center gap-2 h-11 px-4 rounded-xl text-white font-bold text-[14px] active:scale-95"
                   style={{ background: "#22C55E", fontFamily: FF }}
                 >
@@ -445,6 +492,7 @@ export default function SellPage() {
               {drawer === "cart" && (
                 <CartPanel
                   lines={cartLines} customerName={customerName} setCustomerName={setCustomerName}
+                  instructions={perishable ? instructions : undefined} setInstructions={setInstructions}
                   setQty={setQty} clearCart={clearCart}
                   subtotal={subtotal} discount={discount} vat={vat} vatLabel={vatLabel} total={total} count={cartCount}
                   onTakePayment={openPayment}
@@ -499,8 +547,9 @@ function CategoryPanel({ categories, onPick }: { categories: string[]; onPick: (
 
 // ── Cart drawer ──────────────────────────────────────────────────────────────
 function CartPanel({
-  lines, customerName, setCustomerName, setQty, clearCart, subtotal, discount, vat, vatLabel, total, count, onTakePayment,
+  lines, customerName, setCustomerName, instructions, setInstructions, setQty, clearCart, subtotal, discount, vat, vatLabel, total, count, onTakePayment,
 }: {
+  instructions?: string; setInstructions: (v: string) => void;
   lines: { item: InventoryItem; qty: number }[];
   customerName: string; setCustomerName: (v: string) => void;
   setQty: (id: string, qty: number) => void; clearCart: () => void;
@@ -517,7 +566,7 @@ function CartPanel({
         </button>
       </div>
       <div className="px-5 mt-5 flex items-center justify-between">
-        <h2 className="text-[26px] font-black text-spal-navy" style={{ fontFamily: FF }}>Current Sale</h2>
+        <h2 className="text-[26px] font-black text-spal-navy" style={{ fontFamily: FF }}>{instructions !== undefined ? "Order" : "Current Sale"}</h2>
         <span className="text-[13px] font-bold" style={{ fontFamily: FF, color: "#2563EB" }}>{count} Item{count !== 1 ? "s" : ""} in total</span>
       </div>
 
@@ -553,6 +602,17 @@ function CartPanel({
         ))}
         {lines.length === 0 && (
           <p className="text-center text-[14px] text-neutral-400 pt-10" style={{ fontFamily: FF }}>Your cart is empty.</p>
+        )}
+        {instructions !== undefined && lines.length > 0 && (
+          <textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="Add Special instructions"
+            aria-label="Special instructions"
+            rows={5}
+            className="w-full rounded-2xl px-4 py-4 text-[15px] text-spal-navy outline-none resize-none placeholder:text-neutral-300"
+            style={{ fontFamily: FF, background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+          />
         )}
       </div>
 

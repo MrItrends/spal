@@ -6,6 +6,7 @@ import { ArrowLeft01Icon, Delete02Icon, ShoppingBag01Icon } from "hugeicons-reac
 import { formatCurrency } from "@/lib/utils/currency";
 import { useSPALStore } from "@/store";
 import { payInfo, iconTint, orderId, saleBreakdown } from "@/lib/sales";
+import { orderMeta, withStatus, STATUS_STYLE } from "@/lib/orders";
 import type { BusinessRecord } from "@/lib/types";
 
 const BG = "#EDF3E8";
@@ -20,6 +21,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [deleting, setDeleting] = useState(false);
   const [addingCustomer, setAddingCustomer] = useState(false);
   const [customer, setCustomer] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     fetch("/api/records?limit=500").then((r) => r.json()).then((d) => {
@@ -36,6 +38,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setDeleting(true);
     await fetch(`/api/records?id=${id}`, { method: "DELETE" }).catch(() => {});
     window.location.href = "/records";
+  }
+
+  // Restaurant/bar orders: mark a prepared order as delivered (frees its table).
+  async function markDelivered() {
+    if (!record || updating) return;
+    setUpdating(true);
+    const raw = withStatus(record, "delivered");
+    const res = await fetch("/api/records", {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, raw_input: raw }),
+    }).then((r) => r.json()).catch(() => null);
+    if (res?.success) setRecord((r) => (r ? { ...r, raw_input: raw } : r));
+    setUpdating(false);
   }
 
   async function saveCustomer() {
@@ -61,6 +75,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const pay = payInfo(record);
+  const meta = orderMeta(record);
+  const isOrder = meta.type !== null; // placed through the restaurant/bar order flow
+  const status = STATUS_STYLE[meta.status];
   const tint = iconTint(record.description ?? record.category ?? "sale");
   const name = record.description ?? record.category ?? "Sale";
   const { subtotal, vat } = saleBreakdown(record);
@@ -103,8 +120,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Tags */}
-      <div className="px-5 mt-3 flex items-center gap-2">
+      <div className="px-5 mt-3 flex items-center gap-2 flex-wrap">
         <span className="px-3.5 py-1.5 rounded-full text-[13.5px] font-bold" style={{ background: pay.bg, color: pay.color, fontFamily: FF }}>{pay.label}</span>
+        {isOrder && (
+          <>
+            <span className="text-neutral-400">*</span>
+            <span className="px-3.5 py-1.5 rounded-full text-[13.5px] font-bold" style={{ background: status.bg, color: status.color, fontFamily: FF }}>{status.label}</span>
+          </>
+        )}
+        {meta.table != null && (
+          <>
+            <span className="text-neutral-400">*</span>
+            <span className="px-3.5 py-1.5 rounded-full bg-white text-[13.5px] font-semibold text-spal-navy" style={{ fontFamily: FF }}>Table {meta.table}</span>
+          </>
+        )}
         {record.category && (
           <>
             <span className="text-neutral-400">*</span>
@@ -150,6 +179,26 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
+
+      {/* Special instructions */}
+      {meta.instructions && (
+        <div className="px-5 mt-4">
+          <div className="bg-white/70 rounded-2xl px-4 py-4 text-[16px] text-neutral-500 leading-relaxed" style={{ fontFamily: FF, boxShadow: "0 1px 6px rgba(0,0,0,0.04)" }}>
+            {meta.instructions}
+          </div>
+        </div>
+      )}
+
+      {/* Serve it */}
+      {isOrder && meta.status === "preparing" && (
+        <div className="px-5 mt-6">
+          <button onClick={markDelivered} disabled={updating} aria-label="Mark as delivered"
+            className="w-full h-14 rounded-full text-white font-black text-[17px] active:scale-[0.98] transition-transform disabled:opacity-60"
+            style={{ background: "#22C55E", fontFamily: FF }}>
+            {updating ? "Updating..." : "Mark as Delivered"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

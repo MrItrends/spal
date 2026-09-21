@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest) {
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { full_name, business_name, business_type, whatsapp_number, currency, tax_rate, avatar_url, tracking_methods } = body;
+    const { full_name, business_name, business_type, whatsapp_number, currency, tax_rate, table_count, avatar_url, tracking_methods } = body;
 
     const updates: Record<string, unknown> = {};
     if (full_name        !== undefined) updates.full_name        = full_name?.trim()       || null;
@@ -39,6 +39,7 @@ export async function PATCH(req: NextRequest) {
     if (whatsapp_number  !== undefined) updates.whatsapp_number  = whatsapp_number?.trim() || null;
     if (currency         !== undefined) updates.currency         = currency                || "NGN";
     if (tax_rate         !== undefined) updates.tax_rate         = tax_rate != null && tax_rate !== "" ? parseFloat(tax_rate) : null;
+    if (table_count      !== undefined) updates.table_count      = table_count != null && table_count !== "" ? Math.max(0, Math.round(Number(table_count))) : null;
     if (avatar_url       !== undefined) updates.avatar_url       = avatar_url              || null;
     if (tracking_methods !== undefined) updates.tracking_methods = Array.isArray(tracking_methods) ? tracking_methods : [];
 
@@ -53,6 +54,12 @@ export async function PATCH(req: NextRequest) {
     let { data, error } = await runUpdate(updates);
     if (error && /tax_rate/.test(error.message)) {
       const { tax_rate: _omit, ...rest } = updates;
+      void _omit;
+      ({ data, error } = await runUpdate(rest));
+    }
+    // table_count column may not exist yet (migration 025) — retry without it.
+    if (error && /table_count/.test(error.message)) {
+      const { table_count: _omit, ...rest } = updates;
       void _omit;
       ({ data, error } = await runUpdate(rest));
     }

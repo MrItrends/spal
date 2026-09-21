@@ -160,7 +160,7 @@ export async function PATCH(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const { id, amount, description, category, record_date, payment_status, customer_name } = await req.json();
+    const { id, amount, description, category, record_date, payment_status, customer_name, raw_input } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: "id required" }, { status: 400 });
 
     const updates: Record<string, unknown> = {};
@@ -170,6 +170,7 @@ export async function PATCH(req: NextRequest) {
     if (record_date    !== undefined) updates.record_date    = record_date;
     if (payment_status !== undefined) updates.payment_status = payment_status;
     if (customer_name  !== undefined) updates.customer_name  = customer_name?.trim() || null;
+    if (raw_input      !== undefined) updates.raw_input      = raw_input || null;
 
     const { data, error } = await supabase
       .from("records")
