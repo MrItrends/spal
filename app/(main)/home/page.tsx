@@ -3,13 +3,14 @@
 import { Suspense, useEffect } from "react";
 import { useSPALStore } from "@/store";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { RestaurantHome } from "@/components/home/RestaurantHome";
+import { RetailHome } from "@/components/home/RetailHome";
+import { PerishableHome } from "@/components/home/PerishableHome";
+import { isPerishable } from "@/lib/business-mode";
 
 /**
- * Home is dynamic by business type. Each type gets its own tailored home
- * (a restaurant cares about menu, a kiosk about inventory, etc.).
- * Restaurant/bar is built; other types fall back to it until their own
- * variants land.
+ * Home is dynamic by business type via lib/business-mode:
+ *  - perishable (restaurant/bar) -> PerishableHome (built separately)
+ *  - non-perishable (kiosk, supermarket, clothing, salon, ...) -> RetailHome
  */
 function HomeInner() {
   const { user, activeBusiness, setActiveBusiness, setBusinesses } = useSPALStore();
@@ -32,12 +33,7 @@ function HomeInner() {
 
   const type = activeBusiness?.business_type ?? user?.business_type;
 
-  switch (type) {
-    case "food_seller":
-    case "bar_owner":
-    default:
-      return <RestaurantHome />;
-  }
+  return isPerishable(type) ? <PerishableHome /> : <RetailHome />;
 }
 
 export default function HomePage() {

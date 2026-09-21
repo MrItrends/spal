@@ -44,7 +44,10 @@ function relTime(iso: string) {
   return new Date(iso).toLocaleDateString("en", { month: "short", day: "numeric" });
 }
 
-export function RestaurantHome() {
+// Non-perishable / retail dashboard (kiosk, supermarket, clothing, salon, etc.).
+// The perishable (restaurant/bar) dashboard is a separate component — see
+// components/home/PerishableHome.tsx and PERISHABLE_DASHBOARD.md.
+export function RetailHome() {
   const router = useRouter();
   const { user, activeBusiness, recordSavedAt } = useSPALStore();
   const name = activeBusiness?.business_name ?? user?.business_name ?? user?.full_name ?? "there";
