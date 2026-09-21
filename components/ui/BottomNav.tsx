@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon } from "hugeicons-react";
+import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon, Restaurant03Icon, MenuRestaurantIcon } from "hugeicons-react";
+import { useSPALStore } from "@/store";
+import { isPerishable } from "@/lib/business-mode";
 
 const FF = "var(--font-satoshi)";
 
@@ -14,11 +16,22 @@ const TABS = [
   { href: "/profile",           label: "Profile", Icon: User02Icon },
 ];
 
+// Restaurants and bars: orders come from the menu, stock is ingredients/drinks.
+const PERISHABLE_TABS = [
+  { href: "/home",      label: "Home",      Icon: Home01Icon },
+  { href: "/sell",      label: "Orders",    Icon: Restaurant03Icon },
+  { href: "/menu",      label: "Menu",      Icon: MenuRestaurantIcon },
+  { href: "/inventory", label: "Inventory", Icon: PackageIcon },
+  { href: "/profile",   label: "Profile",   Icon: User02Icon },
+];
+
 // Full-screen flows where the tab bar should not show.
 const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/profile/", "/insights"];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user, activeBusiness } = useSPALStore();
+  const tabs = isPerishable(activeBusiness?.business_type ?? user?.business_type) ? PERISHABLE_TABS : TABS;
   if (HIDDEN.some((p) => pathname.includes(p))) return null;
 
   return (
@@ -31,7 +44,7 @@ export function BottomNav() {
         className="flex items-center justify-between rounded-[26px] px-2 py-2"
         style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "saturate(180%) blur(20px)", boxShadow: "0 4px 24px rgba(0,0,0,0.10)" }}
       >
-        {TABS.map(({ href, label, Icon }) => {
+        {tabs.map(({ href, label, Icon }) => {
           const active = href === "/home" ? pathname === "/home" : pathname.startsWith(href);
           return (
             <Link
