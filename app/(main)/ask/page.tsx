@@ -1,613 +1,204 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Cancel01Icon, Clock05Icon, ThumbsUpIcon, ThumbsDownIcon } from "hugeicons-react";
-import { useSPALStore } from "@/store";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft01Icon, Folder01Icon, MessageAdd01Icon, PlusSignSquareIcon,
+  Mic01Icon, SentIcon,
+} from "hugeicons-react";
 
-interface Message { role: "user" | "assistant"; content: string; timestamp: string; }
-type SessionState = "idle" | "listening" | "thinking" | "spal-speaking" | "ended";
+const BG = "#EDF3E8";
+const FF = "var(--font-satoshi)";
 
-function fmtDuration(secs: number) {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return m > 0 ? `${m}m ${s} secs` : `${s} secs`;
+const SUGGESTIONS = [
+  "What is the price of rice in Kubwa?",
+  "How much did I make in 2025?",
+  "What is the price of tomatoes in Lagos?",
+];
+
+interface Msg { role: "user" | "assistant"; content: string }
+
+export default function AskPage() {
+  return <Suspense><AskInner /></Suspense>;
 }
 
-// ── Gemini-style ambient orbs ─────────────────────────────────────────────────
-function AmbientOrbs({ speaking }: { speaking: boolean }) {
-  const orbs = [
-    { color: "#8B3CFF", size: 360, x: "0%",  y: "5%",  dur: 9,  delay: 0   },
-    { color: "#2F63F5", size: 300, x: "55%", y: "0%",  dur: 11, delay: 2   },
-    { color: "#ED712E", size: 240, x: "10%", y: "55%", dur: 8,  delay: 1   },
-    { color: "#22C55E", size: 220, x: "65%", y: "50%", dur: 10, delay: 3   },
-  ];
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {orbs.map((orb, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full"
-          style={{ width: orb.size, height: orb.size, left: orb.x, top: orb.y, background: orb.color, filter: "blur(80px)" }}
-          animate={{
-            x: [0, 28, -18, 12, 0],
-            y: [0, -22, 28, -10, 0],
-            scale: speaking ? [1.0, 1.35, 1.05, 1.2, 1.0] : [0.55, 0.7, 0.6, 0.65, 0.55],
-            opacity: speaking ? [0.55, 0.8, 0.6, 0.7, 0.55] : [0.16, 0.26, 0.18, 0.22, 0.16],
-          }}
-          transition={{ duration: orb.dur, repeat: Infinity, ease: "easeInOut", delay: orb.delay }}
-        />
-      ))}
-    </div>
-  );
-}
+function AskInner() {
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const recRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-// ── Main page ─────────────────────────────────────────────────────────────────
-export default function AskSPALPage() {
-  const router = useRouter();
-  const { user } = useSPALStore();
-  const name = user?.full_name ?? user?.business_name ?? "there";
-
-  const [messages,  setMessages]  = useState<Message[]>([]);
-  const [session,   setSession]   = useState<SessionState>("idle");
-  const [convId,    setConvId]    = useState<string | null>(null);
-  const [feedback,  setFeedback]  = useState<"up" | "down" | null>(null);
-  const [duration,  setDuration]  = useState(0);
-  const [inputText, setInputText] = useState("");
-  const [chatActive, setChatActive] = useState(false); // voice loop running
-
-  // Refs — so async callbacks always see latest values without re-creating
-  const endedRef          = useRef(false);
-  const chatActiveRef     = useRef(false);
-  const sessionRef        = useRef<SessionState>("idle");
-  const messagesRef       = useRef<Message[]>([]);
-  const convIdRef         = useRef<string | null>(null);
-  const recognitionRef    = useRef<any>(null);
-  const pendingTranscript = useRef<string | null>(null);
-  const silenceTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prefetchTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Speculative reply computed while the user is still talking, keyed by transcript
-  const prefetchRef       = useRef<{ transcript: string; promise: Promise<string | null>; ctrl: AbortController } | null>(null);
-  const typingRef         = useRef(false); // user is typing → pause the mic loop
-  const audioCtxRef       = useRef<AudioContext | null>(null);
-  const audioSourceRef    = useRef<AudioBufferSourceNode | null>(null);
-  const startTimeRef      = useRef<number | null>(null);
-  const timerRef          = useRef<ReturnType<typeof setInterval> | null>(null);
-  const inputRef          = useRef<HTMLInputElement>(null);
-
-  // Keep refs in sync with state
-  useEffect(() => { sessionRef.current = session; }, [session]);
-  useEffect(() => { chatActiveRef.current = chatActive; }, [chatActive]);
-  useEffect(() => { messagesRef.current = messages; }, [messages]);
-  useEffect(() => { convIdRef.current = convId; }, [convId]);
-
-  function setSessionSync(s: SessionState) { sessionRef.current = s; setSession(s); }
-
-  // Duration timer
+  // Honor a prefilled prompt set by other screens (Insights, Home orb, etc.).
   useEffect(() => {
-    if (messages.length === 1 && !startTimeRef.current) {
-      startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        setDuration(Math.floor((Date.now() - startTimeRef.current!) / 1000));
-      }, 1000);
-    }
-  }, [messages]);
-
-  // ── Audio ────────────────────────────────────────────────────────────────────
-  function ensureAudioCtx(): AudioContext {
-    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
-    if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
-    return audioCtxRef.current;
-  }
-
-  // Short UI tones for tactile feedback: a rising "open" cue, a softer "close" cue.
-  function playCue(kind: "start" | "stop") {
     try {
-      const ctx = ensureAudioCtx();
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      if (kind === "start") {
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(660, now + 0.12);
-      } else {
-        osc.frequency.setValueAtTime(560, now);
-        osc.frequency.exponentialRampToValueAtTime(360, now + 0.14);
-      }
-      // gentle attack + decay so it never clicks or feels harsh
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.22);
-    } catch { /* audio not available — ignore */ }
-  }
-
-  function stopAudio() {
-    try { audioSourceRef.current?.stop(); } catch { /* already ended */ }
-    audioSourceRef.current = null;
-  }
-
-  async function speakText(text: string): Promise<void> {
-    const ctx = ensureAudioCtx();
-    const res = await fetch("/api/ai/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (endedRef.current) return;          // ended while TTS was fetching
-    if (!res.ok) throw new Error("TTS failed");
-    const buf = await res.arrayBuffer();
-    if (endedRef.current) return;          // ended while reading body
-    await ctx.resume();
-    const decoded = await ctx.decodeAudioData(buf);
-    if (endedRef.current) return;          // ended while decoding — don't play
-    return new Promise((resolve) => {
-      const src = ctx.createBufferSource();
-      src.buffer = decoded;
-      src.connect(ctx.destination);
-      src.onended = () => { audioSourceRef.current = null; resolve(); };
-      audioSourceRef.current = src;
-      src.start(0);
-    });
-  }
-
-  // How long a silence means the user is done (forgiving, so we never cut off
-  // mid-sentence) vs. how soon we START computing the answer during a pause.
-  const END_OF_TURN_MS   = 2200;
-  const PREFETCH_AFTER_MS = 1000;
-
-  function clearPrefetch() {
-    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
-  }
-
-  // Start computing a reply for the transcript-so-far while the user pauses.
-  // If they keep talking, the next pause aborts this and prefetches the longer text.
-  function startPrefetch(text: string) {
-    if (!text || endedRef.current) return;
-    if (prefetchRef.current?.transcript === text) return; // already prefetching this exact text
-    prefetchRef.current?.ctrl.abort();
-    const ctrl = new AbortController();
-    const promise = fetch("/api/ai/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, conversationId: convIdRef.current, dryRun: true }),
-      signal: ctrl.signal,
-    })
-      .then((r) => r.json())
-      .then((d) => (d?.success ? (d.data.reply as string) : null))
-      .catch(() => null);
-    prefetchRef.current = { transcript: text, promise, ctrl };
-  }
-
-  // ── Speech recognition (interim results + manual silence detection) ─────────
-  // Continuous recognizer. We start computing the answer during brief pauses
-  // (prefetch) and only submit after a longer silence, so SPAL has the reply
-  // ready the moment the user stops — without ever cutting them off.
-  const startRecognition = useCallback(() => {
-    if (endedRef.current || !chatActiveRef.current || typingRef.current) return;
-    if (recognitionRef.current) return; // one recognizer at a time
-    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    const r = new SR();
-    r.lang = "en-US";
-    r.interimResults = true;   // fire as the user speaks
-    r.maxAlternatives = 1;
-    r.continuous = true;       // keep one session; we decide when to submit
-
-    const clearSilence = () => {
-      if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
-    };
-
-    // Stop recognizer after the end-of-turn silence → onend submits the transcript
-    const armSilence = () => {
-      clearSilence();
-      silenceTimerRef.current = setTimeout(() => {
-        try { r.stop(); } catch { /* already stopped */ }
-      }, END_OF_TURN_MS);
-    };
-
-    // After a brief pause, start computing the reply in the background.
-    const armPrefetch = () => {
-      clearPrefetch();
-      prefetchTimerRef.current = setTimeout(() => {
-        if (pendingTranscript.current) startPrefetch(pendingTranscript.current);
-      }, PREFETCH_AFTER_MS);
-    };
-
-    r.onresult = (e: any) => {
-      let full = "";
-      for (let i = 0; i < e.results.length; i++) {
-        full += e.results[i][0]?.transcript ?? "";
-      }
-      if (full.trim()) {
-        pendingTranscript.current = full.trim();
-        armSilence();  // reset the end-of-turn countdown on every new word
-        armPrefetch(); // and re-schedule the speculative reply for the latest text
-      }
-    };
-
-    r.onerror = (e: any) => {
-      clearSilence();
-      clearPrefetch();
-      recognitionRef.current = null;
-      if (endedRef.current) return;
-      // no-speech / aborted = just silence, keep listening
-      if (chatActiveRef.current && !typingRef.current) setTimeout(startRecognition, 200);
-      else if (!typingRef.current) setSessionSync("idle");
-    };
-
-    r.onend = () => {
-      clearSilence();
-      clearPrefetch();
-      recognitionRef.current = null;
-      if (endedRef.current) return;
-
-      const transcript = pendingTranscript.current;
-      pendingTranscript.current = null;
-
-      if (transcript) {
-        // Got speech — send to SPAL (mic restarts after SPAL responds)
-        sendAndRespond(transcript);
-      } else if (chatActiveRef.current && !typingRef.current) {
-        // Pure silence, no words — restart mic to keep listening
-        setTimeout(startRecognition, 150);
-      } else if (!typingRef.current) {
-        setSessionSync("idle");
-      }
-    };
-
-    recognitionRef.current = r;
-    setSessionSync("listening");
-    try { r.start(); } catch { /* already started */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      const pre = sessionStorage.getItem("spal_ask_prefill");
+      if (pre) { sessionStorage.removeItem("spal_ask_prefill"); send(pre); }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Send user message → AI → TTS → restart mic ────────────────────────────
-  const sendAndRespond = useCallback(async (text: string) => {
-    if (endedRef.current) return;
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, sending]);
 
-    const userMsg: Message = { role: "user", content: text, timestamp: new Date().toISOString() };
-    const updated = [...messagesRef.current, userMsg];
-    setMessages(updated); messagesRef.current = updated;
-    setSessionSync("thinking");
-
+  async function send(text: string) {
+    const msg = text.trim();
+    if (!msg || sending) return;
+    setInput("");
+    setMessages((m) => [...m, { role: "user", content: msg }]);
+    setSending(true);
     try {
-      // Use the reply we already started computing while the user paused, if it's
-      // for this exact transcript. Otherwise compute it now (still no save).
-      let reply: string | null = null;
-      if (prefetchRef.current?.transcript === text) {
-        reply = await prefetchRef.current.promise;
-      }
-      prefetchRef.current?.ctrl.abort();
-      prefetchRef.current = null;
-
-      if (reply == null) {
-        const res = await fetch("/api/ai/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, conversationId: convIdRef.current, dryRun: true }),
-        });
-        const data = await res.json();
-        reply = data?.success ? (data.data.reply as string) : null;
-      }
-      if (endedRef.current) return;
-      if (!reply) { setSessionSync("listening"); if (chatActiveRef.current) startRecognition(); return; }
-
-      const aiMsg: Message = { role: "assistant", content: reply, timestamp: new Date().toISOString() };
-      const all = [...updated, aiMsg];
-      setMessages(all); messagesRef.current = all;
-
-      if (endedRef.current) return;
-      setSessionSync("spal-speaking");
-
-      // Persist the turn in the background (cheap — no AI call) while SPAL speaks.
-      const persist = fetch("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, conversationId: convIdRef.current, precomputedReply: reply }),
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          if (d?.success && d.data.conversationId) { setConvId(d.data.conversationId); convIdRef.current = d.data.conversationId; }
-        })
-        .catch(() => {});
-
-      await Promise.all([speakText(reply), persist]);
-
-      if (endedRef.current) return;
-      // After SPAL speaks, restart mic for seamless loop
-      if (chatActiveRef.current) {
-        setTimeout(startRecognition, 300);
+      const res = await fetch("/api/ai/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, conversationId }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        setMessages((m) => [...m, { role: "assistant", content: d.data.reply }]);
+        if (d.data.conversationId) setConversationId(d.data.conversationId);
       } else {
-        setSessionSync("idle");
+        setMessages((m) => [...m, { role: "assistant", content: "Sorry, I couldn't answer that. Please try again." }]);
       }
     } catch {
-      if (!endedRef.current) {
-        if (chatActiveRef.current) { setSessionSync("listening"); setTimeout(startRecognition, 500); }
-        else setSessionSync("idle");
-      }
+      setMessages((m) => [...m, { role: "assistant", content: "Something went wrong. Please check your connection." }]);
+    } finally { setSending(false); }
+  }
+
+  async function toggleMic() {
+    if (recording) {
+      recRef.current?.stop();
+      return;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startRecognition]);
-
-  // ── Reset everything for a brand-new conversation ─────────────────────────
-  function resetForNewChat() {
-    endedRef.current = false;
-    chatActiveRef.current = false;
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
-    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
-    prefetchRef.current?.ctrl.abort(); prefetchRef.current = null;
-    startTimeRef.current = null;
-    pendingTranscript.current = null;
-    convIdRef.current = null;
-    messagesRef.current = [];
-    setMessages([]);
-    setConvId(null);
-    setFeedback(null);
-    setDuration(0);
-    setChatActive(false);
-    setSessionSync("idle");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        if (blob.size === 0) return;
+        const fd = new FormData();
+        fd.append("audio", blob, "voice.webm");
+        try {
+          const res = await fetch("/api/ai/transcribe", { method: "POST", body: fd });
+          const d = await res.json();
+          if (d.success && d.data.text) setInput((prev) => (prev ? prev + " " : "") + d.data.text);
+        } catch { /* ignore */ }
+      };
+      rec.start();
+      recRef.current = rec;
+      setRecording(true);
+    } catch { setRecording(false); }
   }
 
-  // ── Activate voice mode ───────────────────────────────────────────────────
-  function activateVoice() {
-    if (endedRef.current) resetForNewChat();
-    ensureAudioCtx(); // unlock audio on user gesture
-    playCue("start");
-    if (startTimeRef.current === null) {
-      startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        setDuration(Math.floor((Date.now() - startTimeRef.current!) / 1000));
-      }, 1000);
-    }
-    chatActiveRef.current = true;
-    setChatActive(true);
-    startRecognition();
-  }
+  function newChat() { setMessages([]); setConversationId(null); setInput(""); }
 
-  // ── Typing pauses the mic so it doesn't auto-submit voice over your text ───
-  function pauseForTyping() {
-    typingRef.current = true;
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
-    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
-    prefetchRef.current?.ctrl.abort(); prefetchRef.current = null;
-    pendingTranscript.current = null;
-    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
-    if (sessionRef.current === "listening") setSessionSync("idle");
-  }
-
-  function resumeFromTyping() {
-    if (!typingRef.current) return;
-    typingRef.current = false;
-    if (chatActiveRef.current && !endedRef.current) startRecognition();
-  }
-
-  // ── Text send ─────────────────────────────────────────────────────────────
-  function handleTextSend() {
-    const text = inputText.trim();
-    if (!text) return;
-    if (endedRef.current) resetForNewChat();
-    ensureAudioCtx();
-    setInputText("");
-    typingRef.current = false; // sendAndRespond will restart the mic when done
-    chatActiveRef.current = true;
-    setChatActive(true);
-    sendAndRespond(text);
-  }
-
-  // ── End session ───────────────────────────────────────────────────────────
-  async function endSession() {
-    playCue("stop");
-    endedRef.current = true;
-    chatActiveRef.current = false;
-    setChatActive(false);
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
-    if (prefetchTimerRef.current) { clearTimeout(prefetchTimerRef.current); prefetchTimerRef.current = null; }
-    prefetchRef.current?.ctrl.abort(); prefetchRef.current = null;
-    stopAudio();
-    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} recognitionRef.current = null; }
-    const dur = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0;
-    setDuration(dur);
-    setSessionSync("ended");
-
-    if (convIdRef.current) {
-      try {
-        await fetch(`/api/conversations/${convIdRef.current}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ duration: dur }),
-        });
-      } catch { /* silent */ }
-    }
-  }
-
-  const isEnded    = session === "ended";
-  const isListening = session === "listening";
-  const isSpeaking  = session === "spal-speaking";
-  const isThinking  = session === "thinking";
+  const empty = messages.length === 0 && !sending;
 
   return (
-    <div
-      className="fixed inset-0 flex flex-col overflow-hidden z-40"
-      style={{ background: "linear-gradient(160deg, #ECD5FF 0%, #C9A8FF 18%, #B8D0FF 48%, #D0E9FF 72%, #EAF4FF 100%)" }}
-    >
-      <AmbientOrbs speaking={isSpeaking} />
-
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-12 pb-2">
-        <button
-          onClick={() => { if (!isEnded && messages.length > 0) endSession().then(() => router.back()); else router.back(); }}
-          aria-label="Close"
-          className="w-11 h-11 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
-        >
-          <Cancel01Icon size={18} color="#121212" />
-        </button>
-        <button
-          onClick={() => router.push("/ask/history")}
-          aria-label="Chat history"
-          className="w-11 h-11 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
-        >
-          <Clock05Icon size={18} color="#121212" />
-        </button>
+    <div className="flex flex-col" style={{ background: BG, fontFamily: FF, height: "100dvh" }}>
+      {/* Header */}
+      <div className="px-5 pt-12 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={() => { window.location.href = "/home"; }}
+            className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Back">
+            <ArrowLeft01Icon size={20} color="#0F172A" />
+          </button>
+          <h1 className="text-[22px] font-black text-spal-navy tracking-wide" style={{ fontFamily: FF }}>ASK SPAL</h1>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <button onClick={() => { window.location.href = "/ask/history"; }}
+            className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Chat history">
+            <Folder01Icon size={19} color="#0F172A" />
+          </button>
+          <button onClick={newChat}
+            className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="New chat">
+            <MessageAdd01Icon size={19} color="#0F172A" />
+          </button>
+        </div>
       </div>
 
-      {/* Center content */}
-      <div className="relative z-10 flex flex-col items-center flex-1 justify-center px-8 text-center" style={{ paddingBottom: "140px" }}>
-        <motion.div
-          animate={isSpeaking ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-          transition={isSpeaking ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : {}}
-          className="mb-5"
-        >
-          <Image src="/spal-ai.webp" alt="SPAL" width={160} height={160} className="w-36 h-36 object-contain" priority />
-        </motion.div>
-
-        <p className="text-[15px] font-semibold mb-3" style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}>
-          Hello {name}
-        </p>
-
-        <AnimatePresence mode="wait">
-          {isEnded ? (
-            <motion.div key="ended" initial={{ opacity: 0, y: 10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="relative bg-white/75 backdrop-blur-sm rounded-2xl px-5 py-4 w-full max-w-[300px]"
-              style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
-              <button onClick={resetForNewChat} aria-label="Dismiss"
-                className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform"
-                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
-                <Cancel01Icon size={13} color="#6B7280" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                    <rect x="3" y="5" width="4" height="14" rx="2" fill="#8B3CFF" opacity="0.4"/>
-                    <rect x="8" y="3" width="4" height="18" rx="2" fill="#8B3CFF" opacity="0.7"/>
-                    <rect x="13" y="7" width="4" height="10" rx="2" fill="#8B3CFF"/>
-                    <rect x="18" y="9" width="3" height="6" rx="1.5" fill="#8B3CFF" opacity="0.5"/>
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13.5px] font-bold" style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}>Voice chat has ended</p>
-                  <p className="text-[12px] text-neutral-400 mt-0.5">You spoke for {fmtDuration(duration)}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setFeedback("up")} aria-label="Thumbs up"
-                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90"
-                    style={{ background: feedback === "up" ? "#DCFCE7" : "transparent" }}>
-                    <ThumbsUpIcon size={15} color={feedback === "up" ? "#16A34A" : "#9CA3AF"} />
-                  </button>
-                  <button onClick={() => setFeedback("down")} aria-label="Thumbs down"
-                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90"
-                    style={{ background: feedback === "down" ? "#FEE2E2" : "transparent" }}>
-                    <ThumbsDownIcon size={15} color={feedback === "down" ? "#DC2626" : "#9CA3AF"} />
-                  </button>
-                </div>
+      {/* Body */}
+      {empty ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+          <Image src="/spal-ai.webp" alt="SPAL" width={140} height={140} className="w-32 h-32 object-contain" priority />
+          <p className="text-[24px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>Start your first Conversation</p>
+          <p className="text-[15px] text-neutral-500 mt-1.5 max-w-[300px]" style={{ fontFamily: FF }}>Ask SPAL anything you&apos;d like to know about your business</p>
+        </div>
+      ) : (
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className="max-w-[82%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed"
+                style={{ fontFamily: FF, background: m.role === "user" ? "#22C55E" : "#fff",
+                  color: m.role === "user" ? "#fff" : "#0F172A", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                {m.content}
               </div>
-            </motion.div>
+            </div>
+          ))}
+          {sending && (
+            <div className="flex justify-start">
+              <div className="rounded-2xl px-4 py-3 bg-white" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                <span className="flex gap-1">
+                  {[0, 1, 2].map((i) => <span key={i} className="w-2 h-2 rounded-full bg-neutral-300 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
-          ) : isSpeaking ? (
-            <motion.div key="speaking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-              {["#ED712E", "#2F63F5", "#8B3CFF"].map((c, i) => (
-                <motion.div key={i} className="w-3 h-3 rounded-full" style={{ background: c }}
-                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 1, 0.6] }}
-                  transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.22 }} />
-              ))}
-            </motion.div>
+      {/* Suggestions (empty only) */}
+      {empty && (
+        <div className="px-5 space-y-3 mb-3">
+          {SUGGESTIONS.map((s) => (
+            <button key={s} onClick={() => send(s)}
+              className="w-full text-left bg-white rounded-2xl px-5 py-4 text-[15px] font-medium text-spal-navy active:scale-[0.99] transition-transform"
+              style={{ fontFamily: FF, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
 
-          ) : isThinking ? (
-            <motion.div key="thinking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-2">
-              {[0,1,2].map(i => (
-                <motion.div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(18,18,18,0.25)" }}
-                  animate={{ opacity: [0.25, 0.8, 0.25] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }} />
-              ))}
-            </motion.div>
-
-          ) : isListening ? (
-            <motion.div key="listening" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-2">
-              <motion.div className="w-2 h-2 rounded-full bg-red-500"
-                animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 0.7, repeat: Infinity }} />
-              <span className="text-[13px] font-medium" style={{ color: "#121212" }}>Listening…</span>
-            </motion.div>
-
-          ) : (
-            <motion.h1 key="prompt" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              className="font-bold leading-snug"
-              style={{ color: "#121212", fontFamily: "var(--font-satoshi)", fontSize: "clamp(22px,6.5vw,30px)" }}>
-              What do you want to ask me about your business?
-            </motion.h1>
+      {/* Input bar */}
+      <div className="px-4 pt-2 pb-safe">
+        <div className="flex items-center gap-2 rounded-full bg-white px-3"
+          style={{ height: 60, border: "2px solid #C9B8F0", boxShadow: "0 6px 24px rgba(139,92,246,0.15)" }}>
+          <button className="w-9 h-9 flex items-center justify-center flex-shrink-0" aria-label="Add">
+            <PlusSignSquareIcon size={24} color="#6B7280" />
+          </button>
+          <input
+            value={input} onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") send(input); }}
+            placeholder="Ask Anything.."
+            className="flex-1 bg-transparent outline-none text-[16px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }}
+          />
+          <button onClick={toggleMic} className="w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90" aria-label="Voice to text">
+            <Mic01Icon size={22} color={recording ? "#DC2626" : "#6B7280"} />
+          </button>
+          <button onClick={() => send(input)} disabled={!input.trim() || sending}
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
+            style={{ background: input.trim() ? "#22C55E" : "#D6DDD2" }} aria-label="Send">
+            <SentIcon size={18} color="#fff" />
+          </button>
+        </div>
+        <AnimatePresence>
+          {recording && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="text-center text-[12.5px] font-semibold mt-2" style={{ color: "#DC2626", fontFamily: FF }}>
+              Listening… tap the mic to stop
+            </motion.p>
           )}
         </AnimatePresence>
       </div>
-
-      {/* Input bar — always present so a new chat can start right after one ends */}
-      {(
-        <div className="absolute left-0 right-0 z-20 px-5" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}>
-          <div
-            className="flex items-center gap-3 px-4 h-[60px] rounded-full"
-            style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.8)" }}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              onFocus={pauseForTyping}
-              onBlur={() => { if (!inputText.trim()) resumeFromTyping(); }}
-              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleTextSend(); } }}
-              placeholder="Ask Anything..."
-              className="flex-1 bg-transparent text-[15px] font-medium outline-none placeholder:text-neutral-400"
-              style={{ color: "#121212", fontFamily: "var(--font-satoshi)" }}
-            />
-
-            <AnimatePresence mode="wait">
-              {inputText.trim() ? (
-                // Send button when typing
-                <motion.button key="send"
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={handleTextSend}
-                  className="w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
-                  style={{ background: "#8B3CFF" }} aria-label="Send">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5} className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </motion.button>
-
-              ) : chatActive ? (
-                // Red stop square — ends entire conversation
-                <motion.button key="stop"
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={endSession}
-                  className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
-                  aria-label="End conversation">
-                  <div className="w-4 h-4 rounded-sm bg-white" />
-                </motion.button>
-
-              ) : (
-                // Waveform mic — tap to start voice chat
-                <motion.button key="mic"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  onClick={activateVoice}
-                  className="flex-shrink-0 active:scale-90 transition-transform" aria-label="Start voice chat">
-                  <svg viewBox="0 0 36 24" fill="none" className="w-9 h-6">
-                    {[3,7,11,15,19,23,27,31].map((x, i) => {
-                      const hs = [8,14,20,24,22,16,10,6];
-                      return <rect key={x} x={x} y={(24-hs[i])/2} width="3" height={hs[i]} rx="1.5" fill="rgba(18,18,18,0.35)" />;
-                    })}
-                  </svg>
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
