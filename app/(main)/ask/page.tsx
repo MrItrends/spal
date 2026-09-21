@@ -205,7 +205,7 @@ function AskInner() {
 
       {/* Input bar */}
       <div className="px-4 pt-2 pb-safe relative">
-        <input ref={attachRef} type="file" accept={attachAccept.current} hidden onChange={(e) => onAttach(e.target.files)} />
+        <input ref={attachRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" hidden onChange={(e) => onAttach(e.target.files)} />
 
         {/* Contextual + menu */}
         <AnimatePresence>

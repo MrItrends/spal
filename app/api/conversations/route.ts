@@ -14,23 +14,25 @@ export async function GET() {
     // Select only guaranteed columns and derive the title from the first message
     // so history works regardless of whether 019 has been applied yet.
     // Try to include folder_id (migration 023); fall back if the column is absent.
-    let data: Record<string, unknown>[] | null = null;
-    let res = await supabase
+    let data: Record<string, unknown>[] = [];
+    const withFolder = await supabase
       .from("conversations")
       .select("id, messages, created_at, updated_at, folder_id")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
       .limit(100);
-    if (res.error) {
-      res = await supabase
+    if (withFolder.error) {
+      const basic = await supabase
         .from("conversations")
         .select("id, messages, created_at, updated_at")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false })
         .limit(100);
+      if (basic.error) throw basic.error;
+      data = basic.data ?? [];
+    } else {
+      data = withFolder.data ?? [];
     }
-    if (res.error) throw res.error;
-    data = res.data;
 
     const withTitles = (data ?? []).map((c) => {
       const msgs = Array.isArray(c.messages) ? c.messages : [];
