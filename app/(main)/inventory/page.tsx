@@ -140,9 +140,9 @@ export default function StockPage() {
         <div className="flex flex-col items-center justify-center text-center px-8" style={{ paddingTop: "28vh" }}>
           <CubeIcon size={54} color="#9AA3AF" strokeWidth={1.4} />
           <p className="text-[22px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>No item in inventory</p>
-          <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>Add your first stock</p>
+          <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>Add your first inventory item</p>
           <button onClick={() => { window.location.href = "/inventory/add"; }}
-            className="mt-6 h-13 px-6 rounded-full flex items-center gap-2.5 text-white font-black text-[16px] active:scale-[0.98] transition-transform"
+            className="mt-6 h-13 px-6 rounded-2xl flex items-center gap-2.5 text-white font-black text-[16px] active:scale-[0.98] transition-transform"
             style={{ background: "#22C55E", fontFamily: FF, height: 56 }}>
             <Store01Icon size={20} color="#fff" /> Add Inventory
           </button>
@@ -296,7 +296,7 @@ export default function StockPage() {
         <motion.button
           initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
           onClick={() => { window.location.href = "/inventory/add"; }}
-          className="fixed right-4 left-auto flex items-center gap-2.5 h-14 px-6 rounded-full text-white font-black text-[16px] active:scale-95 transition-transform z-40"
+          className="fixed right-4 left-auto flex items-center gap-2.5 h-14 px-6 rounded-2xl text-white font-black text-[16px] active:scale-95 transition-transform z-40"
           style={{ background: "#22C55E", fontFamily: FF, bottom: "calc(var(--bottom-nav-h, 88px) + 8px)", boxShadow: "0 8px 24px rgba(34,197,94,0.4)" }}
         >
           <Store01Icon size={20} color="#fff" /> Add Inventory

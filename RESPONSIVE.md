@@ -80,6 +80,29 @@ For every future feature, bug fix, redesign, or component update:
 * New code must not introduce layout shifts or overflow.
 * Any UI change must be tested across multiple viewport sizes.
 
+## Bottom navigation & floating elements (standard)
+
+The fixed `BottomNav` is the single source of truth for how much space it takes.
+It measures its own real height (icon + label + padding + safe-area inset) and
+publishes it live on `<html>` as the CSS variable **`--bottom-nav-h`** (set to
+`0px` whenever the bar is hidden or the keyboard is up). `app/globals.css` also
+defines a safe-area-aware fallback so the value resolves before hydration.
+
+Rules — never hard-code a pixel offset for the bar:
+
+* Any element that floats above the bar (CTA bars, toasts, FABs) positions with
+  `bottom: calc(var(--bottom-nav-h) + <gap>)` — or the `.cta-bottom` utility.
+* Any scroll area whose content passes under the bar clears it with `.pb-nav`
+  (`padding-bottom: calc(var(--bottom-nav-h) + 1rem)`) — not a fixed `pb-*`.
+* The bar itself must stay visible and centred at every width (`fixed bottom-0`,
+  `max-w` = shell), carry `env(safe-area-inset-bottom)` padding, keep tap targets
+  ≥ 48px (`min-h-[52px]`), and scale/clamp labels so all tabs fit at 320px.
+* On very small phones (≤ 374px) headings clamp via the `h1/h2` rules; keep long
+  values on `truncate` so they never push the layout wider than the viewport.
+
+This guarantees the app bar is always visible and everything stays interactable
+from 320px up to large phones, regardless of system font scale or notch.
+
 ## Definition of Done
 
 A task is NOT complete unless:

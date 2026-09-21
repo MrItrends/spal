@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon, Hamburger01Icon, MenuRestaurantIcon } from "hugeicons-react";
@@ -27,23 +28,58 @@ const PERISHABLE_TABS = [
 // Full-screen flows where the tab bar should not show.
 const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/menu/add", "/orders/new", "/profile/", "/insights"];
 
+const isTextField = (el: EventTarget | null) =>
+  el instanceof HTMLElement && (el.matches("input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select") || el.isContentEditable);
+
+/**
+ * Primary tab bar. It is the single source of truth for how much space the bar
+ * takes: it publishes its real height as `--bottom-nav-h` on <html> (0 whenever
+ * it is not on screen). Anything that floats above it, and the page's bottom
+ * padding, reads that variable instead of guessing a pixel value, so nothing
+ * overlaps at any screen size, system font scale or safe-area inset.
+ */
 export function BottomNav() {
   const pathname = usePathname();
-  const { ready, perishable: isPerishableUser } = useBusinessMode();
-  const tabs = isPerishableUser ? PERISHABLE_TABS : TABS;
-  // Restaurant/bar orders run full-screen from the menu picker.
-  const perishable = tabs === PERISHABLE_TABS;
-  if (!ready) return null;
-  if (HIDDEN.some((p) => pathname.includes(p)) || (perishable && pathname.startsWith("/sell"))) return null;
+  const { ready, perishable } = useBusinessMode();
+  const tabs = perishable ? PERISHABLE_TABS : TABS;
+  const ref = useRef<HTMLElement>(null);
+  const [typing, setTyping] = useState(false);
+
+  const hiddenRoute = HIDDEN.some((p) => pathname.includes(p)) || (perishable && pathname.startsWith("/sell"));
+  const visible = ready && !hiddenRoute && !typing;
+
+  // While a text field is focused the on-screen keyboard takes the bottom of the
+  // screen; the bar steps aside so it never floats over the field being typed in.
+  useEffect(() => {
+    const on = (e: FocusEvent) => { if (isTextField(e.target)) setTyping(true); };
+    const off = () => setTyping(false);
+    document.addEventListener("focusin", on);
+    document.addEventListener("focusout", off);
+    return () => { document.removeEventListener("focusin", on); document.removeEventListener("focusout", off); };
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const el = ref.current;
+    if (!visible || !el) { root.style.setProperty("--bottom-nav-h", "0px"); return; }
+    const publish = () => root.style.setProperty("--bottom-nav-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => { ro.disconnect(); root.style.setProperty("--bottom-nav-h", "0px"); };
+  }, [visible]);
+
+  if (!visible) return null;
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 z-40"
+      ref={ref}
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-3 min-[360px]:px-4 z-40"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
       aria-label="Primary"
     >
       <div
-        className="flex items-center justify-between rounded-[26px] px-2 py-2"
+        className="flex items-stretch justify-between rounded-[26px] p-1.5"
         style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "saturate(180%) blur(20px)", boxShadow: "0 4px 24px rgba(0,0,0,0.10)" }}
       >
         {tabs.map(({ href, label, Icon }) => {
@@ -52,12 +88,17 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center gap-1 py-1.5 rounded-2xl active:scale-95 transition-transform"
+              className="flex-1 min-w-0 min-h-[52px] flex flex-col items-center justify-center gap-0.5 px-0.5 rounded-2xl active:scale-95 transition-transform"
               style={{ background: active ? "#EEF3E9" : "transparent" }}
               aria-current={active ? "page" : undefined}
+              aria-label={label}
             >
               <Icon size={22} color={active ? "#0F172A" : "#9CA3AF"} />
-              <span className="text-[10.5px] font-semibold" style={{ fontFamily: FF, color: active ? "#0F172A" : "#9CA3AF" }}>
+              {/* Scales down on 320px phones so five labels always fit on one line */}
+              <span
+                className="max-w-full truncate font-semibold leading-tight"
+                style={{ fontFamily: FF, fontSize: "clamp(9px, 2.9vw, 11px)", color: active ? "#0F172A" : "#9CA3AF" }}
+              >
                 {label}
               </span>
             </Link>

@@ -141,6 +141,14 @@ h1, h2, h3, h4, h5, h6 {
 
   /* App shell max width (single source of truth) */
   --shell-max-w: 480px;
+
+  /*
+   * Bottom nav footprint — single source of truth for every floating CTA /
+   * toast / content that must clear the fixed BottomNav. Includes the device
+   * safe-area so nothing sits under the home indicator on notched phones.
+   * Referenced as `calc(var(--bottom-nav-h) + …)` across screens.
+   */
+  --bottom-nav-h: calc(84px + var(--sab));
 }
 
 /* Very small phones (iPhone SE 1st gen, cheap Androids) */
@@ -177,9 +185,20 @@ h1, h2, h3, h4, h5, h6 {
   padding-bottom: var(--sab);
 }
 
-/* Fixed CTA bars — above the 64px BottomNav + safe area */
+/* Fixed CTA bars / FABs — above the BottomNav; falls back to the home indicator
+   when the bar is hidden (full-screen flows, keyboard open). */
 .cta-bottom {
-  bottom: calc(4rem + var(--sab));
+  bottom: calc(max(var(--bottom-nav-h), var(--sab)) + 0.5rem);
+}
+
+/* Content that scrolls under the fixed BottomNav must clear it. */
+.pb-nav {
+  padding-bottom: calc(var(--bottom-nav-h) + 1rem);
+}
+
+/* Same, for screens with a floating action button (56px tall) over the content. */
+.pb-nav-fab {
+  padding-bottom: calc(var(--bottom-nav-h) + 6rem);
 }
 
 /* Page-level horizontal padding using the responsive token */
