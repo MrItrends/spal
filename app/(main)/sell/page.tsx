@@ -12,7 +12,7 @@ import {
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
-import { isPerishable } from "@/lib/business-mode";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import type { OrderType } from "@/lib/orders";
 import type { InventoryItem, MenuItem } from "@/lib/types";
 
@@ -71,7 +71,7 @@ type Drawer = null | "cart" | "category" | "payment" | "success";
 export default function SellPage() {
   const { user, activeBusiness } = useSPALStore();
   const businessName = activeBusiness?.business_name || user?.business_name || "Your Store";
-  const perishable = isPerishable(activeBusiness?.business_type ?? user?.business_type);
+  const { ready: modeReady, perishable } = useBusinessMode();
 
   const [items, setItems]     = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,17 +111,19 @@ export default function SellPage() {
     if (perishable && flow.ready && !flow.type) window.location.replace("/orders/new");
   }, [perishable, flow]);
 
+  const loadSeq = useRef(0);
   const fetchInventory = useCallback(async () => {
+    const seq = ++loadSeq.current; // only the latest request may update the list
     try {
       const res = await fetch(perishable ? "/api/menu" : "/api/inventory");
       const d = await res.json();
-      if (d.success) {
+      if (d.success && seq === loadSeq.current) {
         const list = d.data.items ?? [];
         setItems(perishable ? (list as MenuItem[]).map(menuAsProduct) : list);
       }
-    } catch { /* silent */ } finally { setLoading(false); }
+    } catch { /* silent */ } finally { if (seq === loadSeq.current) setLoading(false); }
   }, [perishable]);
-  useEffect(() => { fetchInventory(); }, [fetchInventory]);
+  useEffect(() => { if (modeReady) fetchInventory(); }, [modeReady, fetchInventory]);
 
   // ── derived ────────────────────────────────────────────────────────────────
   const categories = useMemo(() => {

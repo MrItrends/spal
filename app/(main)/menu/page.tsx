@@ -9,6 +9,7 @@ import {
   SidebarRight01Icon, Notebook01Icon, MenuRestaurantIcon, Alert02Icon,
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import { typeNoun } from "@/lib/menu-config";
@@ -36,7 +37,7 @@ export default function MenuPage() {
   const router = useRouter();
   const { user, activeBusiness } = useSPALStore();
   const businessName = activeBusiness?.business_name || user?.business_name || "Your Store";
-  const isBar = (activeBusiness?.business_type ?? user?.business_type) === "bar_owner";
+  const isBar = useBusinessMode().type === "bar_owner";
 
   const [items, setItems]     = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);

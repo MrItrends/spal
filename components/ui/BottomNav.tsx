@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon, Hamburger01Icon, MenuRestaurantIcon } from "hugeicons-react";
-import { useSPALStore } from "@/store";
-import { isPerishable } from "@/lib/business-mode";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 
 const FF = "var(--font-satoshi)";
 
@@ -30,10 +29,11 @@ const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confir
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { user, activeBusiness } = useSPALStore();
-  const tabs = isPerishable(activeBusiness?.business_type ?? user?.business_type) ? PERISHABLE_TABS : TABS;
+  const { ready, perishable: isPerishableUser } = useBusinessMode();
+  const tabs = isPerishableUser ? PERISHABLE_TABS : TABS;
   // Restaurant/bar orders run full-screen from the menu picker.
   const perishable = tabs === PERISHABLE_TABS;
+  if (!ready) return null;
   if (HIDDEN.some((p) => pathname.includes(p)) || (perishable && pathname.startsWith("/sell"))) return null;
 
   return (

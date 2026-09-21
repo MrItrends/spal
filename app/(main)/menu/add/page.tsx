@@ -6,7 +6,7 @@ import Image from "next/image";
 import {
   ArrowLeft01Icon, Image02Icon, ArrowDown01Icon, InformationCircleIcon, Cancel01Icon,
 } from "hugeicons-react";
-import { useSPALStore } from "@/store";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { MENU_TYPES, MENU_CATEGORIES, MENU_UNITS } from "@/lib/menu-config";
 import type { MenuItem, MenuType } from "@/lib/types";
 
@@ -51,8 +51,7 @@ export default function AddMenuPage() {
 
 function AddMenuInner() {
   const editId = useSearchParams().get("id");
-  const { user, activeBusiness } = useSPALStore();
-  const isBar = (activeBusiness?.business_type ?? user?.business_type) === "bar_owner";
+  const isBar = useBusinessMode().type === "bar_owner";
 
   const [name, setName]         = useState("");
   const [menuType, setMenuType] = useState<MenuType>(isBar ? "drinks" : "food");

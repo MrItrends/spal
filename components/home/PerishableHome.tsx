@@ -9,6 +9,7 @@ import {
   Restaurant01Icon, Restaurant02Icon, Restaurant03Icon, Alert02Icon,
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import { payInfo, iconTint } from "@/lib/sales";
@@ -62,7 +63,7 @@ export function PerishableHome() {
   const router = useRouter();
   const { user, activeBusiness, recordSavedAt } = useSPALStore();
   const name = activeBusiness?.business_name ?? user?.business_name ?? user?.full_name ?? "there";
-  const isBar = (activeBusiness?.business_type ?? user?.business_type) === "bar_owner";
+  const isBar = useBusinessMode().type === "bar_owner";
   const greeting = getGreeting();
 
   const [period, setPeriod]   = useState<Period>("today");

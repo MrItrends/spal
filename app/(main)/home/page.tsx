@@ -5,7 +5,7 @@ import { useSPALStore } from "@/store";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { RetailHome } from "@/components/home/RetailHome";
 import { PerishableHome } from "@/components/home/PerishableHome";
-import { isPerishable } from "@/lib/business-mode";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 
 /**
  * Home is dynamic by business type via lib/business-mode:
@@ -31,9 +31,10 @@ function HomeInner() {
       .catch(() => {});
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const type = activeBusiness?.business_type ?? user?.business_type;
+  const { ready, perishable } = useBusinessMode();
+  if (!ready) return null;
 
-  return isPerishable(type) ? <PerishableHome /> : <RetailHome />;
+  return perishable ? <PerishableHome /> : <RetailHome />;
 }
 
 export default function HomePage() {
