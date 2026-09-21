@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft01Icon, Folder01Icon, MessageAdd01Icon, PlusSignSquareIcon,
-  Mic01Icon, SentIcon,
+  Mic01Icon, SentIcon, Image02Icon, File01Icon, ChartIncreaseIcon, Analytics01Icon,
 } from "hugeicons-react";
 
 const BG = "#EDF3E8";
@@ -29,6 +29,23 @@ function AskInner() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, setToast] = useState("");
+  const attachRef = useRef<HTMLInputElement>(null);
+  const attachAccept = useRef<string>("image/*");
+
+  function pickAttachment(accept: string) {
+    attachAccept.current = accept;
+    setMenuOpen(false);
+    // trigger the native picker on next tick so the accept attr updates first
+    setTimeout(() => attachRef.current?.click(), 0);
+  }
+  function onAttach(files: FileList | null) {
+    if (attachRef.current) attachRef.current.value = "";
+    if (!files || !files.length) return;
+    setToast("Attachments are coming soon");
+    setTimeout(() => setToast(""), 2400);
+  }
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -169,11 +186,32 @@ function AskInner() {
       )}
 
       {/* Input bar */}
-      <div className="px-4 pt-2 pb-safe">
+      <div className="px-4 pt-2 pb-safe relative">
+        <input ref={attachRef} type="file" accept={attachAccept.current} hidden onChange={(e) => onAttach(e.target.files)} />
+
+        {/* Contextual + menu */}
+        <AnimatePresence>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.16 }}
+                className="absolute left-4 bottom-[76px] z-50 bg-white rounded-2xl overflow-hidden py-1.5 w-56"
+                style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.16)" }}>
+                <MenuItem icon={<Image02Icon size={19} color="#16A34A" />} tint="#E7F6EC" label="Image upload" onClick={() => pickAttachment("image/*")} />
+                <MenuItem icon={<File01Icon size={19} color="#2563EB" />} tint="#EAF0FC" label="File upload" onClick={() => pickAttachment("*/*")} />
+                <MenuItem icon={<ChartIncreaseIcon size={19} color="#8B5CF6" />} tint="#EEE7FB" label="Graphs" onClick={() => { setMenuOpen(false); window.location.href = "/insights"; }} />
+                <MenuItem icon={<Analytics01Icon size={19} color="#F97316" />} tint="#FDECDD" label="Analytics" onClick={() => { setMenuOpen(false); window.location.href = "/insights"; }} />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         <div className="flex items-center gap-2 rounded-full bg-white px-3"
           style={{ height: 60, border: "2px solid #C9B8F0", boxShadow: "0 6px 24px rgba(139,92,246,0.15)" }}>
-          <button className="w-9 h-9 flex items-center justify-center flex-shrink-0" aria-label="Add">
-            <PlusSignSquareIcon size={24} color="#6B7280" />
+          <button onClick={() => setMenuOpen((o) => !o)} className="w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90" aria-label="More options">
+            <PlusSignSquareIcon size={24} color={menuOpen ? "#8B5CF6" : "#6B7280"} />
           </button>
           <input
             value={input} onChange={(e) => setInput(e.target.value)}
@@ -199,6 +237,26 @@ function AskInner() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.22 }} className="fixed left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-full"
+            style={{ background: "#0F172A", bottom: 96, boxShadow: "0 10px 30px rgba(0,0,0,0.28)" }}>
+            <span className="text-[14px] font-bold text-white" style={{ fontFamily: FF }}>{toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function MenuItem({ icon, tint, label, onClick }: { icon: React.ReactNode; tint: string; label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 active:bg-black/[0.03] transition-colors">
+      <span className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: tint }}>{icon}</span>
+      <span className="text-[15px] font-bold text-spal-navy" style={{ fontFamily: FF }}>{label}</span>
+    </button>
   );
 }
