@@ -15,7 +15,7 @@ const FF = "var(--font-satoshi)";
 type Pic = { id: string; preview: string; url?: string; uploading: boolean; failed?: boolean };
 
 const inputCls = "w-full rounded-2xl px-4 text-[15px] text-spal-navy outline-none placeholder:text-neutral-400";
-const inputStyle = { fontFamily: FF, background: "#F1F4EE", height: 56 } as const;
+const inputStyle = { fontFamily: FF, background: "#fff", border: "1.5px solid #E5E7EB", height: 56 } as const;
 
 function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-[15px] font-bold text-spal-navy mb-2" style={{ fontFamily: FF }}>{children}</p>;
@@ -299,7 +299,7 @@ function AddInventoryInner() {
         {/* SKU */}
         <div>
           <Label>SKU</Label>
-          <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
+          <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#fff", border: "1.5px solid #E5E7EB", height: 56 }}>
             <input value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Enter Number"
               className="flex-1 bg-transparent outline-none text-[15px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
             <InfoTip text={TIP_SKU} />
@@ -310,7 +310,7 @@ function AddInventoryInner() {
         <div>
           <Label>Choose a Category</Label>
           <button onClick={() => { setCatOpen((o) => !o); setAddingCat(false); }}
-            className="w-full flex items-center justify-between rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
+            className="w-full flex items-center justify-between rounded-2xl px-4" style={{ background: "#fff", border: "1.5px solid #E5E7EB", height: 56 }}>
             <span className="text-[15px]" style={{ fontFamily: FF, color: category ? "#0F172A" : "#9CA3AF" }}>{category || "Select Category"}</span>
             {catOpen ? <ArrowUp01Icon size={18} color="#9CA3AF" /> : <ArrowDown01Icon size={18} color="#9CA3AF" />}
           </button>
@@ -356,7 +356,7 @@ function AddInventoryInner() {
         {/* GTIN */}
         <div>
           <Label>GTIN</Label>
-          <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
+          <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#fff", border: "1.5px solid #E5E7EB", height: 56 }}>
             <input value={gtin} onChange={(e) => setGtin(e.target.value)} placeholder="UPC, EAN or ISBN"
               className="flex-1 bg-transparent outline-none text-[15px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
             <InfoTip text={TIP_GTIN} />
@@ -367,7 +367,7 @@ function AddInventoryInner() {
         {discountOn && (
           <div>
             <Label>Discount</Label>
-            <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#F1F4EE", height: 56 }}>
+            <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#fff", border: "1.5px solid #E5E7EB", height: 56 }}>
               <input value={discount} onChange={(e) => setDiscount(e.target.value)} type="number" inputMode="decimal"
                 placeholder="Enter Number  less than selling price"
                 className="flex-1 bg-transparent outline-none text-[15px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
@@ -453,7 +453,7 @@ function VField({ label, value, onChange, placeholder, num, infoText }: {
   return (
     <div>
       <p className="text-[13.5px] font-bold text-spal-navy mb-1.5" style={{ fontFamily: FF }}>{label}</p>
-      <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#F1F4EE", height: 52 }}>
+      <div className="flex items-center gap-2 rounded-2xl px-4" style={{ background: "#fff", border: "1.5px solid #E5E7EB", height: 52 }}>
         <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
           type={num ? "number" : "text"} inputMode={num ? "decimal" : "text"}
           className="flex-1 bg-transparent outline-none text-[14.5px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />

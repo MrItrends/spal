@@ -329,13 +329,13 @@ export default function SellPage() {
           <div className="flex flex-col items-center justify-center text-center px-8" style={{ paddingTop: "34vh" }}>
             <CubeIcon size={54} color="#9AA3AF" strokeWidth={1.4} />
             <p className="text-[22px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>{perishable ? "No menu to order from" : "No item to sell"}</p>
-            <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>{perishable ? "Add your menu item and start taking orders" : "Add your first stock"}</p>
+            <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>{perishable ? "Add your menu item and start taking orders" : "Add your first inventory item"}</p>
             <button
               onClick={() => { window.location.href = perishable ? "/menu/add" : "/inventory"; }}
               className="mt-6 h-12 px-6 rounded-2xl text-white font-bold text-[14px] active:scale-[0.98] transition-transform"
               style={{ background: "#22C55E", fontFamily: FF }}
             >
-              {perishable ? "Add Menu Item" : "Add Stock"}
+              {perishable ? "Add Menu Item" : "Add Inventory"}
             </button>
           </div>
         ) : (

@@ -269,7 +269,7 @@ export default function StockPage() {
               </div>
               <div className="px-5 pb-8">
                 <h2 className="text-[26px] font-black text-spal-navy" style={{ fontFamily: FF }}>All Categories</h2>
-                <p className="text-[13.5px] text-neutral-500 mt-1 mb-4" style={{ fontFamily: FF }}>Drag to reorder how they show on Stock.</p>
+                <p className="text-[13.5px] text-neutral-500 mt-1 mb-4" style={{ fontFamily: FF }}>Drag to reorder how they show on Inventory.</p>
                 <Reorder.Group axis="y" values={categories.map((c) => c.name)} onReorder={saveOrder} className="space-y-3">
                   {categories.map((c) => (
                     <Reorder.Item key={c.name} value={c.name} whileDrag={{ scale: 1.03, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}

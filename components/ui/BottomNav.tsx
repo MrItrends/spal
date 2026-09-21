@@ -10,7 +10,7 @@ const FF = "var(--font-satoshi)";
 const TABS = [
   { href: "/home",              label: "Home",    Icon: Home01Icon },
   { href: "/sell",              label: "Sell",    Icon: ShoppingCartAdd01Icon },
-  { href: "/inventory",         label: "Stock",   Icon: PackageIcon },
+  { href: "/inventory",         label: "Inventory", Icon: PackageIcon },
   { href: "/wallet",            label: "Wallet",  Icon: Wallet01Icon },
   { href: "/profile",           label: "Profile", Icon: User02Icon },
 ];
