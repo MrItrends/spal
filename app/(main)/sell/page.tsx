@@ -12,7 +12,8 @@ import {
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
-import type { InventoryItem } from "@/lib/types";
+import { isPerishable } from "@/lib/business-mode";
+import type { InventoryItem, MenuItem } from "@/lib/types";
 
 const BG        = "#EEF3E9";
 const IMG_BG    = "#ECECF7";
@@ -38,6 +39,19 @@ function stockProgress(it: InventoryItem) {
   return { label: `${it.quantity} ${it.unit} left`, fill, tone: "stock" as const };
 }
 
+/** Restaurants and bars sell from the menu; shape a dish like a product so the POS flow is shared. */
+function menuAsProduct(m: MenuItem): InventoryItem {
+  return {
+    id: m.id, user_id: m.user_id, name: m.name, unit: m.unit,
+    quantity: Math.max(0, m.quantity - m.sold),
+    initial_stock: m.quantity,
+    low_stock_threshold: Math.max(1, Math.floor(m.quantity * 0.1)),
+    selling_price: m.price, category: m.category ?? null,
+    image_url: m.image_url ?? null, images: m.images ?? null,
+    created_at: m.created_at, updated_at: m.updated_at,
+  };
+}
+
 type PayMethod = "cash" | "bank" | "card" | "debt" | "link" | "manual";
 const PAY_OPTIONS: { id: PayMethod; label: string; Icon: typeof BankIcon }[] = [
   { id: "cash",   label: "Cash",           Icon: Money02Icon },
@@ -56,6 +70,7 @@ type Drawer = null | "cart" | "category" | "payment" | "success";
 export default function SellPage() {
   const { user, activeBusiness } = useSPALStore();
   const businessName = activeBusiness?.business_name || user?.business_name || "Your Store";
+  const perishable = isPerishable(activeBusiness?.business_type ?? user?.business_type);
 
   const [items, setItems]     = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,11 +92,14 @@ export default function SellPage() {
 
   const fetchInventory = useCallback(async () => {
     try {
-      const res = await fetch("/api/inventory");
+      const res = await fetch(perishable ? "/api/menu" : "/api/inventory");
       const d = await res.json();
-      if (d.success) setItems(d.data.items ?? []);
+      if (d.success) {
+        const list = d.data.items ?? [];
+        setItems(perishable ? (list as MenuItem[]).map(menuAsProduct) : list);
+      }
     } catch { /* silent */ } finally { setLoading(false); }
-  }, []);
+  }, [perishable]);
   useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
   // ── derived ────────────────────────────────────────────────────────────────
@@ -183,13 +201,13 @@ export default function SellPage() {
           }),
         }),
       });
-      // Deduct sold quantities from inventory (best-effort).
+      // Update stock (best-effort): a menu order adds to "sold", retail deducts from inventory.
       await Promise.all(
         cartLines.map((l) =>
-          fetch(`/api/inventory/${l.item.id}`, {
+          fetch(perishable ? `/api/menu/${l.item.id}` : `/api/inventory/${l.item.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quantity: Math.max(0, l.item.quantity - l.qty) }),
+            body: JSON.stringify(perishable ? { sell: l.qty } : { quantity: Math.max(0, l.item.quantity - l.qty) }),
           })
         )
       );
@@ -261,14 +279,14 @@ export default function SellPage() {
           /* Empty state */
           <div className="flex flex-col items-center justify-center text-center px-8" style={{ paddingTop: "34vh" }}>
             <CubeIcon size={54} color="#9AA3AF" strokeWidth={1.4} />
-            <p className="text-[22px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>No item to sell</p>
-            <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>Add your first stock</p>
+            <p className="text-[22px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>{perishable ? "No menu to order from" : "No item to sell"}</p>
+            <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>{perishable ? "Add your menu item and start taking orders" : "Add your first stock"}</p>
             <button
-              onClick={() => { window.location.href = "/inventory"; }}
+              onClick={() => { window.location.href = perishable ? "/menu/add" : "/inventory"; }}
               className="mt-6 h-12 px-6 rounded-2xl text-white font-bold text-[14px] active:scale-[0.98] transition-transform"
               style={{ background: "#22C55E", fontFamily: FF }}
             >
-              Add Stock
+              {perishable ? "Add Menu Item" : "Add Stock"}
             </button>
           </div>
         ) : (

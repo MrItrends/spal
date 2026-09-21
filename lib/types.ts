@@ -89,6 +89,26 @@ export interface InventoryItem {
   updated_at: string;
 }
 
+export type MenuType = 'food' | 'drinks';
+
+// A dish or drink on a restaurant/bar menu. `quantity` is how many are available
+// to sell; `sold` counts orders against it.
+export interface MenuItem {
+  id: string;
+  user_id: string;
+  name: string;
+  menu_type: MenuType;
+  category?: string | null;
+  unit: string;
+  quantity: number;
+  sold: number;
+  price: number;
+  image_url?: string | null;
+  images?: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InventoryVariation {
   size_or_flavour: string;
   unit_price?: number | null;

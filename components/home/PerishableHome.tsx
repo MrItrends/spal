@@ -151,7 +151,7 @@ export function PerishableHome() {
 
   const QUICK = [
     { label: "POS",      Icon: Invoice01Icon, tint: "#FFF3EC", color: "#F97316", href: "/sell" },
-    { label: "Add Item", Icon: CheckListIcon, tint: "#EAF7EE", color: "#16A34A", href: "/inventory/add" },
+    { label: "Add Item", Icon: CheckListIcon, tint: "#EAF7EE", color: "#16A34A", href: "/menu/add" },
     { label: "Restock",  Icon: PackageIcon,   tint: "#F3EEFF", color: "#8B5CF6", href: "/inventory" },
   ];
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon, Restaurant03Icon, MenuRestaurantIcon } from "hugeicons-react";
+import { Home01Icon, ShoppingCartAdd01Icon, PackageIcon, Wallet01Icon, User02Icon, Hamburger01Icon, MenuRestaurantIcon } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { isPerishable } from "@/lib/business-mode";
 
@@ -19,14 +19,14 @@ const TABS = [
 // Restaurants and bars: orders come from the menu, stock is ingredients/drinks.
 const PERISHABLE_TABS = [
   { href: "/home",      label: "Home",      Icon: Home01Icon },
-  { href: "/sell",      label: "Orders",    Icon: Restaurant03Icon },
+  { href: "/sell",      label: "Orders",    Icon: Hamburger01Icon },
   { href: "/menu",      label: "Menu",      Icon: MenuRestaurantIcon },
-  { href: "/inventory", label: "Inventory", Icon: PackageIcon },
+  { href: "/inventory", label: "Ingredients", Icon: PackageIcon },
   { href: "/profile",   label: "Profile",   Icon: User02Icon },
 ];
 
 // Full-screen flows where the tab bar should not show.
-const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/profile/", "/insights"];
+const HIDDEN = ["/ask", "/set-goals", "/records", "/picture", "/voice", "/confirm", "/scan", "/billing", "/inventory/add", "/menu/add", "/profile/", "/insights"];
 
 export function BottomNav() {
   const pathname = usePathname();
