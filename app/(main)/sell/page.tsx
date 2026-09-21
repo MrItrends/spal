@@ -147,7 +147,7 @@ export default function SellPage() {
   useLayoutEffect(() => {
     const el = chipsRef.current;
     if (!el) return;
-    const twoRows = 96; // two 40px rows + gap + tolerance
+    const twoRows = perishable ? 118 : 96; // two chip rows (48px restaurant / 40px retail) + gap + tolerance
     if (el.scrollHeight > twoRows && catLimit > 0) setCatLimit((n) => Math.min(n, categories.length) - 1);
   });
 
@@ -348,7 +348,7 @@ export default function SellPage() {
                   <button
                     key={c}
                     onClick={() => setActiveCat(c)}
-                    className="px-4 h-10 rounded-full text-[14px] font-semibold active:scale-95 transition-all"
+                    className={`px-4 rounded-full text-[14px] font-semibold active:scale-95 transition-all ${perishable ? "h-12" : "h-10"}`}
                     style={{
                       fontFamily: FF,
                       background: on ? "#0F172A" : "#fff",
@@ -362,7 +362,7 @@ export default function SellPage() {
               {catLimit < categories.length && (
                 <button
                   onClick={() => setDrawer("category")}
-                  className="px-4 h-10 rounded-full text-[14px] font-bold active:scale-95 transition-all bg-white"
+                  className={`px-4 rounded-full text-[14px] font-bold active:scale-95 transition-all bg-white ${perishable ? "h-12" : "h-10"}`}
                   style={{ fontFamily: FF, color: "#22C55E", border: "1.5px solid #22C55E" }}
                 >
                   View All
@@ -418,38 +418,37 @@ export default function SellPage() {
           <motion.div
             initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 z-40"
-            style={{ bottom: "calc(var(--bottom-nav-h, 88px) + 8px)" }}
+            className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-3 min-[360px]:px-4 z-40"
           >
             {showLastBar ? (
-              <div className="rounded-2xl bg-white flex items-center justify-between px-5 py-3" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.16)" }}>
-                <span className="text-[16px] font-black text-spal-navy" style={{ fontFamily: FF }}>View Recent Sale</span>
+              <div className="rounded-2xl bg-white flex items-center justify-between gap-3 px-4 min-[360px]:px-5 py-3" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.16)" }}>
+                <span className="min-w-0 text-[16px] font-black text-spal-navy" style={{ fontFamily: FF }}>View Recent Sale</span>
                 <button
                   onClick={() => { window.location.href = perishable && lastSale?.id ? `/records/${lastSale.id}` : "/records"; }}
-                  className="flex items-center gap-2 h-11 px-4 rounded-xl text-white font-bold text-[14px] active:scale-95"
+                  className={`flex items-center gap-2 px-4 rounded-xl text-white font-bold text-[14px] active:scale-95 flex-shrink-0 ${perishable ? "h-12" : "h-11"}`}
                   style={{ background: "#22C55E", fontFamily: FF }}
                 >
                   <ShoppingCartCheck01Icon size={17} color="#fff" /> View
                 </button>
               </div>
             ) : (
-              <div className="rounded-2xl flex items-center justify-between px-5 py-3.5" style={{ background: "#0F172A", boxShadow: "0 8px 30px rgba(0,0,0,0.28)" }}>
-                <span className="text-[16px] font-black text-white leading-tight" style={{ fontFamily: FF }}>
+              <div className="rounded-2xl flex items-center justify-between gap-3 px-4 min-[360px]:px-5 py-3 min-[360px]:py-3.5" style={{ background: "#0F172A", boxShadow: "0 8px 30px rgba(0,0,0,0.28)" }}>
+                <span className="min-w-0 text-[15px] min-[360px]:text-[16px] font-black text-white leading-tight" style={{ fontFamily: FF }}>
                   {showAddBar
                     ? `Add ${selected.size} item${selected.size !== 1 ? "s" : ""} to Cart`
                     : `View Cart • ${cartCount}`}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {showAddBar && (
                     <button onClick={addSelectedToCart}
-                      className="flex items-center gap-2 h-11 px-4 rounded-xl text-white font-bold text-[14px] active:scale-95"
+                      className={`flex items-center gap-2 px-4 rounded-xl text-white font-bold text-[14px] active:scale-95 ${perishable ? "h-12" : "h-11"}`}
                       style={{ background: "#22C55E", fontFamily: FF }}>
                       <ShoppingCartAdd01Icon size={17} color="#fff" /> Add
                     </button>
                   )}
                   {cartCount > 0 && (
                     <button onClick={() => setDrawer("cart")}
-                      className="flex items-center gap-2 h-11 px-4 rounded-xl font-bold text-[14px] active:scale-95 bg-white"
+                      className={`flex items-center gap-2 px-4 rounded-xl font-bold text-[14px] active:scale-95 bg-white ${perishable ? "h-12" : "h-11"}`}
                       style={{ color: "#16A34A", fontFamily: FF }}>
                       <ShoppingCartCheck01Icon size={17} color="#16A34A" /> View
                     </button>
@@ -478,7 +477,7 @@ export default function SellPage() {
               style={{ background: "#EDF3E8", fontFamily: FF }}
             >
               <div className="flex justify-end px-5 pt-12 pb-2">
-                <button onClick={() => setDrawer(null)} className="w-9 h-9 rounded-lg flex items-center justify-center active:scale-95"
+                <button onClick={() => setDrawer(null)} className={`rounded-lg flex items-center justify-center active:scale-95 ${perishable ? "w-12 h-12" : "w-9 h-9"}`}
                   style={{ border: "1.5px solid #C7D2C0" }} aria-label="Close">
                   <SidebarRight01Icon size={18} color="#475467" />
                 </button>
@@ -558,11 +557,13 @@ function CartPanel({
   subtotal: number; discount: number; vat: number; vatLabel: string; total: number; count: number;
   onTakePayment: () => void;
 }) {
+  // Restaurant orders: 48px tap targets, so each line wraps onto two rows instead of squeezing on small phones.
+  const roomy = instructions !== undefined;
   return (
     <>
       <div className="px-5">
         <button onClick={clearCart}
-          className="inline-flex items-center gap-2 px-3.5 h-9 rounded-full active:scale-95" style={{ background: "#FEE0E1" }}>
+          className={`inline-flex items-center gap-2 px-3.5 rounded-full active:scale-95 ${roomy ? "h-12" : "h-9"}`} style={{ background: "#FEE0E1" }}>
           <Delete02Icon size={15} color="#DC2626" />
           <span className="text-[13.5px] font-bold" style={{ fontFamily: FF, color: "#DC2626" }}>Clear Cart</span>
         </button>
@@ -581,7 +582,29 @@ function CartPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 mt-5 space-y-3">
-        {lines.map(({ item, qty }) => (
+        {lines.map(({ item, qty }) => roomy ? (
+          <div key={item.id} className="bg-white rounded-2xl pl-4 pr-1 py-1.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+            <div className="flex items-center gap-2">
+              <p className="flex-1 min-w-0 text-[15px] font-black text-spal-navy truncate" style={{ fontFamily: FF }}>{item.name}</p>
+              <span className="text-[15px] font-black text-spal-navy flex-shrink-0" style={{ fontFamily: FF }}>{formatCurrency(price(item) * qty)}</span>
+              <button onClick={() => setQty(item.id, 0)} className="w-12 h-12 flex items-center justify-center flex-shrink-0 active:scale-90" aria-label={`Remove ${item.name}`}>
+                <Delete02Icon size={18} color="#DC2626" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-2 pb-1.5 pr-3">
+              <p className="min-w-0 text-[13px] text-neutral-400 truncate" style={{ fontFamily: FF }}>{formatCurrency(price(item))} each</p>
+              <div className="flex items-center rounded-xl flex-shrink-0" style={{ background: "#EAF3E5" }}>
+                <button onClick={() => setQty(item.id, qty - 1)} className="w-12 h-12 flex items-center justify-center active:scale-90" aria-label={`Decrease ${item.name}`}>
+                  <MinusSignIcon size={16} color="#374151" />
+                </button>
+                <span className="text-[16px] font-black text-spal-navy min-w-[28px] text-center" style={{ fontFamily: FF }}>{qty}</span>
+                <button onClick={() => setQty(item.id, qty + 1)} className="w-12 h-12 flex items-center justify-center active:scale-90" aria-label={`Increase ${item.name}`}>
+                  <PlusSignIcon size={16} color="#374151" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
           <div key={item.id} className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
             <div className="min-w-0" style={{ width: 96 }}>
               <p className="text-[15px] font-black text-spal-navy truncate" style={{ fontFamily: FF }}>{item.name}</p>
@@ -696,14 +719,14 @@ function PaymentPanel({
         {showAmount && (
           <div className="mt-6">
             <p className="text-[13px] font-bold text-neutral-500 mb-2.5" style={{ fontFamily: FF }}>Amount Paid</p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 min-[360px]:gap-3">
               <button onClick={() => setAmountMode("full")}
-                className="px-5 h-11 rounded-full font-bold text-[15px] active:scale-95"
+                className="px-5 h-12 rounded-full font-bold text-[15px] active:scale-95"
                 style={{ fontFamily: FF, background: amountMode === "full" ? "#0F172A" : "#fff", color: amountMode === "full" ? "#fff" : "#0F172A" }}>
                 {formatCurrency(total)}
               </button>
               <button onClick={() => setAmountMode("other")}
-                className="px-5 h-11 rounded-full font-bold text-[15px] active:scale-95"
+                className="px-5 h-12 rounded-full font-bold text-[15px] active:scale-95"
                 style={{ fontFamily: FF, background: amountMode === "other" ? "#0F172A" : "#fff", color: amountMode === "other" ? "#fff" : "#0F172A" }}>
                 Other Amount
               </button>

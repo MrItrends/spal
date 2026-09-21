@@ -103,6 +103,24 @@ Rules — never hard-code a pixel offset for the bar:
 This guarantees the app bar is always visible and everything stays interactable
 from 320px up to large phones, regardless of system font scale or notch.
 
+Extra rules learned from small-phone testing:
+
+* `.cta-bottom` also covers screens where the bar is hidden (full-screen flows):
+  it falls back to the home-indicator inset, so a floating button never touches
+  the screen edge. Use `.pb-nav-fab` when a floating button sits over scrolling content.
+* The bar hides while a text field is focused (on-screen keyboard) and returns on
+  blur; `--bottom-nav-h` drops to `0px` at the same time, so bars and buttons that
+  follow it move with it.
+* Keep 48px tap targets on small phones by **reflowing**, not shrinking: put a
+  stepper on its own row, let chips wrap, or drop a label. Never go below 48px.
+* Headers use `min-w-0` + `truncate` or `clamp()` font sizes, never a fixed
+  `max-w-[190px]` on the name. Restaurant/bar tab screens share `components/home/AppHeader.tsx`.
+* Check these viewports before shipping, including **short** ones: 320×568,
+  360×640, 375×667, 390×844, 430×932, 768×1024, desktop. For each screen (and each
+  open drawer/sheet) confirm: no horizontal scroll, the bar is fully on screen with
+  every label visible, nothing floats over the bar, no content ends underneath it,
+  and every button/link is at least 48×48.
+
 ## Definition of Done
 
 A task is NOT complete unless:

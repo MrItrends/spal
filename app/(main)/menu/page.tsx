@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search01Icon, Notification03Icon, Dish01Icon, Image02Icon, PlusSignIcon, MinusSignIcon,
+  Search01Icon, Dish01Icon, Image02Icon, PlusSignIcon, MinusSignIcon,
   SidebarRight01Icon, Notebook01Icon, MenuRestaurantIcon, Alert02Icon,
 } from "hugeicons-react";
-import { useSPALStore } from "@/store";
+import { AppHeader } from "@/components/home/AppHeader";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { formatCurrency } from "@/lib/utils/currency";
-import { getGreeting } from "@/lib/utils/dates";
 import { typeNoun } from "@/lib/menu-config";
 import type { MenuItem } from "@/lib/types";
 
@@ -35,8 +34,6 @@ function categorySummary(list: MenuItem[]) {
 
 export default function MenuPage() {
   const router = useRouter();
-  const { user, activeBusiness } = useSPALStore();
-  const businessName = activeBusiness?.business_name || user?.business_name || "Your Store";
   const isBar = useBusinessMode().type === "bar_owner";
 
   const [items, setItems]     = useState<MenuItem[]>([]);
@@ -82,33 +79,11 @@ export default function MenuPage() {
   function openDetail(it: MenuItem) { setSelectedId(it.id); setDetail(it); }
   function closeDetail() { setDetail(null); }
 
-  const Header = (
-    <div className="px-5 pt-12 flex items-center justify-between">
-      <div className="flex items-center gap-3 min-w-0">
-        <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#2563EB,#8B5CF6)" }}>
-          {user?.avatar_url
-            ? <Image src={user.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
-            : <span className="text-white font-bold text-[18px]">{businessName.charAt(0).toUpperCase()}</span>}
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[13px] text-neutral-500">{getGreeting()}</span>
-          <span className="block text-[20px] font-black text-spal-navy leading-tight truncate">{businessName}</span>
-        </span>
-      </div>
-      <div className="flex items-center gap-2.5 flex-shrink-0">
-        <button onClick={() => router.push("/records")} aria-label="Search orders" className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" style={{ boxShadow: SHADOW }}>
-          <Search01Icon size={19} color="#0F172A" />
-        </button>
-        <button onClick={() => router.push("/notifications")} aria-label="Notifications" className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" style={{ boxShadow: SHADOW }}>
-          <Notification03Icon size={19} color="#0F172A" />
-        </button>
-      </div>
-    </div>
-  );
+  const Header = <AppHeader />;
 
   // Floating "New Menu" button, sitting above the tab bar.
   const Fab = (
-    <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 z-30 flex justify-end pointer-events-none" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)" }}>
+    <div className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 min-[360px]:px-5 z-30 flex justify-end pointer-events-none">
       <button
         onClick={() => router.push("/menu/add")}
         aria-label="Add a new menu item"
@@ -148,7 +123,7 @@ export default function MenuPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-full pb-32" style={{ background: BG, fontFamily: FF }}>
+      <div className="min-h-full pb-nav-fab" style={{ background: BG, fontFamily: FF }}>
         {Header}
         <div className="flex flex-col items-center justify-center text-center px-8" style={{ paddingTop: "24vh" }}>
           <Dish01Icon size={56} color="#6B7280" strokeWidth={1.4} />
@@ -164,7 +139,7 @@ export default function MenuPage() {
 
   return (
     <>
-      <div className="min-h-full pb-44" style={{ background: BG, fontFamily: FF }}>
+      <div className="min-h-full pb-nav-fab" style={{ background: BG, fontFamily: FF }}>
         {Header}
 
         {/* Search */}

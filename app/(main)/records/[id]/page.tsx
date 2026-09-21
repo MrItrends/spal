@@ -97,13 +97,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       <div className="px-5 pt-12 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()}
-            className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Back">
+            className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Back">
             <ArrowLeft01Icon size={20} color="#0F172A" />
           </button>
           <h1 className="text-[24px] font-black text-spal-navy" style={{ fontFamily: FF }}>Order Detail</h1>
         </div>
         <button onClick={del} disabled={deleting}
-          className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50" aria-label="Delete order">
+          className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50" aria-label="Delete order">
           <Delete02Icon size={19} color="#DC2626" />
         </button>
       </div>
@@ -168,13 +168,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center justify-between">
             <span className="text-[15px] text-neutral-500" style={{ fontFamily: FF }}>Customer</span>
             {record.customer_name && !addingCustomer ? (
-              <button onClick={() => setAddingCustomer(true)} className="text-[15px] font-black text-spal-navy" style={{ fontFamily: FF }}>{record.customer_name}</button>
+              <button onClick={() => setAddingCustomer(true)} className="min-h-12 text-[15px] font-black text-spal-navy" style={{ fontFamily: FF }}>{record.customer_name}</button>
             ) : addingCustomer ? (
               <input autoFocus value={customer} onChange={(e) => setCustomer(e.target.value)} onBlur={saveCustomer}
                 onKeyDown={(e) => { if (e.key === "Enter") saveCustomer(); }}
-                placeholder="Customer name" className="text-[15px] font-bold text-spal-navy text-right bg-transparent outline-none max-w-[180px]" style={{ fontFamily: FF }} />
+                placeholder="Customer name" className="min-h-12 text-[15px] font-bold text-spal-navy text-right bg-transparent outline-none max-w-[180px]" style={{ fontFamily: FF }} />
             ) : (
-              <button onClick={() => setAddingCustomer(true)} className="text-[15px] font-black" style={{ color: "#22C55E", fontFamily: FF }}>+ Add a Customer</button>
+              <button onClick={() => setAddingCustomer(true)} className="min-h-12 text-[15px] font-black" style={{ color: "#22C55E", fontFamily: FF }}>+ Add a Customer</button>
             )}
           </div>
         </div>

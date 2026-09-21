@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
-  Search01Icon, Notification03Icon, Dish01Icon, Hamburger01Icon, Alert02Icon,
+  Dish01Icon, Hamburger01Icon, Alert02Icon,
   Restaurant01Icon, Restaurant02Icon, Restaurant03Icon,
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
+import { AppHeader } from "@/components/home/AppHeader";
 import { formatCurrency } from "@/lib/utils/currency";
-import { getGreeting } from "@/lib/utils/dates";
 import { payInfo, iconTint } from "@/lib/sales";
 import { orderMeta, STATUS_STYLE } from "@/lib/orders";
 import type { BusinessRecord } from "@/lib/types";
@@ -54,15 +53,13 @@ function dishIcon(name: string) {
 // with a New Order button that starts the order flow.
 export default function OrdersPage() {
   const router = useRouter();
-  const { user, activeBusiness, recordSavedAt } = useSPALStore();
-  const name = activeBusiness?.business_name ?? user?.business_name ?? user?.full_name ?? "there";
+  const { recordSavedAt } = useSPALStore();
 
   const [period, setPeriod]   = useState<Period>("today");
   const [records, setRecords] = useState<BusinessRecord[]>([]);
   const [menuCount, setMenuCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
-  const [unread, setUnread]   = useState(0);
 
   const load = useCallback(async (p: Period) => {
     setLoading(true);
@@ -79,11 +76,6 @@ export default function OrdersPage() {
 
   useEffect(() => { load(period); }, [period, load]);
   useEffect(() => { if (recordSavedAt) load(period); }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetch("/api/notifications").then((r) => r.json())
-      .then((d) => { if (d.success) setUnread((d.data as { read_at: string | null }[]).filter((n) => !n.read_at).length); })
-      .catch(() => {});
-  }, []);
 
   const orders = useMemo(
     () => [...records].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -92,30 +84,9 @@ export default function OrdersPage() {
   const noMenu = !loading && !error && menuCount === 0;
 
   return (
-    <div className="min-h-full pb-40" style={{ background: BG, fontFamily: FF }}>
+    <div className="min-h-full pb-nav-fab" style={{ background: BG, fontFamily: FF }}>
       {/* Header */}
-      <div className="px-5 pt-12 flex items-center justify-between">
-        <button onClick={() => router.push("/profile")} aria-label="Open profile" className="flex items-center gap-3 active:opacity-80 min-h-12">
-          <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#2563EB,#8B5CF6)" }}>
-            {user?.avatar_url
-              ? <Image src={user.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
-              : <span className="text-white font-bold text-[18px]">{name.charAt(0).toUpperCase()}</span>}
-          </span>
-          <span className="text-left">
-            <span className="block text-[13px] text-neutral-500">{getGreeting()}</span>
-            <span className="block text-[20px] font-black text-spal-navy leading-tight truncate max-w-[190px]">{name}</span>
-          </span>
-        </button>
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          <button onClick={() => router.push("/records")} aria-label="Search orders" className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <Search01Icon size={19} color="#0F172A" />
-          </button>
-          <button onClick={() => { setUnread(0); router.push("/notifications"); }} aria-label="Notifications" className="w-12 h-12 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <Notification03Icon size={19} color="#0F172A" />
-            {unread > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unread > 9 ? "9+" : unread}</span>}
-          </button>
-        </div>
-      </div>
+      <AppHeader />
 
       {/* Period tabs */}
       <div className="px-5 mt-5">
@@ -124,8 +95,8 @@ export default function OrdersPage() {
             const active = period === p.key;
             return (
               <button key={p.key} onClick={() => setPeriod(p.key)} aria-label={p.label}
-                className="flex-1 h-12 rounded-full text-[12.5px] sm:text-[13px] font-bold transition-all whitespace-nowrap"
-                style={{ background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
+                className="flex-1 min-w-0 h-12 px-1 rounded-full font-bold transition-all whitespace-nowrap"
+                style={{ fontSize: "clamp(11px, 3.3vw, 13px)", background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
                 {p.label}
               </button>
             );
@@ -191,7 +162,7 @@ export default function OrdersPage() {
 
       {/* New Order (or a nudge to the Menu tab when there is nothing to sell yet) */}
       {!loading && !error && !noMenu && (
-        <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-5 z-30 flex justify-end pointer-events-none" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)" }}>
+        <div className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 min-[360px]:px-5 z-30 flex justify-end pointer-events-none">
           <button
             onClick={() => router.push("/orders/new")}
             aria-label="Start a new order"
@@ -203,7 +174,7 @@ export default function OrdersPage() {
         </div>
       )}
       {noMenu && (
-        <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 pointer-events-none" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 78px)" }} aria-hidden>
+        <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 pointer-events-none" style={{ bottom: "calc(var(--bottom-nav-h) - 44px)" }} aria-hidden>
           <span className="absolute w-7 h-7 rounded-full animate-ping" style={{ left: "54%", background: "rgba(34,197,94,0.35)" }} />
           <span className="absolute w-7 h-7 rounded-full" style={{ left: "54%", background: "#22C55E", boxShadow: "0 0 0 8px rgba(34,197,94,0.2)" }} />
         </div>

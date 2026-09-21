@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  Search01Icon, Notification03Icon, ShoppingBasket03Icon, ReceiptDollarIcon,
+  ShoppingBasket03Icon, ReceiptDollarIcon,
   PackageIcon, MoneyBag01Icon, ArrowRight01Icon, Invoice01Icon, CheckListIcon,
   Restaurant01Icon, Restaurant02Icon, Restaurant03Icon, Alert02Icon,
 } from "hugeicons-react";
@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import { payInfo, iconTint } from "@/lib/sales";
 import type { BusinessRecord, InventoryItem } from "@/lib/types";
+import { AppHeader } from "./AppHeader";
 import { InsightsCarousel, type InsightItem } from "./InsightsCarousel";
 
 const FF = "var(--font-satoshi)";
@@ -69,7 +70,6 @@ export function PerishableHome() {
   const [period, setPeriod]   = useState<Period>("today");
   const [records, setRecords] = useState<BusinessRecord[]>([]);
   const [items, setItems]     = useState<InventoryItem[]>([]);
-  const [unread, setUnread]   = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
 
@@ -90,11 +90,6 @@ export function PerishableHome() {
 
   useEffect(() => { fetchData(period); }, [period, fetchData]);
   useEffect(() => { if (recordSavedAt) fetchData(period); }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetch("/api/notifications").then((r) => r.json())
-      .then((d) => { if (d.success) setUnread((d.data as { read_at: string | null }[]).filter((n) => !n.read_at).length); })
-      .catch(() => {});
-  }, []);
 
   const sales = useMemo(() => records.filter((r) => r.type === "sale"), [records]);
   const totalSales    = sales.reduce((s, r) => s + r.amount, 0);
@@ -157,30 +152,9 @@ export function PerishableHome() {
   ];
 
   return (
-    <div className="min-h-full pb-28" style={{ background: BG, fontFamily: FF }}>
+    <div className="min-h-full pb-nav" style={{ background: BG, fontFamily: FF }}>
       {/* Header */}
-      <div className="px-5 pt-12 flex items-center justify-between">
-        <button onClick={() => router.push("/profile")} aria-label="Open profile" className="flex items-center gap-3 active:opacity-80 min-h-12">
-          <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#2563EB,#8B5CF6)" }}>
-            {user?.avatar_url
-              ? <Image src={user.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
-              : <span className="text-white font-bold text-[18px]">{name.charAt(0).toUpperCase()}</span>}
-          </span>
-          <span className="text-left">
-            <span className="block text-[13px] text-neutral-500">{greeting}</span>
-            <span className="block text-[20px] font-black text-spal-navy leading-tight truncate max-w-[190px]">{name}</span>
-          </span>
-        </button>
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          <button onClick={() => router.push("/records")} aria-label="Search orders" className="w-12 h-12 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <Search01Icon size={19} color="#0F172A" />
-          </button>
-          <button onClick={() => { setUnread(0); router.push("/notifications"); }} aria-label="Notifications" className="w-12 h-12 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <Notification03Icon size={19} color="#0F172A" />
-            {unread > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unread > 9 ? "9+" : unread}</span>}
-          </button>
-        </div>
-      </div>
+      <AppHeader />
 
       {/* Period tabs */}
       <div className="px-5 mt-5">
@@ -192,8 +166,8 @@ export function PerishableHome() {
                 key={p.key}
                 onClick={() => setPeriod(p.key)}
                 aria-label={p.label}
-                className="flex-1 h-12 rounded-full text-[12.5px] sm:text-[13px] font-bold transition-all whitespace-nowrap"
-                style={{ background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}
+                className="flex-1 min-w-0 h-12 px-1 rounded-full font-bold transition-all whitespace-nowrap"
+                style={{ fontSize: "clamp(11px, 3.3vw, 13px)", background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}
               >
                 {p.label}
               </button>

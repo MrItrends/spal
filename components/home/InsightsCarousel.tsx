@@ -62,7 +62,7 @@ export function InsightsCarousel({ items }: { items: InsightItem[] }) {
                     {it.ctaLabel && (
                       <button
                         onClick={() => it.ctaHref && router.push(it.ctaHref)}
-                        className="mt-3 inline-flex items-center gap-2 bg-white rounded-xl px-4 h-10 active:scale-[0.98] transition-transform"
+                        className="mt-3 inline-flex items-center gap-2 bg-white rounded-xl px-4 min-h-12 active:scale-[0.98] transition-transform"
                         style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
                       >
                         <span className="text-[13.5px] font-bold" style={{ fontFamily: FF, color: "#16A34A" }}>{it.ctaLabel}</span>

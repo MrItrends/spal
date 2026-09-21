@@ -160,6 +160,7 @@ Tabs: Home | Records | Insights | Learn | Profile
 - All buttons: aria-label, min 48px height
 - No horizontal scroll on 375px viewport
 - Safe area insets for bottom navigation (env(safe-area-inset-bottom))
+- **Every screen must work on every phone size (320px to 430px+), not just a large one.** The bottom tab bar stays visible and nothing may sit behind it. Never hard-code a pixel offset for it: floating buttons use `.cta-bottom`, scroll areas use `.pb-nav` / `.pb-nav-fab`, both driven by `--bottom-nav-h` (see "Bottom navigation & floating elements" in `RESPONSIVE.md`). Tap targets stay 48px on small phones, so reflow (wrap onto a second row) instead of shrinking. Headers and labels use `min-w-0` + `truncate` or `clamp()` sizing, never a fixed max width.
 
 ---
 
