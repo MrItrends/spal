@@ -5,8 +5,10 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft01Icon, Folder01Icon, MessageAdd01Icon, PlusSignSquareIcon,
-  Mic01Icon, SentIcon, Image02Icon, File01Icon, ChartIncreaseIcon, Analytics01Icon,
+  Mic01Icon, SentIcon, Image02Icon, File01Icon, ChartIncreaseIcon, Analytics01Icon, Cancel01Icon,
 } from "hugeicons-react";
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { formatCurrency } from "@/lib/utils/currency";
 
 const BG = "#EDF3E8";
 const FF = "var(--font-satoshi)";
@@ -31,20 +33,29 @@ function AskInner() {
   const [recording, setRecording] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [mode, setMode] = useState<"graph" | "analytics" | null>(null);
+  const [attach, setAttach] = useState<{ url: string; name: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
   const attachRef = useRef<HTMLInputElement>(null);
-  const attachAccept = useRef<string>("image/*");
 
-  function pickAttachment(accept: string) {
-    attachAccept.current = accept;
+  function pickAttachment() {
     setMenuOpen(false);
-    // trigger the native picker on next tick so the accept attr updates first
     setTimeout(() => attachRef.current?.click(), 0);
   }
-  function onAttach(files: FileList | null) {
+  async function onAttach(files: FileList | null) {
     if (attachRef.current) attachRef.current.value = "";
-    if (!files || !files.length) return;
-    setToast("Attachments are coming soon");
-    setTimeout(() => setToast(""), 2400);
+    const file = files?.[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) { setToast("Image must be less than 1MB"); setTimeout(() => setToast(""), 2400); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const d = await res.json();
+      if (d.success) setAttach({ url: d.url, name: file.name });
+      else { setToast(d.error || "Upload failed"); setTimeout(() => setToast(""), 2400); }
+    } catch { setToast("Upload failed"); setTimeout(() => setToast(""), 2400); }
+    finally { setUploading(false); }
   }
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -64,15 +75,16 @@ function AskInner() {
   }, [messages, sending]);
 
   async function send(text: string) {
-    const msg = text.trim();
+    const msg = text.trim() || (attach ? "Please read this and answer for my business." : "");
     if (!msg || sending) return;
-    setInput("");
-    setMessages((m) => [...m, { role: "user", content: msg }]);
+    const sendMode = mode; const sendAttach = attach;
+    setInput(""); setMode(null); setAttach(null);
+    setMessages((m) => [...m, { role: "user", content: sendAttach ? `📎 ${sendAttach.name}${text.trim() ? " — " + text.trim() : ""}` : msg }]);
     setSending(true);
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, conversationId }),
+        body: JSON.stringify({ message: msg, conversationId, mode: sendMode, attachmentUrl: sendAttach?.url }),
       });
       const d = await res.json();
       if (d.success) {
@@ -151,15 +163,21 @@ function AskInner() {
         </div>
       ) : (
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className="max-w-[82%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed"
-                style={{ fontFamily: FF, background: m.role === "user" ? "#22C55E" : "#fff",
-                  color: m.role === "user" ? "#fff" : "#0F172A", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                {m.content}
+          {messages.map((m, i) => {
+            if (m.role === "assistant") {
+              const parsed = parseBlock(m.content);
+              if (parsed) return <div key={i} className="flex justify-start"><div className="w-[90%]"><RichReply parsed={parsed} /></div></div>;
+            }
+            return (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className="max-w-[82%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed whitespace-pre-wrap"
+                  style={{ fontFamily: FF, background: m.role === "user" ? "#22C55E" : "#fff",
+                    color: m.role === "user" ? "#fff" : "#0F172A", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                  {m.content}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {sending && (
             <div className="flex justify-start">
               <div className="rounded-2xl px-4 py-3 bg-white" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
@@ -199,14 +217,29 @@ function AskInner() {
                 transition={{ duration: 0.16 }}
                 className="absolute left-4 bottom-[76px] z-50 bg-white rounded-2xl overflow-hidden py-1.5 w-56"
                 style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.16)" }}>
-                <MenuItem icon={<Image02Icon size={19} color="#16A34A" />} tint="#E7F6EC" label="Image upload" onClick={() => pickAttachment("image/*")} />
-                <MenuItem icon={<File01Icon size={19} color="#2563EB" />} tint="#EAF0FC" label="File upload" onClick={() => pickAttachment("*/*")} />
-                <MenuItem icon={<ChartIncreaseIcon size={19} color="#8B5CF6" />} tint="#EEE7FB" label="Graphs" onClick={() => { setMenuOpen(false); window.location.href = "/insights"; }} />
-                <MenuItem icon={<Analytics01Icon size={19} color="#F97316" />} tint="#FDECDD" label="Analytics" onClick={() => { setMenuOpen(false); window.location.href = "/insights"; }} />
+                <MenuItem icon={<Image02Icon size={19} color="#16A34A" />} tint="#E7F6EC" label="Image upload" onClick={pickAttachment} />
+                <MenuItem icon={<File01Icon size={19} color="#2563EB" />} tint="#EAF0FC" label="File upload" onClick={pickAttachment} />
+                <MenuItem icon={<ChartIncreaseIcon size={19} color="#8B5CF6" />} tint="#EEE7FB" label="Graphs" onClick={() => { setMode("graph"); setMenuOpen(false); }} />
+                <MenuItem icon={<Analytics01Icon size={19} color="#F97316" />} tint="#FDECDD" label="Analytics" onClick={() => { setMode("analytics"); setMenuOpen(false); }} />
               </motion.div>
             </>
           )}
         </AnimatePresence>
+
+        {/* Active mode / attachment chip */}
+        {(mode || attach || uploading) && (
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-bold"
+              style={{ fontFamily: FF,
+                background: mode === "graph" ? "#EEE7FB" : mode === "analytics" ? "#FDECDD" : "#EAF0FC",
+                color: mode === "graph" ? "#8B5CF6" : mode === "analytics" ? "#F97316" : "#2563EB" }}>
+              {uploading ? "Uploading…" : mode === "graph" ? "Graph mode" : mode === "analytics" ? "Analytics mode" : `📎 ${attach?.name}`}
+              {!uploading && (
+                <button onClick={() => { setMode(null); setAttach(null); }} aria-label="Clear"><Cancel01Icon size={13} /></button>
+              )}
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center gap-2 rounded-full bg-white px-3"
           style={{ height: 60, border: "2px solid #C9B8F0", boxShadow: "0 6px 24px rgba(139,92,246,0.15)" }}>
@@ -248,6 +281,65 @@ function AskInner() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Parse a ```chart / ```analytics fenced JSON block from an assistant reply.
+type Parsed =
+  | { kind: "chart"; title?: string; chartType?: "bar" | "line"; data: { label: string; value: number }[]; summary?: string }
+  | { kind: "analytics"; title?: string; metrics: { label: string; value: string }[]; summary?: string };
+
+function parseBlock(content: string): Parsed | null {
+  const m = content.match(/```(chart|analytics)\s*([\s\S]*?)```/i);
+  if (!m) return null;
+  try {
+    const json = JSON.parse(m[2].trim());
+    if (m[1].toLowerCase() === "chart" && Array.isArray(json.data)) {
+      return { kind: "chart", title: json.title, chartType: json.chartType === "line" ? "line" : "bar", data: json.data, summary: json.summary };
+    }
+    if (m[1].toLowerCase() === "analytics" && Array.isArray(json.metrics)) {
+      return { kind: "analytics", title: json.title, metrics: json.metrics, summary: json.summary };
+    }
+  } catch { /* fall through */ }
+  return null;
+}
+
+function RichReply({ parsed }: { parsed: Parsed }) {
+  return (
+    <div className="bg-white rounded-2xl px-4 py-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+      {parsed.title && <p className="text-[15px] font-black text-spal-navy mb-3" style={{ fontFamily: FF }}>{parsed.title}</p>}
+      {parsed.kind === "chart" ? (
+        <ResponsiveContainer width="100%" height={200}>
+          {parsed.chartType === "line" ? (
+            <LineChart data={parsed.data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+              <CartesianGrid stroke="#F3F4F6" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#A1A3AE" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#A1A3AE" }} axisLine={false} tickLine={false} width={44} tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}K` : String(v)} />
+              <Tooltip formatter={(v) => formatCurrency(Number(v ?? 0))} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", fontSize: 12 }} />
+              <Line type="monotone" dataKey="value" stroke="#2563EB" strokeWidth={3} dot={{ r: 3 }} />
+            </LineChart>
+          ) : (
+            <BarChart data={parsed.data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }} barCategoryGap="24%">
+              <CartesianGrid stroke="#F3F4F6" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#A1A3AE" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#A1A3AE" }} axisLine={false} tickLine={false} width={44} tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}K` : String(v)} />
+              <Tooltip formatter={(v) => formatCurrency(Number(v ?? 0))} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", fontSize: 12 }} />
+              <Bar dataKey="value" fill="#22C55E" radius={[6, 6, 0, 0]} maxBarSize={34} />
+            </BarChart>
+          )}
+        </ResponsiveContainer>
+      ) : (
+        <div className="grid grid-cols-2 gap-2.5">
+          {parsed.metrics.map((mm, i) => (
+            <div key={i} className="rounded-2xl px-3.5 py-3" style={{ background: "#F1F4EE" }}>
+              <p className="text-[12px] text-neutral-500" style={{ fontFamily: FF }}>{mm.label}</p>
+              <p className="text-[18px] font-black text-spal-navy mt-0.5" style={{ fontFamily: FF }}>{mm.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {parsed.summary && <p className="text-[13.5px] text-neutral-600 mt-3 leading-relaxed" style={{ fontFamily: FF }}>{parsed.summary}</p>}
     </div>
   );
 }

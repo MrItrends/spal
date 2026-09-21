@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { askSPAL } from "@/lib/openai/chat";
+import { askSPAL, askVision } from "@/lib/openai/chat";
 import { todayISO, weekStartISO } from "@/lib/utils/dates";
 
 // POST /api/ai/chat — Ask SPAL a question
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const { message, conversationId, dryRun, precomputedReply } = await req.json();
+    const { message, conversationId, dryRun, precomputedReply, mode, attachmentUrl } = await req.json();
     if (!message?.trim()) return NextResponse.json({ success: false, error: "Message required" }, { status: 400 });
     // dryRun   = compute the reply but don't save (speculative prefetch while the user is still talking)
     // precomputedReply = skip the AI call, just persist a reply we already computed during prefetch
@@ -79,22 +79,38 @@ export async function POST(req: NextRequest) {
     const history = conversation?.messages ?? [];
     const newUserMsg = { role: "user" as const, content: message, timestamp: new Date().toISOString() };
 
-    // Call OpenAI — unless we already computed the reply during prefetch
-    const reply = precomputedReply?.trim() ? precomputedReply.trim() : await askSPAL({
-      message,
-      history,
-      user: userData ?? {},
-      summaries: summaries ?? [],
-      dailyBreakdown,
-      recentRecords: (recentRecords ?? []).slice(0, 30).map(r => ({
-        type:        r.type,
-        amount:      Number(r.amount),
-        description: r.description ?? r.category ?? r.type,
-        date:        r.created_at.split("T")[0],
-      })),
-      currency: userData?.currency ?? "NGN",
-      brief: true, // this endpoint feeds the voice chat — keep replies short
-    });
+    // Graph / Analytics modes: instruct the model to reply as a structured block
+    // that the client renders as a chart or metric cards (not plain text).
+    const FORMAT: Record<string, string> = {
+      graph: "\n\nRespond ONLY with a fenced code block starting with ```chart and containing JSON: " +
+        '{"title": string, "chartType": "bar"|"line", "data": [{"label": string, "value": number}], "summary": string}. ' +
+        "Use the business's real figures from the data above. Do not write any text outside the code block.",
+      analytics: "\n\nRespond ONLY with a fenced code block starting with ```analytics and containing JSON: " +
+        '{"title": string, "metrics": [{"label": string, "value": string}], "summary": string}. ' +
+        "Use the business's real figures from the data above. Do not write any text outside the code block.",
+    };
+    const augmentedMessage = mode && FORMAT[mode] ? message + FORMAT[mode] : message;
+
+    // Call OpenAI — vision when there's an attachment, otherwise the normal chat.
+    const reply = precomputedReply?.trim()
+      ? precomputedReply.trim()
+      : attachmentUrl
+        ? await askVision({ message, imageUrl: attachmentUrl, currency: userData?.currency ?? "NGN" })
+        : await askSPAL({
+            message: augmentedMessage,
+            history,
+            user: userData ?? {},
+            summaries: summaries ?? [],
+            dailyBreakdown,
+            recentRecords: (recentRecords ?? []).slice(0, 30).map(r => ({
+              type:        r.type,
+              amount:      Number(r.amount),
+              description: r.description ?? r.category ?? r.type,
+              date:        r.created_at.split("T")[0],
+            })),
+            currency: userData?.currency ?? "NGN",
+            brief: !mode, // graph/analytics need the full structured block
+          });
 
     // Speculative prefetch: return the reply without saving anything.
     if (dryRun) {

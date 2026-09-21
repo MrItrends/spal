@@ -286,3 +286,30 @@ export async function askSPAL(data: {
 
   return response.choices[0]?.message?.content ?? "Sorry, I could not answer that. Please try again.";
 }
+
+// ─── Vision: read an uploaded image/document and answer in text (OCR + reasoning)
+export async function askVision(data: { message: string; imageUrl: string; currency?: string }): Promise<string> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are SPAL, a friendly business assistant for small African businesses. " +
+          "Read the attached image or document (receipts, invoices, notes, product photos) using OCR, " +
+          "then answer the user's question in clear, simple English. Amounts are in " +
+          (data.currency ?? "NGN") + ". Keep it short and practical. Never use jargon like revenue, ledger or reconcile.",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: data.message || "What does this show? Summarise the key details for my business." },
+          { type: "image_url", image_url: { url: data.imageUrl } },
+        ],
+      },
+    ],
+    max_tokens: 600,
+    temperature: 0.3,
+  });
+  return response.choices[0]?.message?.content?.trim() ?? "I couldn't read that clearly. Please try a clearer photo.";
+}
