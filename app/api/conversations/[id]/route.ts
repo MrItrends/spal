@@ -38,9 +38,19 @@ export async function PATCH(
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
-    // The live table has no title/duration columns yet (predates migration 018),
-    // so writing them would 400. Touch updated_at only; the rename stays as an
-    // optimistic client update until migration 019 adds the columns.
+    const body = await req.json().catch(() => ({}));
+
+    // Move a chat into (or out of) a folder when folder_id is provided.
+    if (body.folder_id !== undefined) {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ folder_id: body.folder_id, updated_at: new Date().toISOString() })
+        .eq("id", id).eq("user_id", user.id);
+      if (error) return NextResponse.json({ success: false, error: "Folders not enabled yet" }, { status: 400 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Rename/title columns predate migration 019; touch updated_at only.
     await supabase
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })

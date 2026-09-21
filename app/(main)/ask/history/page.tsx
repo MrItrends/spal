@@ -69,8 +69,8 @@ export default function AskHistoryPage() {
           <h1 className="text-[22px] font-black text-spal-navy" style={{ fontFamily: FF }}>Chat History</h1>
         </div>
         <div className="flex items-center gap-2.5">
-          <button onClick={() => { window.location.href = "/ask"; }}
-            className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Conversation">
+          <button onClick={() => { window.location.href = "/ask/folders"; }}
+            className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" aria-label="Chat folders">
             <Folder01Icon size={19} color="#0F172A" />
           </button>
           <button onClick={() => { window.location.href = "/ask"; }}
