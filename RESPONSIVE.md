@@ -80,36 +80,52 @@ For every future feature, bug fix, redesign, or component update:
 * New code must not introduce layout shifts or overflow.
 * Any UI change must be tested across multiple viewport sizes.
 
-## Bottom navigation & floating elements (standard)
+## App shell & bottom app bar (standard, mandatory)
 
-The fixed `BottomNav` is the single source of truth for how much space it takes.
-It measures its own real height (icon + label + padding + safe-area inset) and
-publishes it live on `<html>` as the CSS variable **`--bottom-nav-h`** (set to
-`0px` whenever the bar is hidden or the keyboard is up). `app/globals.css` also
-defines a safe-area-aware fallback so the value resolves before hydration.
+The bottom app bar must be visible and fixed in place on every phone, browser and
+screen size, and the page must never be pannable or draggable. This is the
+standard app-shell layout, and it is how SPAL is built:
 
-Rules — never hard-code a pixel offset for the bar:
+1. **The document is locked.** `html` and `body` are `overflow: hidden` with
+   `overscroll-behavior: none` (`app/globals.css`). Never set only `overflow-x:
+   hidden` on them: that silently turns them into vertical scroll boxes and lets
+   the whole app be dragged around, which pushes the bar off screen.
+2. **The app frame is pinned to the viewport.** `#app-root` (`app/layout.tsx`) is
+   `position: fixed; top: 0; bottom: 0`, centred, `max-width` = shell. Its height is
+   exactly what is visible. Do **not** size the frame with `100vh` / `100dvh` /
+   `100svh` (or `min-height` of them): those disagree with the visible height in
+   URL-bar and in-app browsers (WhatsApp, Instagram) and leave the bar below the fold.
+3. **The bottom bar is the last row of the frame, in flow.** `(main)/layout.tsx` is a
+   flex column: `<main class="flex-1 overflow-y-auto">` then `<BottomNav />`
+   (`shrink-0`). Pages scroll inside `<main>`; the bar never floats over content and
+   can never be pushed off screen. **Never make the bottom bar `position: fixed`.**
+4. **Every screen scrolls inside `<main>`**, never on the document. Full-screen
+   flows that hide the bar (`HIDDEN` in `BottomNav.tsx`) still live in the same frame.
+5. `viewport.interactiveWidget = "resizes-content"` so the frame (and any fixed save
+   bar) shrinks above the on-screen keyboard instead of being covered by it.
 
-* Any element that floats above the bar (CTA bars, toasts, FABs) positions with
-  `bottom: calc(var(--bottom-nav-h) + <gap>)` — or the `.cta-bottom` utility.
-* Any scroll area whose content passes under the bar clears it with `.pb-nav`
-  (`padding-bottom: calc(var(--bottom-nav-h) + 1rem)`) — not a fixed `pb-*`.
-* The bar itself must stay visible and centred at every width (`fixed bottom-0`,
-  `max-w` = shell), carry `env(safe-area-inset-bottom)` padding, keep tap targets
-  ≥ 48px (`min-h-[52px]`), and scale/clamp labels so all tabs fit at 320px.
-* On very small phones (≤ 374px) headings clamp via the `h1/h2` rules; keep long
+`BottomNav` also publishes its real height as **`--bottom-nav-h`** on `<html>` (`0px`
+whenever it is hidden or a text field is focused). Rules, never hard-code a pixel
+offset for the bar:
+
+* Anything that floats above the bar (FABs, CTA bars, toasts) uses the
+  `.cta-bottom` utility, or `bottom: calc(var(--bottom-nav-h) + <gap>)`. It falls
+  back to the home-indicator inset when the bar is hidden.
+* Page content needs no extra bottom padding for the bar (it is in flow). Use
+  `.pb-nav` (1rem) for breathing room, or `.pb-nav-fab` (6rem) when a floating
+  button sits over the content, not a guessed `pb-28`.
+* The bar keeps `env(safe-area-inset-bottom)` padding, tap targets of at least
+  48px (`min-h-[52px]`), and clamped label sizes so all tabs fit at 320px.
+* On very small phones (<= 374px) headings clamp via the `h1/h2` rules; keep long
   values on `truncate` so they never push the layout wider than the viewport.
-
-This guarantees the app bar is always visible and everything stays interactable
-from 320px up to large phones, regardless of system font scale or notch.
 
 Extra rules learned from small-phone testing:
 
 * `.cta-bottom` also covers screens where the bar is hidden (full-screen flows):
   it falls back to the home-indicator inset, so a floating button never touches
   the screen edge. Use `.pb-nav-fab` when a floating button sits over scrolling content.
-* The bar hides while a text field is focused (on-screen keyboard) and returns on
-  blur; `--bottom-nav-h` drops to `0px` at the same time, so bars and buttons that
+* The bar steps aside while a text field is focused (on-screen keyboard) and
+  returns on blur; `--bottom-nav-h` drops to `0px` at the same time, so buttons that
   follow it move with it.
 * Keep 48px tap targets on small phones by **reflowing**, not shrinking: put a
   stepper on its own row, let chips wrap, or drop a label. Never go below 48px.

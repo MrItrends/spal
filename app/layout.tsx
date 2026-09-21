@@ -48,6 +48,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  // When the on-screen keyboard opens, shrink the layout (not just the visual
+  // viewport) so the app frame, its bottom bar and the focused field stay on screen.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -82,18 +85,28 @@ export default function RootLayout({
         translateZ(0) creates a stacking context so every position:fixed
         child stays inside the shell on desktop (nav, sheets, FAB, etc.).
       */}
+      {/*
+        App-shell standard: the document itself never scrolls or pans (see
+        globals.css). #app-root is pinned to the viewport with top/bottom: 0, so
+        its height is always exactly what is visible: no 100vh/100dvh/100svh maths
+        that can leave the bottom bar below the fold in URL-bar or in-app browsers.
+        The page scrolls inside <main>; the bottom bar is the last row of the
+        column (in flow), so it can never be pushed off screen.
+      */}
       <body className="antialiased">
         <RegisterSW />
         <div
           id="app-root"
-          className="flex flex-col overflow-hidden bg-spal-bg mx-auto relative"
+          className="flex flex-col overflow-hidden bg-spal-bg"
           style={{
+            position: "fixed",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            margin: "0 auto",
             maxWidth: "var(--shell-max-w)",
             minWidth:  "min(320px, 100vw)",
-            /* Use dynamic viewport height so mobile browser chrome is handled */
-            height: "100dvh",
-            /* Fallback for browsers without dvh */
-            minHeight: "100svh",
             transform: "translateZ(0)",
             boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 0 80px rgba(0,0,0,0.6)",
           }}

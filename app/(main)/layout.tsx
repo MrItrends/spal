@@ -14,10 +14,11 @@ export default function MainLayout({
       <UserHydration />
       {/*
         flex-1 + overflow-y-auto = scrollable content area.
-        pb-safe = device safe-area padding at the bottom.
+        pb-shell = home-indicator inset, only when the bottom bar is hidden.
+        The bottom bar (BottomNav) is the next flex row: in flow, never floating.
         max-w matches --shell-max-w so inner content never exceeds the shell.
       */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-container pb-safe">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-container pb-shell">
         <div className="w-full min-h-full relative">
           {children}
         </div>

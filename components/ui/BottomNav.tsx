@@ -32,11 +32,14 @@ const isTextField = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.matches("input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select") || el.isContentEditable);
 
 /**
- * Primary tab bar. It is the single source of truth for how much space the bar
- * takes: it publishes its real height as `--bottom-nav-h` on <html> (0 whenever
- * it is not on screen). Anything that floats above it, and the page's bottom
- * padding, reads that variable instead of guessing a pixel value, so nothing
- * overlaps at any screen size, system font scale or safe-area inset.
+ * Primary tab bar: the standard bottom app bar. It is the LAST ROW of the app
+ * shell's flex column (in flow, `shrink-0`), not a floating `position: fixed`
+ * layer, so the page scrolls in the row above it and the bar is always fully on
+ * screen, on every screen size, browser and keyboard state.
+ *
+ * It also publishes its real height as `--bottom-nav-h` on <html> (0 whenever it
+ * is not on screen). Things that float above it (FABs, CTA bars) read that
+ * variable instead of guessing a pixel value.
  */
 export function BottomNav() {
   const pathname = usePathname();
@@ -74,7 +77,7 @@ export function BottomNav() {
   return (
     <nav
       ref={ref}
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-3 min-[360px]:px-4 z-40"
+      className="relative shrink-0 w-full px-3 min-[360px]:px-4 pt-1.5 z-40"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
       aria-label="Primary"
     >

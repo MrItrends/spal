@@ -82,9 +82,14 @@
 
 html, body {
   height: 100%;
-  /* Use svh so mobile browsers with collapsible chrome don't miscalculate */
-  min-height: 100svh;
-  overflow-x: hidden;
+  /*
+   * The document never scrolls or pans. The app lives in #app-root (pinned to the
+   * viewport); pages scroll inside <main>. Setting only overflow-x:hidden used to
+   * make html and body vertical scroll containers too, which let the whole app
+   * (and its bottom bar) be dragged around on phones.
+   */
+  overflow: hidden;
+  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -191,14 +196,22 @@ h1, h2, h3, h4, h5, h6 {
   bottom: calc(max(var(--bottom-nav-h), var(--sab)) + 0.5rem);
 }
 
-/* Content that scrolls under the fixed BottomNav must clear it. */
+/* Scroll area of the main shell. The BottomNav is the last row of the shell (in
+   flow), so <main> already ends above it; only when the bar is hidden do we need
+   the home-indicator inset here. */
+.pb-shell {
+  padding-bottom: max(0px, calc(var(--sab) - var(--bottom-nav-h)));
+}
+
+/* Page content: a little breathing room above the bottom bar. (The bar is in flow,
+   so content can never end underneath it.) */
 .pb-nav {
-  padding-bottom: calc(var(--bottom-nav-h) + 1rem);
+  padding-bottom: 1rem;
 }
 
 /* Same, for screens with a floating action button (56px tall) over the content. */
 .pb-nav-fab {
-  padding-bottom: calc(var(--bottom-nav-h) + 6rem);
+  padding-bottom: 6rem;
 }
 
 /* Page-level horizontal padding using the responsive token */
