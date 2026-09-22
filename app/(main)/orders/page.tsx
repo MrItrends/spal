@@ -89,27 +89,40 @@ export default function OrdersPage() {
       {/* Header */}
       <AppHeader />
 
-      {/* Period tabs */}
-      <div className="px-5 mt-5">
-        <div className="flex items-center bg-white rounded-full p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-          {PERIODS.map((p) => {
-            const active = period === p.key;
-            return (
-              <button key={p.key} onClick={() => setPeriod(p.key)} aria-label={p.label}
-                className="flex-1 min-w-0 h-12 px-1 rounded-full font-bold transition-all whitespace-nowrap"
-                style={{ fontSize: "clamp(11px, 3.3vw, 13px)", background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
-                {p.label}
-              </button>
-            );
-          })}
+      {/* Period tabs — shares a row with the page title on desktop, like Home's Overview row */}
+      <div className="px-5 mt-5 lg:px-10 lg:pt-10 lg:mt-0 lg:max-w-[1200px] lg:mx-auto lg:flex lg:items-center lg:justify-between">
+        <h1 className="hidden lg:block text-[22px] font-black text-spal-navy" style={{ fontFamily: FF }}>Orders</h1>
+        <div className="lg:flex lg:items-center lg:gap-4">
+          <div className="flex items-center bg-white rounded-full p-1 lg:w-[380px]" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+            {PERIODS.map((p) => {
+              const active = period === p.key;
+              return (
+                <button key={p.key} onClick={() => setPeriod(p.key)} aria-label={p.label}
+                  className="flex-1 min-w-0 h-12 px-1 rounded-full font-bold transition-all whitespace-nowrap"
+                  style={{ fontSize: "clamp(11px, 3.3vw, 13px)", background: active ? "#22C55E" : "transparent", color: active ? "#fff" : "#6B7280" }}>
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+          {!loading && !error && !noMenu && (
+            <button
+              onClick={() => router.push("/orders/new")}
+              aria-label="Start a new order"
+              className="hidden lg:flex items-center gap-2.5 h-12 px-5 rounded-2xl text-white font-black text-[14px] hover:opacity-90 transition-opacity flex-shrink-0"
+              style={{ background: "#22C55E", fontFamily: FF, boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
+            >
+              <Hamburger01Icon size={18} color="#fff" /> New Order
+            </button>
+          )}
         </div>
       </div>
 
       {/* Body */}
       {loading ? (
-        <div className="px-5 mt-5 space-y-2.5">{[1, 2, 3].map((i) => <div key={i} className="h-[76px] bg-white rounded-2xl animate-pulse" />)}</div>
+        <div className="px-5 mt-5 space-y-2.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-[76px] bg-white rounded-2xl animate-pulse" />)}</div>
       ) : error ? (
-        <div className="px-5 mt-5">
+        <div className="px-5 mt-5 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
           <div className="rounded-2xl px-4 py-4 flex items-center gap-3" style={{ background: "#FEE0E1" }}>
             <Alert02Icon size={20} color="#DC2626" />
             <p className="flex-1 text-[13px] font-semibold text-red-700">Couldn&apos;t load your orders. Check your connection.</p>
@@ -129,7 +142,7 @@ export default function OrdersPage() {
           <p className="text-[15px] text-neutral-500 mt-1">Add and process your first order</p>
         </div>
       ) : (
-        <div className="px-5 mt-5 space-y-2.5">
+        <div className="px-5 mt-5 space-y-2.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3">
           {orders.map((r) => {
             const label = r.description ?? "Order";
             const tint = iconTint(label);
@@ -161,9 +174,9 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* New Order (or a nudge to the Menu tab when there is nothing to sell yet) */}
+      {/* New Order FAB — mobile only; desktop gets the inline button in the header row above */}
       {!loading && !error && !noMenu && (
-        <div className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 min-[360px]:px-5 z-30 flex justify-end pointer-events-none">
+        <div className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 min-[360px]:px-5 z-30 flex justify-end pointer-events-none lg:hidden">
           <button
             onClick={() => router.push("/orders/new")}
             aria-label="Start a new order"

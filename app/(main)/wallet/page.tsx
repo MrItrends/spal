@@ -42,9 +42,10 @@ export default function WalletPage() {
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification03Icon size={19} color="#6B7280" /></button>
       </div>
+      <h1 className="hidden lg:block px-5 pt-10 pb-1 text-[22px] font-black text-spal-navy" style={{ fontFamily: FF }}>Wallet</h1>
 
       {/* Empty / claim state */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-8" style={{ paddingBottom: "calc(var(--bottom-nav-h, 88px) + 16px)" }}>
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-8 lg:max-w-[480px] lg:mx-auto" style={{ paddingBottom: "calc(var(--bottom-nav-h, 88px) + 16px)" }}>
         <ComputerUserIcon size={56} color="#5B6472" strokeWidth={1.5} />
         <h1 className="text-[30px] font-black text-spal-navy leading-tight mt-6" style={{ fontFamily: FF }}>
           Get a SPAL account number for your business in less than 1 minute

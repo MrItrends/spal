@@ -9,10 +9,11 @@ import { BottomNav } from "@/components/ui/BottomNav";
 import { Sidebar } from "@/components/desktop/Sidebar";
 import { DesktopTopBar } from "@/components/desktop/DesktopTopBar";
 
-// Routes with their own wide desktop layout (built via DESKTOP.md's hook +
-// view split). Every other route keeps its mobile-width column, just centred
-// in the wider desktop content area, until it gets the same treatment.
-const DESKTOP_WIDE_ROUTES = ["/home"];
+// Routes with their own wide desktop layout (reflowed via `lg:` classes in
+// the page itself, or a hook + view split for the dashboards). Every other
+// route keeps its mobile-width column, just centred in the wider desktop
+// content area, until it gets the same treatment.
+const DESKTOP_WIDE_ROUTES = ["/home", "/orders", "/menu", "/inventory", "/wallet", "/sell", "/profile"];
 
 export default function MainLayout({
   children,
