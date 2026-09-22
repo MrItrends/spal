@@ -286,7 +286,7 @@ export default function SellPage() {
             </button>
           </div>
         ) : (
-        <div className="px-5 pt-12 pb-3 flex items-center gap-3">
+        <div className="px-5 pt-12 pb-3 flex items-center gap-3 lg:hidden">
           <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
             {user?.avatar_url
               ? <Image src={user.avatar_url} alt="" width={44} height={44} className="w-full h-full object-cover" />

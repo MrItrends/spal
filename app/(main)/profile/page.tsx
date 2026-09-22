@@ -280,7 +280,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-full pb-28" style={{ background: "#EEF3E9", fontFamily: "var(--font-satoshi)" }}>
       {/* Header */}
-      <div className="px-5 pt-12 pb-2 flex items-center gap-3">
+      <div className="px-5 pt-12 pb-2 flex items-center gap-3 lg:hidden">
         <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
           {user?.avatar_url
             // eslint-disable-next-line @next/next/no-img-element

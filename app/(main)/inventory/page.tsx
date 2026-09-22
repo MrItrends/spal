@@ -109,7 +109,7 @@ export default function StockPage() {
 
   const Header = (
     <>
-      <div className="px-5 pt-12 pb-3 flex items-center gap-3">
+      <div className="px-5 pt-12 pb-3 flex items-center gap-3 lg:hidden">
         <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
           {user?.avatar_url
             ? <Image src={user.avatar_url} alt="" width={44} height={44} className="w-full h-full object-cover" />
@@ -122,7 +122,7 @@ export default function StockPage() {
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification03Icon size={19} color="#6B7280" /></button>
       </div>
-      <div className="px-5 pt-1 pb-4 flex items-center gap-2.5">
+      <div className="px-5 pt-1 lg:pt-6 pb-4 flex items-center gap-2.5">
         <div className="flex-1 flex items-center gap-2.5 bg-white/70 rounded-2xl px-4" style={{ height: 52 }}>
           <Search01Icon size={18} color="#9CA3AF" />
           <input placeholder="Search products by name or SKU..." className="flex-1 bg-transparent outline-none text-[14px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
