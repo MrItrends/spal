@@ -17,6 +17,8 @@ import type { BusinessRecord, InventoryItem } from "@/lib/types";
 import { AppHeader } from "./AppHeader";
 import { InsightsCarousel, type InsightItem } from "./InsightsCarousel";
 import { SetupChecklist } from "./SetupChecklist";
+import { TargetPulse } from "@/components/shared/TargetPulse";
+import { markSetupSeen } from "@/lib/setup-progress";
 
 const FF = "var(--font-satoshi)";
 const BG = "#EDF3E8";
@@ -71,6 +73,7 @@ export function PerishableHome() {
   const [period, setPeriod]   = useState<Period>("today");
   const [records, setRecords] = useState<BusinessRecord[]>([]);
   const [items, setItems]     = useState<InventoryItem[]>([]);
+  const [menuCount, setMenuCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
 
@@ -91,6 +94,14 @@ export function PerishableHome() {
 
   useEffect(() => { fetchData(period); }, [period, fetchData]);
   useEffect(() => { if (recordSavedAt) fetchData(period); }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Menu item count — separate from `items` (ingredients, above), and not period-scoped.
+  // Used by the setup checklist ("add your first menu item") and the pointer below.
+  useEffect(() => {
+    fetch("/api/menu").then((r) => r.json())
+      .then((d) => { if (d.success) setMenuCount(d.data?.items?.length ?? 0); })
+      .catch(() => {});
+  }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sales = useMemo(() => records.filter((r) => r.type === "sale"), [records]);
   const totalSales    = sales.reduce((s, r) => s + r.amount, 0);
@@ -152,6 +163,24 @@ export function PerishableHome() {
     { label: "Restock",  Icon: PackageIcon,   tint: "#F3EEFF", color: "#8B5CF6", href: "/inventory" },
   ];
 
+  // Points at whatever the setup checklist wants done next (same steps/order as
+  // SetupChecklist, read from the same flags) — a visual nudge on top of the
+  // checklist's own "tap to go there" rows, for anyone who's collapsed the card.
+  const [setupTarget, setSetupTarget] = useState<string | null>(null);
+  useEffect(() => {
+    if (loading) return;
+    try {
+      if (localStorage.getItem("spal_setup_done")) { setSetupTarget(null); return; }
+      const seen = (k: string) => !!localStorage.getItem(`spal_seen_${k}`);
+      if (menuCount === 0)         { setSetupTarget("tab-menu"); return; }
+      if (sales.length === 0)      { setSetupTarget("tab-orders"); return; }
+      if (!seen("category"))       { setSetupTarget("tab-menu"); return; }
+      if (!seen("ask"))            { setSetupTarget("ask-quick-access"); return; }
+      if (!seen("profile"))        { setSetupTarget("tab-profile"); return; }
+      setSetupTarget(null);
+    } catch { setSetupTarget(null); }
+  }, [loading, menuCount, sales.length]);
+
   return (
     <div className="min-h-full pb-nav" style={{ background: BG, fontFamily: FF }}>
       {/* Header */}
@@ -189,7 +218,8 @@ export function PerishableHome() {
       )}
 
       {/* First-run setup checklist (self-hides once complete) */}
-      <SetupChecklist hasItem={items.length > 0} hasSale={sales.length > 0} perishable={true} />
+      <SetupChecklist hasItem={menuCount > 0} hasSale={sales.length > 0} perishable={true} />
+      {setupTarget && <TargetPulse targetAttr={setupTarget} />}
 
       {/* Stat cards */}
       <div className="px-5 mt-4 grid grid-cols-2 gap-3">
@@ -218,7 +248,7 @@ export function PerishableHome() {
               <span className="text-[12px] font-semibold text-neutral-600">{q.label}</span>
             </button>
           ))}
-          <button onClick={() => (window.location.href = "/ask")} aria-label="Ask SPAL" className="bg-white rounded-2xl py-4 min-h-[88px] flex flex-col items-center gap-2 active:scale-95 transition-transform" style={{ boxShadow: CARD_SHADOW }}>
+          <button onClick={() => { markSetupSeen("ask"); window.location.href = "/ask"; }} aria-label="Ask SPAL" data-setup-target="ask-quick-access" className="bg-white rounded-2xl py-4 min-h-[88px] flex flex-col items-center gap-2 active:scale-95 transition-transform" style={{ boxShadow: CARD_SHADOW }}>
             <Image src="/spal-ai.webp" alt="" width={40} height={40} className="w-10 h-10 object-contain" />
             <span className="text-[12px] font-semibold text-neutral-600">Ask SPAL</span>
           </button>

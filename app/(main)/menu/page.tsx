@@ -12,6 +12,7 @@ import { AppHeader } from "@/components/home/AppHeader";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { formatCurrency } from "@/lib/utils/currency";
 import { typeNoun } from "@/lib/menu-config";
+import { markSetupSeen } from "@/lib/setup-progress";
 import type { MenuItem } from "@/lib/types";
 
 const BG     = "#EDF3E8";
@@ -171,7 +172,7 @@ export default function MenuPage() {
                 return (
                   <button
                     key={c.name}
-                    onClick={() => setActiveCat(on ? null : c.name)}
+                    onClick={() => { if (!on) markSetupSeen("category"); setActiveCat(on ? null : c.name); }}
                     aria-label={`${c.name}, ${c.summary}`}
                     aria-pressed={on}
                     className="snap-start shrink-0 text-left active:scale-[0.98] transition-transform"

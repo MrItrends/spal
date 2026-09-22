@@ -8,6 +8,7 @@ import {
 } from "hugeicons-react";
 import { useSPALStore } from "@/store";
 import { AppHeader } from "@/components/home/AppHeader";
+import { TargetPulse } from "@/components/shared/TargetPulse";
 import { formatCurrency } from "@/lib/utils/currency";
 import { payInfo, iconTint } from "@/lib/sales";
 import { orderMeta, STATUS_STYLE } from "@/lib/orders";
@@ -173,12 +174,7 @@ export default function OrdersPage() {
           </button>
         </div>
       )}
-      {noMenu && (
-        <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 pointer-events-none" style={{ bottom: "calc(var(--bottom-nav-h) - 44px)" }} aria-hidden>
-          <span className="absolute w-7 h-7 rounded-full animate-ping" style={{ left: "54%", background: "rgba(34,197,94,0.35)" }} />
-          <span className="absolute w-7 h-7 rounded-full" style={{ left: "54%", background: "#22C55E", boxShadow: "0 0 0 8px rgba(34,197,94,0.2)" }} />
-        </div>
-      )}
+      {noMenu && <TargetPulse targetAttr="tab-menu" />}
     </div>
   );
 }
