@@ -285,7 +285,7 @@ export default function ProfilePage() {
           {user?.avatar_url
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-[16px] font-black text-white">{(user?.business_name ?? "S").charAt(0)}</div>}
+            : <div className="w-full h-full flex items-center justify-center text-[16px] font-black text-white">{(user?.business_name ?? user?.full_name ?? "S").charAt(0).toUpperCase()}</div>}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[13px] text-neutral-500">{greeting()}</p>

@@ -129,7 +129,7 @@ export function RetailHome() {
       {/* Header */}
       <div className="px-5 pt-12 flex items-center justify-between">
         <button onClick={() => router.push("/profile")} className="flex items-center gap-3 active:opacity-80">
-          <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#2563EB,#8B5CF6)" }}>
+          <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#D9C7B8" }}>
             {user?.avatar_url
               ? <Image src={user.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
               : <span className="text-white font-bold text-[18px]">{name.charAt(0).toUpperCase()}</span>}

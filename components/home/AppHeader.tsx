@@ -30,7 +30,7 @@ export function AppHeader() {
   return (
     <div className="px-4 min-[360px]:px-5 pt-12 flex items-center justify-between gap-2">
       <button onClick={() => { markSetupSeen("profile"); router.push("/profile"); }} aria-label="Open profile" className="flex-1 min-w-0 flex items-center gap-3 text-left min-h-12 active:opacity-80">
-        <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#2563EB,#8B5CF6)" }}>
+        <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#D9C7B8" }}>
           {user?.avatar_url
             ? <Image src={user.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
             : <span className="text-white font-bold text-[18px]">{name.charAt(0).toUpperCase()}</span>}
