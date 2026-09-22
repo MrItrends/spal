@@ -93,7 +93,10 @@ export default function RootLayout({
         The page scrolls inside <main>; the bottom bar is the last row of the
         column (in flow), so it can never be pushed off screen.
       */}
-      <body className="antialiased">
+      {/* suppressHydrationWarning: some browser extensions inject attributes
+          (e.g. inject_newvt_svd) onto <body> before React hydrates — this is
+          not a real mismatch, just noise from the extension. */}
+      <body className="antialiased" suppressHydrationWarning>
         <RegisterSW />
         <div
           id="app-root"
