@@ -91,6 +91,7 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
+              data-setup-target={`tab-${href.slice(1)}`}
               className="flex-1 min-w-0 min-h-[52px] flex flex-col items-center justify-center gap-0.5 px-0.5 rounded-2xl active:scale-95 transition-transform"
               style={{ background: active ? "#EEF3E9" : "transparent" }}
               aria-current={active ? "page" : undefined}

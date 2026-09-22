@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { getGreeting } from "@/lib/utils/dates";
 import type { BusinessRecord, InventoryItem } from "@/lib/types";
 import { InsightsCarousel, type InsightItem } from "./InsightsCarousel";
+import { SetupChecklist } from "./SetupChecklist";
 
 const FF = "var(--font-satoshi)";
 const BG = "#EDF3E8";
@@ -167,6 +168,9 @@ export function RetailHome() {
           })}
         </div>
       </div>
+
+      {/* First-run setup checklist (self-hides once complete) */}
+      <SetupChecklist hasItem={items.length > 0} hasSale={sales.length > 0} perishable={false} />
 
       {/* Stat cards */}
       <div className="px-5 mt-4 grid grid-cols-2 gap-3">

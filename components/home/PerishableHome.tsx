@@ -16,6 +16,7 @@ import { payInfo, iconTint } from "@/lib/sales";
 import type { BusinessRecord, InventoryItem } from "@/lib/types";
 import { AppHeader } from "./AppHeader";
 import { InsightsCarousel, type InsightItem } from "./InsightsCarousel";
+import { SetupChecklist } from "./SetupChecklist";
 
 const FF = "var(--font-satoshi)";
 const BG = "#EDF3E8";
@@ -186,6 +187,9 @@ export function PerishableHome() {
           </div>
         </div>
       )}
+
+      {/* First-run setup checklist (self-hides once complete) */}
+      <SetupChecklist hasItem={items.length > 0} hasSale={sales.length > 0} perishable={true} />
 
       {/* Stat cards */}
       <div className="px-5 mt-4 grid grid-cols-2 gap-3">
