@@ -84,6 +84,33 @@ export default function ProfilePage() {
   const [comingSoon,    setComingSoon]    = useState(false);
   const [activeSheet,   setActiveSheet]   = useState<SheetType>(null);
   const soon = () => { setComingSoon(true); setTimeout(() => setComingSoon(false), 2200); };
+
+  // Push notifications toggle — on = permission granted and not user-disabled.
+  const [pushOn, setPushOn]     = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  useEffect(() => {
+    try {
+      const granted = typeof Notification !== "undefined" && Notification.permission === "granted";
+      setPushOn(granted && localStorage.getItem("spal_push_enabled") !== "0");
+    } catch { /* ignore */ }
+  }, []);
+  async function togglePush() {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushOn) {
+        await disablePushNotifications();
+        try { localStorage.setItem("spal_push_enabled", "0"); } catch { /* ignore */ }
+        setPushOn(false);
+      } else {
+        const res = await enablePushNotifications();
+        if (res === "granted") { try { localStorage.setItem("spal_push_enabled", "1"); } catch { /* ignore */ } setPushOn(true); }
+        // Blocked at the browser level — the toggle can't turn itself on; show
+        // how to fix it instead of just silently staying off.
+        else if (res === "denied") setActiveSheet("notifications");
+      }
+    } finally { setPushBusy(false); }
+  }
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [switchingBiz,  setSwitchingBiz]  = useState<string | null>(null);
   const [bizToManage,   setBizToManage]   = useState<Business | null>(null);
@@ -301,7 +328,8 @@ export default function ProfilePage() {
       {/* Menu group 2 */}
       <div className="px-4 mt-4">
         <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-          <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Set and manage your Notifications" onClick={() => setActiveSheet("notifications")} />
+          <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Sales, reminders, insights on your lock screen"
+            trailing={<PushToggle on={pushOn} busy={pushBusy} onToggle={togglePush} />} />
           <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => router.push("/profile/receipts")} />
           <ProfileRow icon={<Invoice01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Billing & Plan" sub="Manage your payment plan" onClick={() => router.push("/billing")} />
           <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Billing History" sub="See your past payments" onClick={() => router.push("/billing/history")} />
@@ -480,18 +508,42 @@ function greeting() {
   return "Good Evening";
 }
 
-function ProfileRow({ icon, tint, title, sub, onClick, last }: {
-  icon: React.ReactNode; tint: string; title: string; sub: string; onClick: () => void; last?: boolean;
-}) {
+function PushToggle({ on, busy, onToggle }: { on: boolean; busy: boolean; onToggle: () => void }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3.5 px-3 py-4 text-left active:bg-black/[0.02] transition-colors"
-      style={{ borderBottom: last ? "none" : "1px solid #F1F3EF" }}>
+    <button onClick={onToggle} disabled={busy} aria-label="Toggle push notifications" aria-pressed={on}
+      className="relative flex-shrink-0 rounded-full transition-colors disabled:opacity-60"
+      style={{ width: 48, height: 28, background: on ? "#22C55E" : "#D1D5DB" }}>
+      <motion.span animate={{ x: on ? 22 : 2 }} transition={{ type: "tween", duration: 0.18 }}
+        className="absolute top-[3px] rounded-full bg-white" style={{ width: 22, height: 22, boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }} />
+    </button>
+  );
+}
+
+function ProfileRow({ icon, tint, title, sub, onClick, last, trailing }: {
+  icon: React.ReactNode; tint: string; title: string; sub: string; onClick?: () => void; last?: boolean; trailing?: React.ReactNode;
+}) {
+  const inner = (
+    <>
       <span className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: tint }}>{icon}</span>
       <span className="flex-1 min-w-0">
         <span className="block text-[16px] font-bold text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>{title}</span>
         <span className="block text-[13px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-satoshi)" }}>{sub}</span>
       </span>
-      <ArrowRight01Icon size={18} color="#C4CBD4" />
+      {trailing ?? <ArrowRight01Icon size={18} color="#C4CBD4" />}
+    </>
+  );
+  // A row with a trailing control (e.g. a toggle) isn't itself tappable.
+  if (trailing) {
+    return (
+      <div className="w-full flex items-center gap-3.5 px-3 py-4" style={{ borderBottom: last ? "none" : "1px solid #F1F3EF" }}>
+        {inner}
+      </div>
+    );
+  }
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-3.5 px-3 py-4 text-left active:bg-black/[0.02] transition-colors"
+      style={{ borderBottom: last ? "none" : "1px solid #F1F3EF" }}>
+      {inner}
     </button>
   );
 }
@@ -1280,8 +1332,8 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
           <div className="bg-blue-50 rounded-2xl p-4">
             <p className="text-sm font-semibold text-spal-blue mb-1">Stay on track</p>
             <p className="text-sm text-neutral-500 leading-relaxed">
-              SPAL will nudge you at 9 AM and 7 PM on days you haven&apos;t logged anything —
-              so you never miss a record.
+              SPAL will send your daily sales summary, a nudge on days you haven&apos;t
+              logged anything, weekly insights, and the odd business tip — right to your lock screen.
             </p>
           </div>
         )}
@@ -1293,7 +1345,7 @@ function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => v
             className="w-full flex items-center justify-between px-4 h-14 bg-neutral-50 rounded-2xl border-2 border-neutral-100 active:bg-neutral-100 transition-colors disabled:opacity-60 disabled:cursor-default"
           >
             <div className="text-left">
-              <p className="text-sm font-semibold text-spal-navy">Daily reminders</p>
+              <p className="text-sm font-semibold text-spal-navy">Push notifications</p>
               <p className="text-xs text-neutral-400">
                 {requesting ? "Setting up…" : enabled ? "Tap to turn off" : "Tap to turn on"}
               </p>

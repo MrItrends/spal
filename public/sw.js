@@ -87,13 +87,15 @@ self.addEventListener("fetch", (event) => {
 // ── Push notification display ─────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  const { title, body, url } = event.data.json();
+  const { title, body, url, tag } = event.data.json();
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
       icon:  "/icons/icon-192.png",
       badge: "/icons/icon-96.png",
       data:  { url: url ?? "/home" },
+      tag,            // same-type notifications replace instead of stacking
+      renotify: !!tag,
       vibrate: [100, 50, 100],
     }),
   );
