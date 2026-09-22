@@ -5,8 +5,8 @@ import Image from "next/image";
 import { ArrowRight01Icon, Restaurant01Icon } from "hugeicons-react";
 import { formatCurrency } from "@/lib/utils/currency";
 import { useRetailDashboard, PERIODS, relTime } from "@/hooks/useRetailDashboard";
-import { InsightsCarousel } from "@/components/home/InsightsCarousel";
 import { SetupChecklist } from "@/components/home/SetupChecklist";
+import { InsightsRow } from "./InsightsRow";
 
 const FF = "var(--font-satoshi)";
 const BG = "#EDF3E8";
@@ -46,7 +46,7 @@ export function RetailDashboardDesktop() {
         </div>
 
         {/* First-run setup checklist (self-hides once complete) */}
-        <div className="[&>div]:px-0 [&>div]:mt-0 mb-6 max-w-xl">
+        <div className="[&>div]:px-0 [&>div]:mt-0 mb-6">
           <SetupChecklist hasItem={hasItem} hasSale={hasSale} perishable={false} />
         </div>
 
@@ -66,7 +66,7 @@ export function RetailDashboardDesktop() {
         {/* Quick Access */}
         <div className="mt-8">
           <p className="text-[16px] font-black text-spal-navy mb-3">Quick Access</p>
-          <div className="grid grid-cols-4 gap-3 max-w-xl">
+          <div className="grid grid-cols-4 gap-4">
             {quickActions.map((q) => (
               <button key={q.label} onClick={() => router.push(q.href)} className="bg-white rounded-2xl py-4 flex flex-col items-center gap-2 hover:opacity-90 transition-opacity" style={{ boxShadow: CARD_SHADOW }}>
                 <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: q.tint }}>
@@ -82,55 +82,55 @@ export function RetailDashboardDesktop() {
           </div>
         </div>
 
-        {/* Insights + Recent Sales side by side */}
-        <div className="grid grid-cols-2 gap-6 mt-8 items-start">
-          <div>
-            <p className="text-[16px] font-black text-spal-navy mb-3">Insights</p>
-            <InsightsCarousel items={insights} />
-          </div>
+        {/* Insights — its own row. Two cards fit at once at this width, so no
+            carousel/dots (that's a mobile-only affordance for one card at a time). */}
+        <div className="mt-8">
+          <p className="text-[16px] font-black text-spal-navy mb-3">Insights</p>
+          <InsightsRow items={insights} />
+        </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[16px] font-black text-spal-navy">Recent Sales</p>
-              {salesCount > 5 && (
-                <button onClick={() => router.push("/records")} className="inline-flex items-center gap-1 text-[13px] font-bold" style={{ color: "#16A34A" }}>
-                  View All <ArrowRight01Icon size={14} color="#16A34A" />
-                </button>
-              )}
-            </div>
-
-            {loading ? (
-              <div className="space-y-2.5">{[1, 2, 3].map((i) => <div key={i} className="h-[68px] bg-white rounded-2xl animate-pulse" />)}</div>
-            ) : recentSales.length === 0 ? (
-              <div className="bg-white rounded-2xl px-4 py-8 text-center" style={{ boxShadow: CARD_SHADOW }}>
-                <p className="text-[14px] font-bold text-spal-navy">No sales yet</p>
-                <p className="text-[13px] text-neutral-400 mt-1">Your recent sales will show up here.</p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {recentSales.map((r) => {
-                  const owing = r.payment_status === "owing";
-                  return (
-                    <button key={r.id} onClick={() => router.push(`/records/${r.id}`)} className="w-full text-left bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:opacity-90 transition-opacity" style={{ boxShadow: CARD_SHADOW }}>
-                      <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FFF3EC" }}>
-                        <Restaurant01Icon size={18} color="#F97316" />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14.5px] font-bold text-spal-navy truncate">{r.description ?? "Sale"}</p>
-                        <span className="inline-block mt-1 text-[10.5px] font-bold px-2 py-0.5 rounded-full" style={{ background: owing ? "#FFF3EC" : "#EAF7EE", color: owing ? "#C2410C" : "#16A34A" }}>
-                          {owing ? "Debt" : "Paid"}
-                        </span>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[14px] font-black text-spal-navy">{formatCurrency(r.amount)}</p>
-                        <p className="text-[11px] text-neutral-400 mt-0.5">{relTime(r.created_at)}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+        {/* Recent Sales — its own row */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[16px] font-black text-spal-navy">Recent Sales</p>
+            {salesCount > 5 && (
+              <button onClick={() => router.push("/records")} className="inline-flex items-center gap-1 text-[13px] font-bold" style={{ color: "#16A34A" }}>
+                View All <ArrowRight01Icon size={14} color="#16A34A" />
+              </button>
             )}
           </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-[68px] bg-white rounded-2xl animate-pulse" />)}</div>
+          ) : recentSales.length === 0 ? (
+            <div className="bg-white rounded-2xl px-4 py-8 text-center" style={{ boxShadow: CARD_SHADOW }}>
+              <p className="text-[14px] font-bold text-spal-navy">No sales yet</p>
+              <p className="text-[13px] text-neutral-400 mt-1">Your recent sales will show up here.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {recentSales.map((r) => {
+                const owing = r.payment_status === "owing";
+                return (
+                  <button key={r.id} onClick={() => router.push(`/records/${r.id}`)} className="w-full text-left bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:opacity-90 transition-opacity" style={{ boxShadow: CARD_SHADOW }}>
+                    <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FFF3EC" }}>
+                      <Restaurant01Icon size={18} color="#F97316" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14.5px] font-bold text-spal-navy truncate">{r.description ?? "Sale"}</p>
+                      <span className="inline-block mt-1 text-[10.5px] font-bold px-2 py-0.5 rounded-full" style={{ background: owing ? "#FFF3EC" : "#EAF7EE", color: owing ? "#C2410C" : "#16A34A" }}>
+                        {owing ? "Debt" : "Paid"}
+                      </span>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-[14px] font-black text-spal-navy">{formatCurrency(r.amount)}</p>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">{relTime(r.created_at)}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Promos */}
