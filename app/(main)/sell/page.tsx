@@ -286,7 +286,7 @@ export default function SellPage() {
             </button>
           </div>
         ) : (
-        <div className="px-5 pt-12 pb-3 flex items-center gap-3 lg:hidden">
+        <div className="px-5 pt-12 pb-3 flex items-center gap-3">
           <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
             {user?.avatar_url
               ? <Image src={user.avatar_url} alt="" width={44} height={44} className="w-full h-full object-cover" />
@@ -305,12 +305,9 @@ export default function SellPage() {
         </div>
         )}
 
-        {/* Title row — desktop only */}
-        <h1 className="hidden lg:block px-5 pt-10 pb-1 lg:px-10 lg:max-w-[1200px] lg:mx-auto text-[22px] font-black text-spal-navy" style={{ fontFamily: FF }}>Sell</h1>
-
-        {/* Search row */}
-        <div className="px-5 pt-1 pb-4 flex items-center gap-2.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
-          <div className="flex-1 flex items-center gap-2.5 bg-white/70 rounded-2xl px-4 h-13 lg:flex-none lg:w-[420px]" style={{ height: 52 }}>
+        {/* Search + scan */}
+        <div className="px-5 pt-1 pb-4 flex items-center gap-2.5">
+          <div className="flex-1 flex items-center gap-2.5 bg-white/70 rounded-2xl px-4 h-13" style={{ height: 52 }}>
             <Search01Icon size={18} color="#9CA3AF" />
             <input
               value={query}
@@ -321,7 +318,7 @@ export default function SellPage() {
               style={{ fontFamily: FF }}
             />
           </div>
-          <button className="w-13 rounded-2xl flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
+          <button className="w-13 rounded-2xl flex items-center justify-center active:scale-95 transition-transform"
             style={{ background: "#22C55E", height: 52, width: 52 }} aria-label="Scan barcode">
             <QrCode01Icon size={22} color="#fff" />
           </button>
@@ -329,7 +326,7 @@ export default function SellPage() {
 
         {items.length === 0 ? (
           /* Empty state */
-          <div className="flex flex-col items-center justify-center text-center px-8 lg:max-w-[480px] lg:mx-auto" style={{ paddingTop: "34vh" }}>
+          <div className="flex flex-col items-center justify-center text-center px-8" style={{ paddingTop: "34vh" }}>
             <CubeIcon size={54} color="#9AA3AF" strokeWidth={1.4} />
             <p className="text-[22px] font-black text-spal-navy mt-4" style={{ fontFamily: FF }}>{perishable ? "No menu to order from" : "No item to sell"}</p>
             <p className="text-[15px] text-neutral-500 mt-1" style={{ fontFamily: FF }}>{perishable ? "Add your menu item and start taking orders" : "Add your first inventory item"}</p>
@@ -344,7 +341,7 @@ export default function SellPage() {
         ) : (
           <>
             {/* Category chips — capped to two rows, View All appears only on overflow */}
-            <div ref={chipsRef} className="px-5 flex flex-wrap gap-2.5 mb-4 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
+            <div ref={chipsRef} className="px-5 flex flex-wrap gap-2.5 mb-4">
               {["All", ...categories.slice(0, catLimit)].map((c) => {
                 const on = activeCat === c;
                 return (
@@ -374,7 +371,7 @@ export default function SellPage() {
             </div>
 
             {/* Product grid */}
-            <div className="px-5 grid grid-cols-2 gap-3.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto lg:grid-cols-4">
+            <div className="px-5 grid grid-cols-2 gap-3.5">
               {filtered.map((it) => {
                 const sel = selected.has(it.id);
                 const low = isLow(it);

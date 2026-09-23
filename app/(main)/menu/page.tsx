@@ -82,21 +82,9 @@ export default function MenuPage() {
 
   const Header = <AppHeader />;
 
-  // Desktop-only inline "New Menu" button, next to the title row.
-  const NewMenuButton = (
-    <button
-      onClick={() => router.push("/menu/add")}
-      aria-label="Add a new menu item"
-      className="hidden lg:flex items-center gap-2.5 h-12 px-5 rounded-2xl text-white font-black text-[14px] hover:opacity-90 transition-opacity flex-shrink-0"
-      style={{ background: "#22C55E", fontFamily: FF, boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
-    >
-      <MenuRestaurantIcon size={18} color="#fff" /> New Menu
-    </button>
-  );
-
-  // Floating "New Menu" FAB — mobile only; desktop uses the inline button above.
+  // Floating "New Menu" button, sitting above the tab bar.
   const Fab = (
-    <div className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 min-[360px]:px-5 z-30 flex justify-end pointer-events-none lg:hidden">
+    <div className="cta-bottom fixed left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 min-[360px]:px-5 z-30 flex justify-end pointer-events-none">
       <button
         onClick={() => router.push("/menu/add")}
         aria-label="Add a new menu item"
@@ -155,15 +143,9 @@ export default function MenuPage() {
       <div className="min-h-full pb-nav-fab" style={{ background: BG, fontFamily: FF }}>
         {Header}
 
-        {/* Title row — title left, New Menu right (desktop only) */}
-        <div className="hidden lg:flex lg:items-center lg:justify-between px-5 pt-10 pb-1 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
-          <h1 className="text-[22px] font-black text-spal-navy" style={{ fontFamily: FF }}>Menu</h1>
-          {NewMenuButton}
-        </div>
-
         {/* Search */}
-        <div className="px-5 mt-5 lg:mt-0 lg:pt-4 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
-          <div className="flex items-center gap-2.5 bg-white rounded-2xl px-4 lg:w-[420px]" style={{ height: 52, boxShadow: SHADOW }}>
+        <div className="px-5 mt-5">
+          <div className="flex items-center gap-2.5 bg-white rounded-2xl px-4" style={{ height: 52, boxShadow: SHADOW }}>
             <Search01Icon size={18} color="#9CA3AF" />
             <input
               value={query}
@@ -177,12 +159,12 @@ export default function MenuPage() {
 
         {/* Categories */}
         {categories.length > 0 && (
-          <div className="mt-5 lg:max-w-[1200px] lg:mx-auto">
-            <h2 className="px-5 lg:px-10 text-[24px] font-black text-spal-navy mb-3">Categories</h2>
+          <div className="mt-5">
+            <h2 className="px-5 text-[24px] font-black text-spal-navy mb-3">Categories</h2>
             <div
               ref={catScroller}
               onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
-              className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden px-5 lg:px-10 lg:flex-wrap lg:overflow-visible"
+              className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden px-5"
               style={{ scrollbarWidth: "none", gap: 14 }}
             >
               {categories.map((c) => {
@@ -206,7 +188,7 @@ export default function MenuPage() {
               })}
             </div>
             {pages > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-3 lg:hidden">
+              <div className="flex items-center justify-center gap-1.5 mt-3">
                 {Array.from({ length: pages }).map((_, i) => (
                   <span key={i} className="rounded-full transition-all" style={{ width: i === page ? 16 : 7, height: 7, background: i === page ? "#22C55E" : "#CBD5C0" }} />
                 ))}
@@ -222,7 +204,7 @@ export default function MenuPage() {
             <p className="text-[14px] text-neutral-500 mt-1">Try another name or category.</p>
           </div>
         ) : (
-          <div className="px-5 mt-5 grid grid-cols-2 gap-3.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto lg:grid-cols-4">
+          <div className="px-5 mt-5 grid grid-cols-2 gap-3.5">
             {filtered.map((it) => {
               const on = selectedId === it.id;
               return (

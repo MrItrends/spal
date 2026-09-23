@@ -109,7 +109,7 @@ export default function StockPage() {
 
   const Header = (
     <>
-      <div className="px-5 pt-12 pb-3 flex items-center gap-3 lg:hidden">
+      <div className="px-5 pt-12 pb-3 flex items-center gap-3">
         <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
           {user?.avatar_url
             ? <Image src={user.avatar_url} alt="" width={44} height={44} className="w-full h-full object-cover" />
@@ -122,23 +122,12 @@ export default function StockPage() {
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification03Icon size={19} color="#6B7280" /></button>
       </div>
-      {/* Title row — title left, Add Inventory right (desktop only) */}
-      <div className="hidden lg:flex lg:items-center lg:justify-between px-5 pt-10 pb-1 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
-        <h1 className="text-[22px] font-black text-spal-navy" style={{ fontFamily: FF }}>Inventory</h1>
-        <button onClick={() => { window.location.href = "/inventory/add"; }} aria-label="Add Inventory"
-          className="flex items-center gap-2.5 h-12 px-5 rounded-2xl text-white font-black text-[14px] hover:opacity-90 transition-opacity flex-shrink-0"
-          style={{ background: "#22C55E", fontFamily: FF, boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}>
-          <Store01Icon size={18} color="#fff" /> Add Inventory
-        </button>
-      </div>
-
-      {/* Search row */}
-      <div className="px-5 pt-1 pb-4 flex items-center gap-2.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto">
-        <div className="flex-1 flex items-center gap-2.5 bg-white/70 rounded-2xl px-4 lg:flex-none lg:w-[420px]" style={{ height: 52 }}>
+      <div className="px-5 pt-1 pb-4 flex items-center gap-2.5">
+        <div className="flex-1 flex items-center gap-2.5 bg-white/70 rounded-2xl px-4" style={{ height: 52 }}>
           <Search01Icon size={18} color="#9CA3AF" />
           <input placeholder="Search products by name or SKU..." className="flex-1 bg-transparent outline-none text-[14px] text-spal-navy placeholder:text-neutral-400" style={{ fontFamily: FF }} />
         </div>
-        <button className="rounded-2xl flex items-center justify-center active:scale-95 flex-shrink-0" style={{ background: "#22C55E", height: 52, width: 52 }} aria-label="Scan"><QrCode01Icon size={22} color="#fff" /></button>
+        <button className="rounded-2xl flex items-center justify-center active:scale-95" style={{ background: "#22C55E", height: 52, width: 52 }} aria-label="Scan"><QrCode01Icon size={22} color="#fff" /></button>
       </div>
     </>
   );
@@ -172,12 +161,12 @@ export default function StockPage() {
         {Header}
 
         {categories.length > 0 && (
-          <div className="mb-2 lg:max-w-[1200px] lg:mx-auto">
-            <h2 className="px-5 lg:px-10 text-[26px] font-black text-spal-navy mb-3" style={{ fontFamily: FF }}>Categories</h2>
+          <div className="mb-2">
+            <h2 className="px-5 text-[26px] font-black text-spal-navy mb-3" style={{ fontFamily: FF }}>Categories</h2>
             <div
               ref={catScroller}
               onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
-              className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden px-5 lg:px-10 lg:flex-wrap lg:overflow-visible"
+              className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden px-5"
               style={{ scrollbarWidth: "none", gap: 14 }}
             >
               {categories.map((c) => {
@@ -206,7 +195,7 @@ export default function StockPage() {
               )}
             </div>
             {pages > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-3 lg:hidden">
+              <div className="flex items-center justify-center gap-1.5 mt-3">
                 {Array.from({ length: pages }).map((_, i) => (
                   <span key={i} className="rounded-full transition-all" style={{ width: i === page ? 16 : 7, height: 7, background: i === page ? "#22C55E" : "#CBD5C0" }} />
                 ))}
@@ -216,7 +205,7 @@ export default function StockPage() {
         )}
 
         {/* Product grid */}
-        <div className="px-5 mt-4 grid grid-cols-2 gap-3.5 lg:px-10 lg:max-w-[1200px] lg:mx-auto lg:grid-cols-4">
+        <div className="px-5 mt-4 grid grid-cols-2 gap-3.5">
           {filtered.map((it) => {
             const low = isLow(it);
             const prog = stockProgress(it);
@@ -302,12 +291,12 @@ export default function StockPage() {
         )}
       </AnimatePresence>
 
-      {/* Floating Add Inventory — mobile only; desktop uses the inline button in the header row */}
+      {/* Floating Add Inventory */}
       <AnimatePresence>
         <motion.button
           initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
           onClick={() => { window.location.href = "/inventory/add"; }}
-          className="fixed right-4 left-auto flex items-center gap-2.5 h-14 px-6 rounded-2xl text-white font-black text-[16px] active:scale-95 transition-transform z-40 lg:hidden"
+          className="fixed right-4 left-auto flex items-center gap-2.5 h-14 px-6 rounded-2xl text-white font-black text-[16px] active:scale-95 transition-transform z-40"
           style={{ background: "#22C55E", fontFamily: FF, bottom: "calc(var(--bottom-nav-h, 88px) + 8px)", boxShadow: "0 8px 24px rgba(34,197,94,0.4)" }}
         >
           <Store01Icon size={20} color="#fff" /> Add Inventory

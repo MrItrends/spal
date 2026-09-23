@@ -3,11 +3,8 @@
 import { Suspense, useEffect } from "react";
 import { useSPALStore } from "@/store";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { RetailHome } from "@/components/home/RetailHome";
 import { PerishableHome } from "@/components/home/PerishableHome";
-import { RetailDashboardDesktop } from "@/components/desktop/RetailDashboardDesktop";
-import { PerishableDashboardDesktop } from "@/components/desktop/PerishableDashboardDesktop";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
 
 /**
@@ -35,10 +32,8 @@ function HomeInner() {
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { ready, perishable } = useBusinessMode();
-  const isDesktop = useIsDesktop();
   if (!ready) return null;
 
-  if (isDesktop) return perishable ? <PerishableDashboardDesktop /> : <RetailDashboardDesktop />;
   return perishable ? <PerishableHome /> : <RetailHome />;
 }
 

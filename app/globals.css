@@ -144,9 +144,7 @@ h1, h2, h3, h4, h5, h6 {
   /* Vertical section gap */
   --gap-section: 1.5rem;
 
-  /* App shell max width (single source of truth). Lifted at the desktop
-     breakpoint so the shell becomes a full-width app with a sidebar instead
-     of the mobile phone frame — see DesktopShell / DESKTOP.md. */
+  /* App shell max width (single source of truth) */
   --shell-max-w: 480px;
 
   /*
@@ -156,12 +154,6 @@ h1, h2, h3, h4, h5, h6 {
    * Referenced as `calc(var(--bottom-nav-h) + …)` across screens.
    */
   --bottom-nav-h: calc(84px + var(--sab));
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --shell-max-w: none;
-  }
 }
 
 /* Very small phones (iPhone SE 1st gen, cheap Androids) */

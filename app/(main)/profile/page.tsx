@@ -280,7 +280,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-full pb-28" style={{ background: "#EEF3E9", fontFamily: "var(--font-satoshi)" }}>
       {/* Header */}
-      <div className="px-5 pt-12 pb-2 flex items-center gap-3 lg:hidden">
+      <div className="px-5 pt-12 pb-2 flex items-center gap-3">
         <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#D9C7B8" }}>
           {user?.avatar_url
             // eslint-disable-next-line @next/next/no-img-element
@@ -294,7 +294,6 @@ export default function ProfilePage() {
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Search"><Search01Icon size={19} color="#6B7280" /></button>
         <button className="w-11 h-11 rounded-full bg-white/70 flex items-center justify-center active:scale-95" aria-label="Notifications"><Notification01Icon size={19} color="#6B7280" /></button>
       </div>
-      <h1 className="hidden lg:block px-5 pt-10 pb-1 text-[22px] font-black text-spal-navy" style={{ fontFamily: "var(--font-satoshi)" }}>Profile</h1>
 
       {/* Big avatar + name */}
       <div className="flex flex-col items-center mt-4">
@@ -316,30 +315,27 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Menu groups — side by side on desktop */}
-      <div className="mt-6 lg:mt-8 lg:grid lg:grid-cols-2 lg:gap-6 lg:max-w-[900px] lg:mx-auto lg:items-start">
-        {/* Menu group 1 */}
-        <div className="px-4 lg:px-0">
-          <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-            <ProfileRow icon={<UserIcon size={20} color="#F97316" />} tint="#FDECDD" title="Personal Profile" sub="Set and manage your profile" onClick={() => setActiveSheet("name")} />
-            <ProfileRow icon={<Briefcase01Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Business Profile" sub="Set and manage your business profile" onClick={() => setActiveSheet("business")} />
-            <ProfileRow icon={<Location01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Business Locations" sub="Set and manage your business locations" onClick={soon} />
-            <ProfileRow icon={<UserAdd01Icon size={20} color="#2563EB" />} tint="#E4ECFB" title="Staffs & Permission" sub="Add your staffs and set their permissions" onClick={soon} last />
-          </div>
+      {/* Menu group 1 */}
+      <div className="px-4 mt-6">
+        <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+          <ProfileRow icon={<UserIcon size={20} color="#F97316" />} tint="#FDECDD" title="Personal Profile" sub="Set and manage your profile" onClick={() => setActiveSheet("name")} />
+          <ProfileRow icon={<Briefcase01Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Business Profile" sub="Set and manage your business profile" onClick={() => setActiveSheet("business")} />
+          <ProfileRow icon={<Location01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Business Locations" sub="Set and manage your business locations" onClick={soon} />
+          <ProfileRow icon={<UserAdd01Icon size={20} color="#2563EB" />} tint="#E4ECFB" title="Staffs & Permission" sub="Add your staffs and set their permissions" onClick={soon} last />
         </div>
+      </div>
 
-        {/* Menu group 2 */}
-        <div className="px-4 lg:px-0 mt-4 lg:mt-0">
-          <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-            <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Sales, reminders, insights on your lock screen"
-              trailing={<PushToggle on={pushOn} busy={pushBusy} onToggle={togglePush} />} />
-            <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => router.push("/profile/receipts")} />
-            <ProfileRow icon={<Invoice01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Billing & Plan" sub="Manage your payment plan" onClick={() => router.push("/billing")} />
-            <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Billing History" sub="See your past payments" onClick={() => router.push("/billing/history")} />
-            <ProfileRow icon={<HelpCircleIcon size={20} color="#2563EB" />} tint="#E4ECFB" title="Help & Support" sub="Get help where necessary" onClick={soon} />
-            <ProfileRow icon={<Shield01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Security" sub="Add an extra layer of security to your account" onClick={soon} />
-            <ProfileRow icon={<Share08Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Share/Invite Others" sub="Invite others to join the account" onClick={soon} last />
-          </div>
+      {/* Menu group 2 */}
+      <div className="px-4 mt-4">
+        <div className="bg-white rounded-3xl px-2 py-1" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+          <ProfileRow icon={<Notification01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Notification" sub="Sales, reminders, insights on your lock screen"
+            trailing={<PushToggle on={pushOn} busy={pushBusy} onToggle={togglePush} />} />
+          <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Receipts & Tax" sub="Manage currency, receipt and tax amount" onClick={() => router.push("/profile/receipts")} />
+          <ProfileRow icon={<Invoice01Icon size={20} color="#8B5CF6" />} tint="#EEE7FB" title="Billing & Plan" sub="Manage your payment plan" onClick={() => router.push("/billing")} />
+          <ProfileRow icon={<ReceiptDollarIcon size={20} color="#16A34A" />} tint="#E4F5E9" title="Billing History" sub="See your past payments" onClick={() => router.push("/billing/history")} />
+          <ProfileRow icon={<HelpCircleIcon size={20} color="#2563EB" />} tint="#E4ECFB" title="Help & Support" sub="Get help where necessary" onClick={soon} />
+          <ProfileRow icon={<Shield01Icon size={20} color="#F97316" />} tint="#FDECDD" title="Security" sub="Add an extra layer of security to your account" onClick={soon} />
+          <ProfileRow icon={<Share08Icon size={20} color="#16A34A" />} tint="#E4F5E9" title="Share/Invite Others" sub="Invite others to join the account" onClick={soon} last />
         </div>
       </div>
 

@@ -77,7 +77,7 @@ export function BottomNav() {
   return (
     <nav
       ref={ref}
-      className="relative shrink-0 w-full px-3 min-[360px]:px-4 pt-1.5 z-40 lg:hidden"
+      className="relative shrink-0 w-full px-3 min-[360px]:px-4 pt-1.5 z-40"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
       aria-label="Primary"
     >

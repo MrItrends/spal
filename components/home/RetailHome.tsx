@@ -1,28 +1,128 @@
 "use client";
 
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import Image from "next/image";
-import { Search01Icon, Notification03Icon, ArrowRight01Icon, Restaurant01Icon } from "hugeicons-react";
+import {
+  Search01Icon, Notification03Icon, ShoppingBasket03Icon, ReceiptDollarIcon,
+  PackageIcon, MoneyBag01Icon, ArrowRight01Icon, Invoice01Icon, CheckListIcon,
+  Restaurant01Icon,
+} from "hugeicons-react";
+import { useSPALStore } from "@/store";
 import { formatCurrency } from "@/lib/utils/currency";
-import { useRetailDashboard, PERIODS, relTime } from "@/hooks/useRetailDashboard";
-import { InsightsCarousel } from "./InsightsCarousel";
+import { getGreeting } from "@/lib/utils/dates";
+import type { BusinessRecord, InventoryItem } from "@/lib/types";
+import { InsightsCarousel, type InsightItem } from "./InsightsCarousel";
 import { SetupChecklist } from "./SetupChecklist";
 
 const FF = "var(--font-satoshi)";
 const BG = "#EDF3E8";
 
+type Period = "today" | "week" | "month" | "year";
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "week",  label: "This Week" },
+  { key: "month", label: "This Month" },
+  { key: "year",  label: "This Year" },
+];
+
+function periodStart(p: Period): string {
+  const d = new Date();
+  if (p === "today") return d.toISOString().slice(0, 10);
+  if (p === "week")  { d.setDate(d.getDate() - 6); return d.toISOString().slice(0, 10); }
+  if (p === "month") return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  return `${d.getFullYear()}-01-01`;
+}
+
+function relTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), day = Math.floor(diff / 86400000);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m}m ago`;
+  if (h < 24) return `Today at ${new Date(iso).toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" }).toLowerCase()}`;
+  if (day === 1) return `Yesterday at ${new Date(iso).toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" }).toLowerCase()}`;
+  return new Date(iso).toLocaleDateString("en", { month: "short", day: "numeric" });
+}
+
 // Non-perishable / retail dashboard (kiosk, supermarket, clothing, salon, etc.).
 // The perishable (restaurant/bar) dashboard is a separate component — see
 // components/home/PerishableHome.tsx and PERISHABLE_DASHBOARD.md.
-// Data + computation live in hooks/useRetailDashboard.ts, shared with the
-// desktop layout — this component is layout-only.
 export function RetailHome() {
   const router = useRouter();
-  const {
-    loading, period, setPeriod, stats, insights, recentSales, quickActions,
-    hasItem, hasSale, unread, clearUnread, businessName, greeting,
-    user, salesCount,
-  } = useRetailDashboard();
+  const { user, activeBusiness, recordSavedAt } = useSPALStore();
+  const name = activeBusiness?.business_name ?? user?.business_name ?? user?.full_name ?? "there";
+  const greeting = getGreeting();
+
+  const [period, setPeriod]   = useState<Period>("today");
+  const [records, setRecords] = useState<BusinessRecord[]>([]);
+  const [items, setItems]     = useState<InventoryItem[]>([]);
+  const [unread, setUnread]   = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async (p: Period) => {
+    setLoading(true);
+    try {
+      const [recRes, invRes] = await Promise.all([
+        fetch(`/api/records?start_date=${periodStart(p)}&limit=2000`),
+        fetch(`/api/inventory`),
+      ]);
+      const recData = await recRes.json();
+      const invData = await invRes.json();
+      if (recData.success) setRecords(recData.data ?? []);
+      if (invData.success) setItems(invData.data?.items ?? []);
+    } catch { /* silent */ } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchData(period); }, [period, fetchData]);
+  useEffect(() => { if (recordSavedAt) fetchData(period); }, [recordSavedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetch("/api/notifications").then((r) => r.json())
+      .then((d) => { if (d.success) setUnread((d.data as { read_at: string | null }[]).filter((n) => !n.read_at).length); })
+      .catch(() => {});
+  }, []);
+
+  const sales    = useMemo(() => records.filter((r) => r.type === "sale"), [records]);
+  const totalSales    = sales.reduce((s, r) => s + r.amount, 0);
+  const totalExpenses = records.filter((r) => r.type === "expense").reduce((s, r) => s + r.amount, 0);
+  const outstanding   = sales.filter((r) => r.payment_status === "owing").reduce((s, r) => s + r.amount, 0);
+  const invValue      = items.reduce((s, it) => s + (it.selling_price ?? it.cost_price ?? 0) * it.quantity, 0);
+  const lowCount      = items.filter((it) => it.quantity <= it.low_stock_threshold).length;
+  const recentSales   = useMemo(
+    () => [...sales].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 4),
+    [sales]
+  );
+
+  const insights = useMemo<InsightItem[]>(() => {
+    const out: InsightItem[] = [];
+    if (outstanding > 0) {
+      const owed = sales.filter((r) => r.payment_status === "owing");
+      out.push({ id: "debt", tone: "warning", title: `${formatCurrency(outstanding)} is owed to you`, body: `${owed.length} sale${owed.length !== 1 ? "s" : ""} not yet paid. Follow up to get your money in.`, ctaLabel: "View Debts", ctaHref: "/records" });
+    }
+    if (lowCount > 0) {
+      out.push({ id: "low", tone: "warning", title: `${lowCount} product${lowCount !== 1 ? "s are" : " is"} running low`, body: "Restock soon so you never miss a sale.", ctaLabel: "Restock Now", ctaHref: "/inventory" });
+    }
+    if (period === "today" && totalSales === 0) {
+      out.push({ id: "nosale", tone: "info", title: "No sales recorded yet today", body: "Record your first sale to start tracking your day.", ctaLabel: "Record a Sale", ctaHref: "/records/add-sale" });
+    } else if (totalSales > 0) {
+      out.push({ id: "profit", tone: "success", title: `You've made ${formatCurrency(totalSales)} in sales`, body: "Keep it up. Check your insights to see what's driving it.", ctaLabel: "See Insights", ctaHref: "/insights" });
+    }
+    out.push({ id: "tip", tone: "info", title: "Track every sale, even the small ones", body: "The more you record, the sharper SPAL's advice on growing your business gets.", ctaLabel: "Ask SPAL", ctaHref: "/ask" });
+    return out;
+  }, [outstanding, lowCount, period, totalSales, sales]);
+
+  const STATS = [
+    { label: "Total Sales",     value: totalSales,    Icon: ShoppingBasket03Icon, tint: "#EAF7EE", color: "#16A34A" },
+    { label: "Total Expenses",  value: totalExpenses, Icon: ReceiptDollarIcon,    tint: "#FFF3EC", color: "#F97316" },
+    { label: "Inventory Value", value: invValue,      Icon: PackageIcon,          tint: "#F3EEFF", color: "#8B5CF6" },
+    { label: "Outstanding Debt",value: outstanding,   Icon: MoneyBag01Icon,       tint: "#EAF0FC", color: "#2563EB" },
+  ];
+
+  const QUICK = [
+    { label: "POS",     Icon: Invoice01Icon,  tint: "#FFF3EC", color: "#F97316", href: "/records/add-sale" },
+    { label: "Add Item",Icon: CheckListIcon,  tint: "#EAF7EE", color: "#16A34A", href: "/inventory" },
+    { label: "Restock", Icon: PackageIcon,    tint: "#F3EEFF", color: "#8B5CF6", href: "/inventory" },
+  ];
 
   return (
     <div className="min-h-full pb-28" style={{ background: BG, fontFamily: FF }}>
@@ -32,18 +132,18 @@ export function RetailHome() {
           <span className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#D9C7B8" }}>
             {user?.avatar_url
               ? <Image src={user.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
-              : <span className="text-white font-bold text-[18px]">{businessName.charAt(0).toUpperCase()}</span>}
+              : <span className="text-white font-bold text-[18px]">{name.charAt(0).toUpperCase()}</span>}
           </span>
           <span className="text-left">
             <span className="block text-[13px] text-neutral-500">{greeting}</span>
-            <span className="block text-[20px] font-black text-spal-navy leading-tight truncate max-w-[190px]">{businessName}</span>
+            <span className="block text-[20px] font-black text-spal-navy leading-tight truncate max-w-[190px]">{name}</span>
           </span>
         </button>
         <div className="flex items-center gap-2.5 flex-shrink-0">
           <button onClick={() => router.push("/records")} aria-label="Search" className="w-11 h-11 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <Search01Icon size={19} color="#0F172A" />
           </button>
-          <button onClick={() => { clearUnread(); router.push("/notifications"); }} aria-label="Notifications" className="w-11 h-11 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <button onClick={() => { setUnread(0); router.push("/notifications"); }} aria-label="Notifications" className="w-11 h-11 rounded-full bg-white flex items-center justify-center relative active:scale-95 transition-transform" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <Notification03Icon size={19} color="#0F172A" />
             {unread > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unread > 9 ? "9+" : unread}</span>}
           </button>
@@ -70,18 +170,18 @@ export function RetailHome() {
       </div>
 
       {/* First-run setup checklist (self-hides once complete) */}
-      <SetupChecklist hasItem={hasItem} hasSale={hasSale} perishable={false} />
+      <SetupChecklist hasItem={items.length > 0} hasSale={sales.length > 0} perishable={false} />
 
       {/* Stat cards */}
       <div className="px-5 mt-4 grid grid-cols-2 gap-3">
-        {stats.map((s) => (
+        {STATS.map((s) => (
           <div key={s.label} className="bg-white rounded-2xl px-4 py-4 min-w-0" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
             <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: s.tint }}>
               <s.Icon size={20} color={s.color} />
             </span>
             <p className="text-[13px] text-neutral-500 mt-3" style={{ fontFamily: FF }}>{s.label}</p>
             <p className="font-black text-spal-navy truncate mt-0.5" style={{ fontFamily: FF, fontSize: "clamp(18px, 6vw, 24px)", letterSpacing: "-0.02em" }}>
-              {s.value}
+              {formatCurrency(s.value)}
             </p>
           </div>
         ))}
@@ -106,7 +206,7 @@ export function RetailHome() {
       <div className="px-5 mt-6">
         <p className="text-[16px] font-black text-spal-navy mb-3" style={{ fontFamily: FF }}>Quick Access</p>
         <div className="grid grid-cols-4 gap-2.5">
-          {quickActions.map((q) => (
+          {QUICK.map((q) => (
             <button key={q.label} onClick={() => router.push(q.href)} className="bg-white rounded-2xl py-4 flex flex-col items-center gap-2 active:scale-95 transition-transform" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
               <span className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: q.tint }}>
                 <q.Icon size={19} color={q.color} />
@@ -130,7 +230,7 @@ export function RetailHome() {
       <div className="px-5 mt-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[16px] font-black text-spal-navy" style={{ fontFamily: FF }}>Recent Sales</p>
-          {salesCount > 5 && (
+          {sales.length > 5 && (
             <button onClick={() => router.push("/records")} className="inline-flex items-center gap-1 text-[13px] font-bold" style={{ fontFamily: FF, color: "#16A34A" }}>
               View All Sales <ArrowRight01Icon size={14} color="#16A34A" />
             </button>
