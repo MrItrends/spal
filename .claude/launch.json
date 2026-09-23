@@ -4,7 +4,14 @@
     {
       "name": "spal-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "dev", "--workspace", "apps/mobile"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "desktop",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace", "apps/desktop"],
       "port": 3000,
       "autoPort": true
     }
