@@ -65,6 +65,29 @@ source and re-sync, and plan to move to A/B.
   recent sales side by side. Max width ~1200px, centered, generous gutters. Same
   tokens, `rounded-2xl` cards, colors and Framer Motion easing as mobile.
 
+## Status (2026-09-23)
+
+Implemented on branch `feat/desktop-monorepo` (commit 0d51dd7), not yet merged
+to master: the workspace conversion (`apps/mobile`, `apps/desktop`,
+`packages/core`) is done, and `apps/desktop` has working auth (`proxy.ts`,
+`/login`, `/api/auth/*`), a minimal read API (`/api/records`, `/api/inventory`,
+`/api/menu`, `/api/notifications`, `/api/businesses` — copied from
+`apps/mobile`, hitting the same Supabase project), the sidebar + top bar shell,
+and a fully working **Home** dashboard (both retail and perishable) built on
+`@spal/core`'s hooks. Both `apps/mobile` and `apps/desktop` build clean.
+
+`packages/core` currently only exists as fresh copies of the pure files
+(`lib/business-mode.ts`, `lib/orders.ts`, `lib/sales.ts`, `lib/types.ts`,
+`lib/utils/*`, `store/`, the two dashboard hooks, `useBusinessMode`) — `apps/mobile`
+was **not** rewired to import from it, to avoid risking the live app. Real
+single-source-of-truth sharing (mobile importing from `@spal/core` too) is a
+follow-up, done deliberately, not blind.
+
+The desktop sidebar links to Orders/Menu/Inventory/Wallet/Sell/Profile/Records/
+Insights, but only Home exists as a page — the other routes 404 until built,
+same treatment Home already got (its own view reading the same core hook, no
+forking business logic).
+
 ## Conventions (both apps)
 
 Next 16 App Router · TS · Tailwind v4 (`@theme`, no config file) · Satoshi/Inter
