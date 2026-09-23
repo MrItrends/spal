@@ -1,0 +1,14 @@
+{
+  "name": "@spal/core",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./lib/*": "./lib/*.ts",
+    "./store": "./store/index.ts",
+    "./hooks/*": "./hooks/*.ts"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "zustand": "*"
+  }
+}

@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* =============================================
+   SPAL Desktop — Tailwind v4 CSS Config
+   Same design tokens as the mobile app (see apps/mobile/app/globals.css) —
+   keep colors/fonts in sync by hand until these move into a shared package.
+   ============================================= */
+
+@theme {
+  --color-spal-green:  #22C55E;
+  --color-spal-blue:   #2563EB;
+  --color-spal-orange: #F97316;
+  --color-spal-purple: #8B5CF6;
+  --color-spal-navy:   #0F172A;
+  --color-spal-bg:     #EEF3E9;
+
+  --color-spal-green-50:  #F0FDF4;
+  --color-spal-green-100: #DCFCE7;
+  --color-spal-green-200: #BBF7D0;
+  --color-spal-green-500: #22C55E;
+  --color-spal-green-600: #16A34A;
+  --color-spal-green-700: #15803D;
+
+  --color-spal-orange-50:  #FFF7ED;
+  --color-spal-orange-100: #FFEDD5;
+  --color-spal-orange-500: #F97316;
+  --color-spal-orange-600: #EA580C;
+
+  --color-spal-blue-50:  #EFF6FF;
+  --color-spal-blue-100: #DBEAFE;
+  --color-spal-blue-500: #2563EB;
+  --color-spal-blue-600: #1D4ED8;
+
+  --color-spal-purple-50:  #F5F3FF;
+  --color-spal-purple-100: #EDE9FE;
+  --color-spal-purple-500: #8B5CF6;
+  --color-spal-purple-600: #7C3AED;
+
+  --color-neutral-50:  #FAFAFA;
+  --color-neutral-100: #F4F4F5;
+  --color-neutral-200: #E4E4E7;
+  --color-neutral-300: #D4D4D8;
+  --color-neutral-400: #A1A1AA;
+  --color-neutral-500: #71717A;
+  --color-neutral-600: #52525B;
+  --color-neutral-700: #3F3F46;
+  --color-neutral-800: #27272A;
+  --color-neutral-900: #18181B;
+
+  --font-satoshi: 'Satoshi', system-ui, sans-serif;
+  --font-inter:   var(--font-inter-tight), 'Inter Tight', system-ui, sans-serif;
+
+  --radius-sm:   0.5rem;
+  --radius-md:   1rem;
+  --radius-lg:   1.5rem;
+  --radius-xl:   2rem;
+  --radius-full: 9999px;
+}
+
+:root {
+  --background: #F7F9F5;
+  --foreground: #0F172A;
+  --shadow-card:    0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-card-lg: 0 2px 6px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.08);
+}
+
+html, body {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv01", "ss01";
+}
+
+body {
+  background-color: var(--spal-bg, #EEF3E9);
+  color: var(--foreground);
+  font-family: var(--font-inter);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-satoshi);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
