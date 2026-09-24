@@ -33,7 +33,7 @@ interface ReviewRecord {
 
 // ── Method metadata ───────────────────────────────────────────────────────────
 
-export const METHOD_META: Record<TrackingMethod, {
+const METHOD_META: Record<TrackingMethod, {
   label:     string;
   sub:       string;
   icon:      React.ReactNode;

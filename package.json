@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "to-webp": "node scripts/to-webp.mjs",
@@ -41,5 +41,8 @@
     "jimp": "^1.6.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "lightningcss": "1.33.0"
   }
 }
